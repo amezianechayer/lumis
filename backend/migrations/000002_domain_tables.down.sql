@@ -1,0 +1,12 @@
+DROP INDEX IF EXISTS idx_face_profiles_user;
+DROP INDEX IF EXISTS idx_coach_messages_conversation;
+DROP INDEX IF EXISTS idx_recommendations_user_type;
+DROP INDEX IF EXISTS idx_skin_scans_user_created;
+DROP TABLE IF EXISTS subscriptions;
+DROP TABLE IF EXISTS user_streaks;
+DROP TABLE IF EXISTS scanned_products;
+DROP TABLE IF EXISTS coach_messages;
+DROP TABLE IF EXISTS coach_conversations;
+DROP TABLE IF EXISTS recommendations;
+DROP TABLE IF EXISTS skin_scans;
+DROP TABLE IF EXISTS face_profiles;
