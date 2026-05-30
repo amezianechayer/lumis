@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/lumis/backend/internal/middleware"
@@ -77,6 +79,35 @@ func (h *StripeHandler) GetStatus(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"is_premium":    user.IsPremium(),
 		"premium_until": user.PremiumUntil,
+	})
+}
+
+// POST /api/v1/premium/activate  — called by mobile after RevenueCat purchase
+func (h *StripeHandler) ActivatePremium(c *fiber.Ctx) error {
+	userIDStr, ok := c.Locals(middleware.UserIDKey).(string)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
+	}
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
+	}
+
+	var body struct {
+		DurationMonths int `json:"duration_months"`
+	}
+	if err := c.BodyParser(&body); err != nil || body.DurationMonths <= 0 {
+		body.DurationMonths = 12
+	}
+
+	premiumUntil := time.Now().AddDate(0, body.DurationMonths, 0)
+	if err := h.userRepo.SetPremium(c.Context(), userID, premiumUntil); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to activate premium"})
+	}
+
+	return c.JSON(fiber.Map{
+		"is_premium":    true,
+		"premium_until": premiumUntil,
 	})
 }
 

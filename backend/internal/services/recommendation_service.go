@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/lumis/backend/internal/models"
 	"github.com/lumis/backend/internal/repository"
 )
@@ -38,7 +39,7 @@ func NewRecommendationService(
 		userRepo:     userRepo,
 		skinScanRepo: skinScanRepo,
 		groqAPIKey:   groqAPIKey,
-		httpClient:   &http.Client{Timeout: 30 * time.Second},
+		httpClient:   &http.Client{Timeout: 60 * time.Second},
 	}
 }
 
@@ -56,49 +57,24 @@ func (s *RecommendationService) GetOrGenerate(ctx context.Context, userID uuid.U
 }
 
 func (s *RecommendationService) Generate(ctx context.Context, userID uuid.UUID) ([]models.Recommendation, error) {
-	profile, err := s.profileRepo.FindLatestByUser(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-
-	var user *models.User
-	gender := ""
-	if u, err := s.userRepo.FindByID(ctx, userID); err == nil && u != nil {
-		user = u
-		if u.Gender != nil {
-			gender = *u.Gender
-		}
-	}
-
-	// Static templates for haircut / grooming / makeup / color season
-	var templates []RecTemplate
-	if profile != nil {
-		templates = buildTemplatesWithoutSkincare(profile, gender)
-	} else {
-		templates = defaultTemplatesWithoutSkincare()
-	}
-
-	recs := make([]models.Recommendation, 0, len(templates)+1)
-	for _, tpl := range templates {
-		rec, err := templateToModel(userID, profile, tpl)
-		if err != nil {
-			return nil, fmt.Errorf("serialize rec: %w", err)
-		}
-		recs = append(recs, rec)
-	}
-
-	// AI-powered skincare recommendation
+	profile, _ := s.profileRepo.FindLatestByUser(ctx, userID)
+	user, _ := s.userRepo.FindByID(ctx, userID)
 	var skinScan *models.SkinScan
 	if s.skinScanRepo != nil {
 		skinScan, _ = s.skinScanRepo.FindLatestByUser(ctx, userID)
 	}
-	skincareRec, err := s.generateSkincareRec(ctx, userID, profile, skinScan, user)
-	if err != nil {
-		log.Printf("[RecService] AI skincare failed, using fallback: %v", err)
-		fallback, _ := templateToModel(userID, profile, buildSkincareRec("fitzpatrick_3", gender))
-		recs = append(recs, fallback)
+
+	var recs []models.Recommendation
+	var err error
+
+	if s.groqAPIKey != "" {
+		recs, err = s.generateAllWithGroq(ctx, userID, profile, skinScan, user)
+		if err != nil {
+			log.Printf("[RecService] Groq generation failed, using fallback: %v", err)
+			recs = buildFallbackRecs(userID, profile, user)
+		}
 	} else {
-		recs = append(recs, *skincareRec)
+		recs = buildFallbackRecs(userID, profile, user)
 	}
 
 	if err := s.recRepo.DeleteByUser(ctx, userID); err != nil {
@@ -110,101 +86,108 @@ func (s *RecommendationService) Generate(ctx context.Context, userID uuid.UUID) 
 	return recs, nil
 }
 
-// generateSkincareRec calls Groq to build a personalized skincare recommendation.
-func (s *RecommendationService) generateSkincareRec(
+// generateAllWithGroq generates all 5 recommendation types in a single Groq call.
+func (s *RecommendationService) generateAllWithGroq(
 	ctx context.Context,
 	userID uuid.UUID,
 	profile *models.FaceProfile,
 	skinScan *models.SkinScan,
 	user *models.User,
-) (*models.Recommendation, error) {
-	if s.groqAPIKey == "" {
-		return nil, fmt.Errorf("no groq key")
-	}
-
+) ([]models.Recommendation, error) {
 	var sb strings.Builder
-	sb.WriteString("Tu es un expert en dermatologie et skincare. Génère une routine skincare personnalisée au format JSON strict.\n\n")
 
-	if skinScan != nil {
-		sb.WriteString("## Analyse de peau récente\n")
-		fmt.Fprintf(&sb, "- Score global : %d/100\n", skinScan.OverallScore)
-		fmt.Fprintf(&sb, "- Hydratation : %d/100\n", skinScan.HydrationScore)
-		fmt.Fprintf(&sb, "- Acné : %d/100 (100=sans acné)\n", skinScan.AcneScore)
-		fmt.Fprintf(&sb, "- Texture : %d/100\n", skinScan.TextureScore)
-		fmt.Fprintf(&sb, "- Uniformité : %d/100\n", skinScan.UniformityScore)
-		fmt.Fprintf(&sb, "- Rougeur : %s\n", skinScan.RednessLevel)
-		fmt.Fprintf(&sb, "- Pores : %s\n", skinScan.PoresCondition)
-		fmt.Fprintf(&sb, "- Hyperpigmentation : %s\n", skinScan.HyperpigmentationLevel)
-		if len(skinScan.AcneZones) > 0 {
-			fmt.Fprintf(&sb, "- Zones acnéiques : %s\n", strings.Join(skinScan.AcneZones, ", "))
-		}
-		if skinScan.FineLinesDetected {
-			sb.WriteString("- Premières ridules détectées : oui\n")
-		}
-		fmt.Fprintf(&sb, "- Sommeil : %.1fh/nuit, Stress : %d/10, Eau : %.1fL/j\n",
-			skinScan.SleepHours, skinScan.StressLevel, skinScan.WaterIntakeLiters)
-	} else {
-		sb.WriteString("## Analyse de peau\nAucune analyse disponible — génère une routine universelle équilibrée.\n")
-	}
+	sb.WriteString("Tu es un expert beauté, dermatologue et styliste. Génère 5 recommandations ultra-personnalisées basées sur le profil complet de l'utilisateur.\n\n")
 
-	if profile != nil {
-		fmt.Fprintf(&sb, "\n## Profil facial\n- Teinte peau : %s\n- Undertone : %s\n- Saison couleur : %s\n",
-			profile.SkinTone, profile.Undertone, profile.ColorSeason)
-	}
-
-	gender := ""
+	// User profile
+	gender := "non spécifié"
 	if user != nil {
 		if user.Gender != nil {
 			gender = *user.Gender
 		}
 		if len(user.Goals) > 0 {
-			fmt.Fprintf(&sb, "\n## Objectifs\n%s\n", strings.Join(user.Goals, ", "))
+			fmt.Fprintf(&sb, "## Objectifs utilisateur\n%s\n\n", strings.Join(user.Goals, ", "))
 		}
 	}
+	fmt.Fprintf(&sb, "## Genre : %s\n\n", gender)
 
-	genderNote := "mixte"
-	if gender == "male" {
-		genderNote = "homme"
-	} else if gender == "female" {
-		genderNote = "femme"
+	// Skin scan
+	if skinScan != nil {
+		sb.WriteString("## Analyse de peau récente\n")
+		fmt.Fprintf(&sb, "- Score global : %d/100\n", skinScan.OverallScore)
+		fmt.Fprintf(&sb, "- Hydratation : %d/100\n", skinScan.HydrationScore)
+		fmt.Fprintf(&sb, "- Acné : %d/100 (100=aucune)\n", skinScan.AcneScore)
+		fmt.Fprintf(&sb, "- Texture : %d/100\n", skinScan.TextureScore)
+		fmt.Fprintf(&sb, "- Uniformité : %d/100\n", skinScan.UniformityScore)
+		fmt.Fprintf(&sb, "- Rougeur : %s | Pores : %s | Hyperpigmentation : %s\n",
+			skinScan.RednessLevel, skinScan.PoresCondition, skinScan.HyperpigmentationLevel)
+		if len(skinScan.AcneZones) > 0 {
+			fmt.Fprintf(&sb, "- Zones acnéiques : %s\n", strings.Join(skinScan.AcneZones, ", "))
+		}
+		if len(skinScan.DrynessZones) > 0 {
+			fmt.Fprintf(&sb, "- Zones sèches : %s\n", strings.Join(skinScan.DrynessZones, ", "))
+		}
+		fmt.Fprintf(&sb, "- Sommeil : %.1fh/nuit, Stress : %d/10, Eau : %.1fL/j\n",
+			skinScan.SleepHours, skinScan.StressLevel, skinScan.WaterIntakeLiters)
+		sb.WriteString("\n")
+	} else {
+		sb.WriteString("## Analyse de peau : non disponible — base-toi sur le profil facial.\n\n")
 	}
 
-	fmt.Fprintf(&sb, `
-## Format de réponse
-Réponds UNIQUEMENT avec un objet JSON valide (sans markdown, sans explication) :
-{
-  "title": "<titre accrocheur de la routine, max 60 chars>",
-  "summary": "<description de 1-2 phrases, personnalisée aux problèmes détectés>",
-  "duration_min": <durée totale en minutes, int>,
-  "difficulty": <"easy"|"medium"|"advanced">,
-  "steps": [
-    {
-      "order": 1,
-      "title": "<nom de l'étape>",
-      "description": "<instruction claire, 1-2 phrases>",
-      "tip": "<astuce optionnelle ou chaîne vide>",
-      "duration_min": <durée en minutes, int>
-    }
-  ],
-  "products": [
-    {
-      "name": "<nom générique du produit>",
-      "category": "<catégorie>",
-      "why": "<pourquoi ce produit pour ce profil>",
-      "premium": false
-    }
-  ]
-}
-Génère 4-5 étapes et 3-5 produits. Public cible : %s. Sois très spécifique aux problèmes détectés.`, genderNote)
-
-	messages := []recGroqMsg{
-		{Role: "user", Content: sb.String()},
+	// Face profile
+	if profile != nil {
+		sb.WriteString("## Profil facial\n")
+		fmt.Fprintf(&sb, "- Forme du visage : %s\n", profile.FaceShape)
+		fmt.Fprintf(&sb, "- Teinte peau : %s\n", profile.SkinTone)
+		fmt.Fprintf(&sb, "- Undertone : %s\n", profile.Undertone)
+		fmt.Fprintf(&sb, "- Saison couleur : %s\n", profile.ColorSeason)
+		fmt.Fprintf(&sb, "- Forme des yeux : %s\n", profile.EyeShape)
+		fmt.Fprintf(&sb, "- Mâchoire : %s\n", profile.JawType)
+		sb.WriteString("\n")
 	}
+
+	sb.WriteString(`## Instructions
+Génère EXACTEMENT 5 recommandations, une par type : skincare, makeup, haircut, grooming, color_season.
+- Pour "makeup" : si genre masculin, propose une routine teint naturel/BB cream/correcteur adaptée aux hommes.
+- Pour "grooming" : si genre féminin, propose une routine sourcils/lèvres/soin visage.
+- Chaque recommandation doit être TRÈS spécifique aux problèmes détectés (cite les scores, les zones, les problèmes réels).
+- Pas de conseils génériques. Chaque étape et produit doit être justifié par les données.
+
+Réponds UNIQUEMENT avec un tableau JSON valide (sans markdown) :
+[
+  {
+    "type": "skincare",
+    "icon": "🌿",
+    "title": "<titre spécifique, max 60 chars>",
+    "summary": "<2-3 phrases très spécifiques aux problèmes détectés>",
+    "duration_min": <int>,
+    "difficulty": <"easy"|"medium"|"advanced">,
+    "steps": [
+      {"order": 1, "title": "<nom étape>", "description": "<instruction précise>", "tip": "<astuce ou vide>", "duration_min": <int>}
+    ],
+    "products": [
+      {"name": "<produit>", "category": "<catégorie>", "why": "<pourquoi CE produit pour CE profil>", "premium": false}
+    ]
+  },
+  ... (4 autres)
+]
+Génère 4-6 étapes et 3-5 produits par recommandation. Types requis : skincare, makeup, haircut, grooming, color_season.`)
+
+	type recGroqMsg struct {
+		Role    string `json:"role"`
+		Content string `json:"content"`
+	}
+	type recGroqReq struct {
+		Model       string       `json:"model"`
+		Messages    []recGroqMsg `json:"messages"`
+		Temperature float64      `json:"temperature"`
+		MaxTokens   int          `json:"max_tokens"`
+	}
+
 	reqBody := recGroqReq{
 		Model:       groqModel,
-		Messages:    messages,
-		Temperature: 0.5,
-		MaxTokens:   1024,
+		Messages:    []recGroqMsg{{Role: "user", Content: sb.String()}},
+		Temperature: 0.4,
+		MaxTokens:   4096,
 	}
 
 	body, err := json.Marshal(reqBody)
@@ -241,42 +224,169 @@ Génère 4-5 étapes et 3-5 produits. Public cible : %s. Sois très spécifique 
 		return nil, fmt.Errorf("no choices")
 	}
 
-	raw := extractJSON(groqResp.Choices[0].Message.Content)
-	log.Printf("[RecService] AI skincare raw: %.200s", raw)
+	raw := groqResp.Choices[0].Message.Content
+	log.Printf("[RecService] Groq raw (first 300): %.300s", raw)
+	raw = extractJSONArray(raw)
 
-	var parsed struct {
-		Title       string       `json:"title"`
-		Summary     string       `json:"summary"`
-		DurationMin int          `json:"duration_min"`
-		Difficulty  string       `json:"difficulty"`
-		Steps       []RecStep    `json:"steps"`
-		Products    []RecProduct `json:"products"`
+	var parsed []struct {
+		Type        string `json:"type"`
+		Icon        string `json:"icon"`
+		Title       string `json:"title"`
+		Summary     string `json:"summary"`
+		DurationMin int    `json:"duration_min"`
+		Difficulty  string `json:"difficulty"`
+		Steps       []struct {
+			Order       int    `json:"order"`
+			Title       string `json:"title"`
+			Description string `json:"description"`
+			Tip         string `json:"tip"`
+			DurationMin int    `json:"duration_min"`
+		} `json:"steps"`
+		Products []struct {
+			Name     string `json:"name"`
+			Category string `json:"category"`
+			Why      string `json:"why"`
+			Premium  bool   `json:"premium"`
+		} `json:"products"`
 	}
+
 	if err := json.Unmarshal([]byte(raw), &parsed); err != nil {
-		return nil, fmt.Errorf("parse skincare JSON: %w", err)
+		return nil, fmt.Errorf("parse recs JSON: %w", err)
 	}
 
-	tpl := RecTemplate{
-		Type:        "skincare",
-		GenderTarget: "all",
-		Title:       parsed.Title,
-		Summary:     parsed.Summary,
-		Steps:       parsed.Steps,
-		Products:    parsed.Products,
-		Occasions:   []string{"daily"},
-		IconEmoji:   "🧴",
-		DurationMin: parsed.DurationMin,
-		Difficulty:  parsed.Difficulty,
+	var faceProfileID *uuid.UUID
+	if profile != nil {
+		faceProfileID = &profile.ID
 	}
 
-	rec, err := templateToModel(userID, profile, tpl)
-	if err != nil {
-		return nil, err
+	recs := make([]models.Recommendation, 0, len(parsed))
+	for _, p := range parsed {
+		stepsJSON, _ := json.Marshal(p.Steps)
+		prodsJSON, _ := json.Marshal(p.Products)
+
+		recType := p.Type
+		validTypes := map[string]bool{"skincare": true, "makeup": true, "haircut": true, "grooming": true, "color_season": true}
+		if !validTypes[recType] {
+			recType = "skincare"
+		}
+
+		difficulty := p.Difficulty
+		if difficulty == "" {
+			difficulty = "easy"
+		}
+
+		icon := p.Icon
+		if icon == "" {
+			icons := map[string]string{"skincare": "🌿", "makeup": "💄", "haircut": "✂️", "grooming": "🧔", "color_season": "🎨"}
+			icon = icons[recType]
+		}
+
+		recs = append(recs, models.Recommendation{
+			UserID:        userID,
+			FaceProfileID: faceProfileID,
+			Type:          recType,
+			GenderTarget:  "all",
+			Title:         p.Title,
+			Summary:       p.Summary,
+			Steps:         models.JSON(stepsJSON),
+			Products:      models.JSON(prodsJSON),
+			Occasions:     pq.StringArray{"daily"},
+			IconEmoji:     icon,
+			DurationMin:   p.DurationMin,
+			Difficulty:    difficulty,
+		})
 	}
-	return &rec, nil
+
+	return recs, nil
 }
 
-// recGroqMsg and recGroqReq are package-local to avoid conflicts with coach_service.go
+func extractJSONArray(s string) string {
+	// Strip markdown code fences
+	if i := strings.Index(s, "```"); i >= 0 {
+		s = s[i:]
+		if j := strings.Index(s[3:], "```"); j >= 0 {
+			s = s[3 : 3+j]
+		}
+		s = strings.TrimPrefix(s, "json")
+		s = strings.TrimSpace(s)
+	}
+	start := strings.Index(s, "[")
+	end := strings.LastIndex(s, "]")
+	if start >= 0 && end > start {
+		return s[start : end+1]
+	}
+	return s
+}
+
+// buildFallbackRecs returns minimal static recs when Groq is unavailable.
+func buildFallbackRecs(userID uuid.UUID, profile *models.FaceProfile, user *models.User) []models.Recommendation {
+	gender := ""
+	if user != nil && user.Gender != nil {
+		gender = *user.Gender
+	}
+
+	makeupTitle := "Routine Maquillage Naturel"
+	makeupSummary := "Une routine maquillage légère et naturelle pour sublimer tes traits au quotidien."
+	if gender == "male" || gender == "homme" {
+		makeupTitle = "Teint Naturel & Correcteur"
+		makeupSummary = "Une routine discrète pour unifier le teint et corriger les imperfections sans effet maquillé."
+	}
+
+	defaultSteps, _ := json.Marshal([]map[string]interface{}{
+		{"order": 1, "title": "Préparation", "description": "Hydrate bien ta peau avant d'appliquer quoi que ce soit.", "tip": "", "duration_min": 2},
+		{"order": 2, "title": "Application", "description": "Applique le produit en tapotant avec les doigts pour un rendu naturel.", "tip": "Moins c'est plus.", "duration_min": 3},
+	})
+	defaultProds, _ := json.Marshal([]map[string]interface{}{
+		{"name": "BB Cream SPF 30", "category": "teint", "why": "Couvre légèrement tout en protégeant", "premium": false},
+	})
+
+	recs := []models.Recommendation{
+		{
+			UserID: userID, Type: "skincare", GenderTarget: "all",
+			Title: "Routine Skincare Essentielle", Summary: "Une routine de base pour prendre soin de ta peau au quotidien.",
+			Steps: models.JSON(defaultSteps), Products: models.JSON(defaultProds),
+			Occasions: pq.StringArray{"daily"}, IconEmoji: "🌿", DurationMin: 5, Difficulty: "easy",
+		},
+		{
+			UserID: userID, Type: "makeup", GenderTarget: "all",
+			Title: makeupTitle, Summary: makeupSummary,
+			Steps: models.JSON(defaultSteps), Products: models.JSON(defaultProds),
+			Occasions: pq.StringArray{"daily"}, IconEmoji: "💄", DurationMin: 5, Difficulty: "easy",
+		},
+		{
+			UserID: userID, Type: "haircut", GenderTarget: "all",
+			Title: "Coupe Adaptée à Ton Visage", Summary: "Une coupe qui met en valeur tes traits naturels.",
+			Steps: models.JSON(defaultSteps), Products: models.JSON(defaultProds),
+			Occasions: pq.StringArray{"daily"}, IconEmoji: "✂️", DurationMin: 0, Difficulty: "easy",
+		},
+		{
+			UserID: userID, Type: "grooming", GenderTarget: "all",
+			Title: "Entretien & Finitions", Summary: "Les gestes essentiels pour un look soigné au quotidien.",
+			Steps: models.JSON(defaultSteps), Products: models.JSON(defaultProds),
+			Occasions: pq.StringArray{"daily"}, IconEmoji: "🧔", DurationMin: 5, Difficulty: "easy",
+		},
+		{
+			UserID: userID, Type: "color_season", GenderTarget: "all",
+			Title: "Ta Palette de Couleurs", Summary: "Les couleurs qui subliment naturellement ton teint et tes yeux.",
+			Steps: models.JSON(defaultSteps), Products: models.JSON(defaultProds),
+			Occasions: pq.StringArray{"daily"}, IconEmoji: "🎨", DurationMin: 0, Difficulty: "easy",
+		},
+	}
+
+	for i := range recs {
+		if recs[i].ID == uuid.Nil {
+			recs[i].ID = uuid.New()
+		}
+	}
+
+	return recs
+}
+
+func (s *RecommendationService) GetByID(ctx context.Context, id, userID uuid.UUID) (*models.Recommendation, error) {
+	return s.recRepo.FindByID(ctx, id, userID)
+}
+
+// recGroqMsg and recGroqReq kept for compatibility
 type recGroqMsg struct {
 	Role    string `json:"role"`
 	Content string `json:"content"`
@@ -287,98 +397,4 @@ type recGroqReq struct {
 	Messages    []recGroqMsg `json:"messages"`
 	Temperature float64      `json:"temperature"`
 	MaxTokens   int          `json:"max_tokens"`
-}
-
-func (s *RecommendationService) GetByID(ctx context.Context, id, userID uuid.UUID) (*models.Recommendation, error) {
-	return s.recRepo.FindByID(ctx, id, userID)
-}
-
-// ─── helpers ────────────────────────────────────────────────────────────────
-
-// buildTemplatesWithoutSkincare returns all recs except skincare (generated by AI separately).
-func buildTemplatesWithoutSkincare(p *models.FaceProfile, gender string) []RecTemplate {
-	var tpls []RecTemplate
-
-	shape := p.FaceShape
-	season := p.ColorSeason
-	_ = p.SkinTone
-
-	if t, ok := haircutByShape[shape]; ok {
-		t.Type = "haircut"
-		t.GenderTarget = "all"
-		tpls = append(tpls, t)
-	}
-
-	if gender == "male" || gender == "homme" {
-		if t, ok := groomingByShape[shape]; ok {
-			t.Type = "grooming"
-			t.GenderTarget = "male"
-			tpls = append(tpls, t)
-		}
-	} else {
-		if t, ok := makeupBySeason[season]; ok {
-			t.Type = "makeup"
-			t.GenderTarget = "female"
-			tpls = append(tpls, t)
-		}
-		if t, ok := makeupByShape[shape]; ok {
-			t.Type = "makeup"
-			t.GenderTarget = "female"
-			tpls = append(tpls, t)
-		}
-	}
-
-	if t, ok := colorSeasonGuide[season]; ok {
-		t.Type = "color_season"
-		t.GenderTarget = "all"
-		tpls = append(tpls, t)
-	}
-
-	return tpls
-}
-
-func defaultTemplatesWithoutSkincare() []RecTemplate {
-	return []RecTemplate{
-		haircutByShape["oval"],
-		colorSeasonGuide["spring"],
-	}
-}
-
-
-func templateToModel(userID uuid.UUID, profile *models.FaceProfile, tpl RecTemplate) (models.Recommendation, error) {
-	stepsJSON, err := json.Marshal(tpl.Steps)
-	if err != nil {
-		return models.Recommendation{}, err
-	}
-	prodsJSON, err := json.Marshal(tpl.Products)
-	if err != nil {
-		return models.Recommendation{}, err
-	}
-
-	recType := tpl.Type
-	if recType == "" {
-		recType = "skincare"
-	}
-
-	var faceProfileID *uuid.UUID
-	if profile != nil {
-		faceProfileID = &profile.ID
-	}
-
-	return models.Recommendation{
-		UserID:        userID,
-		FaceProfileID: faceProfileID,
-		Type:          recType,
-		GenderTarget:  tpl.GenderTarget,
-		Title:         tpl.Title,
-		Summary:       tpl.Summary,
-		Steps:         models.JSON(stepsJSON),
-		Products:      models.JSON(prodsJSON),
-		Occasions:     tpl.Occasions,
-		Season:        tpl.Season,
-		IsPremiumOnly: tpl.IsPremium,
-		IconEmoji:     tpl.IconEmoji,
-		DurationMin:   tpl.DurationMin,
-		Difficulty:    tpl.Difficulty,
-	}, nil
 }

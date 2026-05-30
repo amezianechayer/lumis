@@ -176,10 +176,14 @@ func main() {
 	recs.Post("/generate", recHandler.Generate)
 	recs.Get("/:id", recHandler.GetByID)
 
-	// Stripe
+	// Stripe / Premium
 	stripeGroup := protected.Group("/stripe")
 	stripeGroup.Post("/checkout", stripeHandler.CreateCheckout)
 	stripeGroup.Get("/status", stripeHandler.GetStatus)
+
+	// RevenueCat — activate premium after in-app purchase
+	protected.Post("/premium/activate", stripeHandler.ActivatePremium)
+	protected.Get("/premium/status", stripeHandler.GetStatus)
 
 	// Stripe webhook (no auth)
 	v1.Post("/webhook/stripe", stripeHandler.Webhook)

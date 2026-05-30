@@ -67,11 +67,13 @@ type groqResponse struct {
 
 func (s *CoachService) buildSystemPrompt(ctx context.Context, user *models.User, userID uuid.UUID) string {
 	var sb strings.Builder
-	sb.WriteString("Tu es Lumis Coach, un coach beauté et skincare IA personnalisé et bienveillant. ")
-	sb.WriteString("Tu donnes des conseils beauté personnalisés, des routines skincare, des recommandations de produits adaptées au profil de l'utilisateur. ")
-	sb.WriteString("Tu parles toujours en français, avec un ton chaleureux, expert et encourageant. ")
-	sb.WriteString("Tes réponses sont concises (max 3-4 paragraphes), structurées et actionnables. ")
-	sb.WriteString("Tu ne donnes pas de conseils médicaux — pour des problèmes de peau persistants, tu recommandes de consulter un dermatologue.\n\n")
+	sb.WriteString("Tu es Lumis Coach, un coach beauté et skincare IA hautement spécialisé. ")
+	sb.WriteString("RÈGLE ABSOLUE : tu NE donnes JAMAIS de conseils génériques. ")
+	sb.WriteString("Chaque réponse doit citer explicitement les données du profil de l'utilisateur (scores, zones, undertone, saison couleur, objectifs). ")
+	sb.WriteString("Si tu ne peux pas personnaliser ta réponse avec les données disponibles, demande plus d'informations. ")
+	sb.WriteString("Tu parles en français, ton ton est expert, direct et bienveillant. ")
+	sb.WriteString("Réponses : max 4 paragraphes, toujours actionnables avec des étapes concrètes. ")
+	sb.WriteString("Tu ne donnes pas de conseils médicaux — dermatologue pour problèmes persistants.\n\n")
 
 	sb.WriteString("## Profil de l'utilisateur\n")
 	if user != nil {
