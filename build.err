@@ -1,0 +1,22 @@
+Node.js (v20.18.0) is outdated and unsupported. Please update to a newer Node.js LTS version (required: >=20.19.4)
+Go to: https://nodejs.org/en/download
+
+Error: could not connect to TCP port 5554: cannot connect to 127.0.0.1:5554: Aucune connexion n’a pu être établie car l’ordinateur cible l’a expressément refusée. (10061)
+Error: C:\Users\chaye\AppData\Local\Android\Sdk/platform-tools/adb -s emulator-5554 emu avd name exited with non-zero code: 1
+    at ChildProcess.completionListener (C:\Users\chaye\lumis\apps\mobile\node_modules\@expo\spawn-async\build\spawnAsync.js:113:23)
+    at Object.onceWrapper (node:events:634:26)
+    at ChildProcess.emit (node:events:519:28)
+    at cp.emit (C:\Users\chaye\lumis\apps\mobile\node_modules\cross-spawn\lib\enoent.js:34:29)
+    at maybeClose (node:internal/child_process:1105:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:305:5)
+    ...
+    at spawnAsync (C:\Users\chaye\lumis\apps\mobile\node_modules\@expo\spawn-async\build\spawnAsync.js:9:23)
+    at ADBServer.runAsync (C:\Users\chaye\lumis\apps\mobile\node_modules\expo\node_modules\@expo\cli\build\src\start\platforms\android\ADBServer.js:97:79)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async getAdbNameForDeviceIdAsync (C:\Users\chaye\lumis\apps\mobile\node_modules\expo\node_modules\@expo\cli\build\src\start\platforms\android\adb.js:300:21)
+    at async C:\Users\chaye\lumis\apps\mobile\node_modules\expo\node_modules\@expo\cli\build\src\start\platforms\android\adb.js:278:20
+    at async Promise.all (index 0)
+    at async Object.isDeviceBootedAsync (C:\Users\chaye\lumis\apps\mobile\node_modules\expo\node_modules\@expo\cli\build\src\start\platforms\android\adb.js:308:21)
+    at async AndroidDeviceManager.attemptToStartAsync (C:\Users\chaye\lumis\apps\mobile\node_modules\expo\node_modules\@expo\cli\build\src\start\platforms\android\AndroidDeviceManager.js:126:14)
+    at async AndroidDeviceManager.resolveAsync (C:\Users\chaye\lumis\apps\mobile\node_modules\expo\node_modules\@expo\cli\build\src\start\platforms\android\AndroidDeviceManager.js:97:18)
+    at async resolveDeviceAsync (C:\Users\chaye\lumis\apps\mobile\node_modules\expo\node_modules\@expo\cli\build\src\run\android\resolveDevice.js:16:25)

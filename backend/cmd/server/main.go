@@ -51,7 +51,7 @@ func main() {
 	logger.Info("database connected")
 
 	// Auto-migrate models (supplements SQL migrations)
-	if err := db.AutoMigrate(&models.User{}, &models.RefreshToken{}, &models.FaceProfile{}, &models.Recommendation{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.RefreshToken{}, &models.FaceProfile{}, &models.Recommendation{}, &models.SkinScan{}, &models.CoachConversation{}, &models.CoachMessage{}, &models.ScannedProduct{}); err != nil {
 		logger.Fatal("automigrate failed", zap.Error(err))
 	}
 
@@ -67,17 +67,29 @@ func main() {
 	tokenRepo := repository.NewTokenRepository(db)
 	faceProfileRepo := repository.NewFaceProfileRepository(db)
 	recRepo := repository.NewRecommendationRepository(db)
+	skinScanRepo := repository.NewSkinScanRepository(db)
+	coachRepo := repository.NewCoachRepository(db)
+	productRepo := repository.NewScannedProductRepository(db)
 
 	// Services
 	authSvc := services.NewAuthService(userRepo, tokenRepo, cfg)
+	storageSvc := services.NewStorageService(cfg.R2AccountID, cfg.R2AccessKey, cfg.R2SecretKey, cfg.R2Bucket, cfg.R2Endpoint)
+	stripeSvc := services.NewStripeService(cfg.StripeSecretKey, cfg.StripeWebhookSecret, cfg.StripePremiumPriceID, userRepo)
 	faceAnalysisSvc := services.NewFaceAnalysisService(faceProfileRepo)
-	recSvc := services.NewRecommendationService(recRepo, faceProfileRepo, userRepo)
+	recSvc := services.NewRecommendationService(recRepo, faceProfileRepo, userRepo, skinScanRepo, cfg.GroqAPIKey)
+	skinScanSvc := services.NewSkinScanService(skinScanRepo, cfg.GroqAPIKey, storageSvc)
+	coachSvc := services.NewCoachService(coachRepo, userRepo, skinScanRepo, faceProfileRepo, cfg.GroqAPIKey)
+	productSvc := services.NewProductService(productRepo, skinScanRepo, userRepo, cfg.GroqAPIKey)
 
 	// Handlers
 	authHandler := handlers.NewAuthHandler(authSvc)
 	userHandler := handlers.NewUserHandler(userRepo)
 	analysisHandler := handlers.NewAnalysisHandler(faceAnalysisSvc, faceProfileRepo)
 	recHandler := handlers.NewRecommendationHandler(recSvc)
+	skinScanHandler := handlers.NewSkinScanHandler(skinScanSvc, skinScanRepo, userRepo, cfg.FreeScanLimit)
+	coachHandler := handlers.NewCoachHandler(coachSvc, coachRepo, userRepo, cfg.FreeCoachDailyLimit)
+	productHandler := handlers.NewProductHandler(productSvc)
+	stripeHandler := handlers.NewStripeHandler(stripeSvc, userRepo)
 
 	// Middleware
 	rateLimiter := middleware.NewRateLimiter(rdb)
@@ -140,11 +152,37 @@ func main() {
 	analysis.Get("/face/history", analysisHandler.GetHistory)
 	analysis.Get("/face/:id", analysisHandler.GetByID)
 
+	// Skin scan
+	analysis.Post("/skin", skinScanHandler.Analyze)
+	analysis.Get("/skin/latest", skinScanHandler.GetLatest)
+	analysis.Get("/skin/history", skinScanHandler.GetHistory)
+
+	// AI Coach
+	coach := protected.Group("/coach")
+	coach.Post("/conversations", coachHandler.CreateConversation)
+	coach.Get("/conversations", coachHandler.ListConversations)
+	coach.Get("/conversations/:id", coachHandler.GetConversation)
+	coach.Post("/conversations/:id/messages", coachHandler.SendMessage)
+	coach.Delete("/conversations/:id", coachHandler.DeleteConversation)
+
+	// Products (barcode scan)
+	products := protected.Group("/products")
+	products.Post("/scan", productHandler.Scan)
+	products.Get("/history", productHandler.GetHistory)
+
 	// Recommendations
 	recs := protected.Group("/recommendations")
 	recs.Get("/", recHandler.List)
 	recs.Post("/generate", recHandler.Generate)
 	recs.Get("/:id", recHandler.GetByID)
+
+	// Stripe
+	stripeGroup := protected.Group("/stripe")
+	stripeGroup.Post("/checkout", stripeHandler.CreateCheckout)
+	stripeGroup.Get("/status", stripeHandler.GetStatus)
+
+	// Stripe webhook (no auth)
+	v1.Post("/webhook/stripe", stripeHandler.Webhook)
 
 	addr := fmt.Sprintf(":%s", cfg.Port)
 	logger.Info("server starting", zap.String("addr", addr))

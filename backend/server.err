@@ -1,0 +1,3 @@
+2026-05-26T15:57:18.974+0200	INFO	server/main.go:51	database connected
+2026-05-26T15:57:19.701+0200	INFO	server/main.go:150	server starting	{"addr": ":8080"}
+2026-05-26T16:00:52.863+0200	INFO	middleware/logger.go:14	request	{"method": "GET", "path": "/health", "status": 200, "latency": "20.3429ms", "ip": "127.0.0.1"}

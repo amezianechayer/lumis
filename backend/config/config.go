@@ -40,9 +40,8 @@ type Config struct {
 	StripeWebhookSecret  string
 	StripePremiumPriceID string
 
-	// Rate limiting (requests per day)
-	FreeAnalysisLimit    int
-	PremiumAnalysisLimit int
+	FreeScanLimit       int
+	FreeCoachDailyLimit int
 }
 
 func Load() *Config {
@@ -66,8 +65,8 @@ func Load() *Config {
 		StripeSecretKey:      getEnv("STRIPE_SECRET_KEY", ""),
 		StripeWebhookSecret:  getEnv("STRIPE_WEBHOOK_SECRET", ""),
 		StripePremiumPriceID: getEnv("STRIPE_PREMIUM_PRICE_ID", ""),
-		FreeAnalysisLimit:    getEnvInt("FREE_ANALYSIS_LIMIT", 10),
-		PremiumAnalysisLimit: getEnvInt("PREMIUM_ANALYSIS_LIMIT", 50),
+		FreeScanLimit:       getEnvInt("FREE_SCAN_LIMIT", 3),
+		FreeCoachDailyLimit: getEnvInt("FREE_COACH_DAILY_LIMIT", 10),
 	}
 }
 

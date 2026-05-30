@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/lumis/backend/internal/models"
@@ -45,4 +46,14 @@ func (r *UserRepository) Update(ctx context.Context, user *models.User) error {
 
 func (r *UserRepository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Where("id = ?", id).Delete(&models.User{}).Error
+}
+
+func (r *UserRepository) SetPremium(ctx context.Context, id uuid.UUID, until time.Time) error {
+	return r.db.WithContext(ctx).Model(&models.User{}).Where("id = ?", id).
+		Update("premium_until", until).Error
+}
+
+func (r *UserRepository) SetStripeCustomerID(ctx context.Context, id uuid.UUID, customerID string) error {
+	return r.db.WithContext(ctx).Model(&models.User{}).Where("id = ?", id).
+		Update("stripe_customer_id", customerID).Error
 }

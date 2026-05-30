@@ -19,18 +19,18 @@ type RecTemplate struct {
 }
 
 type RecStep struct {
-	Order       int
-	Title       string
-	Description string
-	Tip         string
-	DurationMin int
+	Order       int    `json:"order"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Tip         string `json:"tip,omitempty"`
+	DurationMin int    `json:"duration_min,omitempty"`
 }
 
 type RecProduct struct {
-	Name     string
-	Category string
-	Why      string
-	Premium  bool
+	Name     string `json:"name"`
+	Category string `json:"category"`
+	Why      string `json:"why"`
+	Premium  bool   `json:"premium"`
 }
 
 // ─── MALE GROOMING ────────────────────────────────────────────────
