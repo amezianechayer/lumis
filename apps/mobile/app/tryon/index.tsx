@@ -35,7 +35,7 @@ import {
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { router } from "expo-router";
 import * as MediaLibrary from "expo-media-library";
-import { captureRef } from "expo-view-shot";
+import { captureRef } from "react-native-view-shot";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
