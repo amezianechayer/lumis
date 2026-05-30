@@ -6,6 +6,7 @@ backend/tmp/
 apps/mobile/node_modules/
 apps/mobile/.expo/
 apps/mobile/dist/
+apps/mobile/.env
 
 # General
 .DS_Store
