@@ -39,10 +39,8 @@ func (h *AnalysisHandler) AnalyzeFace(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
 	}
 
-	if len(input.Landmarks) < 468 {
-		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
-			"error": "landmarks must contain exactly 468 points",
-		})
+	if input.PhotoBase64 == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "photo_base64 is required"})
 	}
 
 	profile, err := h.faceSvc.Analyze(c.Context(), userID, input)

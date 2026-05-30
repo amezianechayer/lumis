@@ -45,6 +45,9 @@ type obfProduct struct {
 	StatusVerbose string `json:"status_verbose"`
 	Product       struct {
 		ProductName     string   `json:"product_name"`
+		ProductNameFr   string   `json:"product_name_fr"`
+		ProductNameEn   string   `json:"product_name_en"`
+		GenericName     string   `json:"generic_name"`
 		Brands          string   `json:"brands"`
 		CategoriesTags  []string `json:"categories_tags"`
 		IngredientsText string   `json:"ingredients_text"`
@@ -112,6 +115,22 @@ func (s *ProductService) ScanBarcode(ctx context.Context, userID uuid.UUID, barc
 	}
 
 	p := obfResp.Product
+
+	// Use the first non-empty name available
+	productName := p.ProductName
+	if productName == "" {
+		productName = p.ProductNameFr
+	}
+	if productName == "" {
+		productName = p.ProductNameEn
+	}
+	if productName == "" {
+		productName = p.GenericName
+	}
+	if productName == "" && p.Brands != "" {
+		productName = p.Brands
+	}
+
 	category := ""
 	if len(p.CategoriesTags) > 0 {
 		category = p.CategoriesTags[0]
@@ -124,7 +143,7 @@ func (s *ProductService) ScanBarcode(ctx context.Context, userID uuid.UUID, barc
 	product := &models.ScannedProduct{
 		UserID:      userID,
 		Barcode:     barcode,
-		ProductName: p.ProductName,
+		ProductName: productName,
 		Brand:       p.Brands,
 		Category:    category,
 		Ingredients: p.IngredientsText,

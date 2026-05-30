@@ -75,7 +75,7 @@ func main() {
 	authSvc := services.NewAuthService(userRepo, tokenRepo, cfg)
 	storageSvc := services.NewStorageService(cfg.R2AccountID, cfg.R2AccessKey, cfg.R2SecretKey, cfg.R2Bucket, cfg.R2Endpoint)
 	stripeSvc := services.NewStripeService(cfg.StripeSecretKey, cfg.StripeWebhookSecret, cfg.StripePremiumPriceID, userRepo)
-	faceAnalysisSvc := services.NewFaceAnalysisService(faceProfileRepo)
+	faceAnalysisSvc := services.NewFaceAnalysisService(faceProfileRepo, cfg.GroqAPIKey)
 	recSvc := services.NewRecommendationService(recRepo, faceProfileRepo, userRepo, skinScanRepo, cfg.GroqAPIKey)
 	skinScanSvc := services.NewSkinScanService(skinScanRepo, cfg.GroqAPIKey, storageSvc)
 	coachSvc := services.NewCoachService(coachRepo, userRepo, skinScanRepo, faceProfileRepo, cfg.GroqAPIKey)

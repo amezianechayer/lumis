@@ -16,7 +16,10 @@ func NewRecommendationHandler(svc *services.RecommendationService) *Recommendati
 
 // GET /api/v1/recommendations?type=grooming&occasion=daily
 func (h *RecommendationHandler) List(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(uuid.UUID)
+	userID, err := parseUserID(c)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
+	}
 	recType := c.Query("type")
 	occasion := c.Query("occasion")
 
@@ -29,7 +32,10 @@ func (h *RecommendationHandler) List(c *fiber.Ctx) error {
 
 // POST /api/v1/recommendations/generate
 func (h *RecommendationHandler) Generate(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(uuid.UUID)
+	userID, err := parseUserID(c)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
+	}
 
 	recs, err := h.svc.Generate(c.Context(), userID)
 	if err != nil {
@@ -40,7 +46,10 @@ func (h *RecommendationHandler) Generate(c *fiber.Ctx) error {
 
 // GET /api/v1/recommendations/:id
 func (h *RecommendationHandler) GetByID(c *fiber.Ctx) error {
-	userID := c.Locals("userID").(uuid.UUID)
+	userID, err := parseUserID(c)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
+	}
 
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil {
