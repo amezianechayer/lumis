@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { Camera } from "react-native-vision-camera";
+import { CameraView } from "expo-camera";
 import * as ImageManipulator from "expo-image-manipulator";
 import {
   analyzeSkinWithGemini,
@@ -40,7 +40,7 @@ const INITIAL_STATE: SkinAnalysisState = {
   lowConfidenceWarning: false,
 };
 
-export function useSkinAnalysis(cameraRef: React.RefObject<Camera>) {
+export function useSkinAnalysis(cameraRef: React.RefObject<CameraView>) {
   const [state, setState] = useState<SkinAnalysisState>(INITIAL_STATE);
   const countdownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   const isCancelled = useRef(false);
@@ -76,14 +76,14 @@ export function useSkinAnalysis(cameraRef: React.RefObject<Camera>) {
     try {
       if (!cameraRef.current) throw new Error("Camera non disponible");
 
-      const photo = await cameraRef.current.takePhoto({
-        flash: "off",
-        enableShutterSound: false,
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.9,
+        skipProcessing: true,
       });
 
       if (isCancelled.current) return;
 
-      const photoUri = `file://${photo.path}`;
+      const photoUri = photo.uri;
       setState((s) => ({ ...s, photoUri }));
 
       // Compress to 1080p JPEG

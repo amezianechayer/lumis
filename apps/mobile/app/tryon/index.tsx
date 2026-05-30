@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,95 +9,52 @@ import {
   useWindowDimensions,
   StyleSheet,
 } from "react-native";
-import {
-  Camera,
-  useCameraDevice,
-  useCameraPermission,
-  useFrameProcessor,
-} from "react-native-vision-camera";
-import { useFaceDetector } from "react-native-vision-camera-face-detector";
-import {
-  Canvas,
-  Path,
-  Circle,
-  RoundedRect,
-  RadialGradient,
-  Skia,
-  BlendMode,
-  vec,
-} from "@shopify/react-native-skia";
-import {
-  useSharedValue,
-  useDerivedValue,
-  interpolate,
-  runOnUI,
-} from "react-native-reanimated";
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import { CameraView, useCameraPermissions, CameraType } from "expo-camera";
 import { router } from "expo-router";
+import Animated, { FadeInUp } from "react-native-reanimated";
 import * as MediaLibrary from "expo-media-library";
 import { captureRef } from "react-native-view-shot";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type MakeupLookType = "lipstick" | "blush" | "eyeliner" | "eyeshadow" | "foundation";
+type MakeupLookType = "lipstick" | "gloss" | "blush" | "eyeshadow" | "foundation";
 
 interface MakeupLook {
   type: MakeupLookType;
   label: string;
   emoji: string;
   color: string;
-  intensity: number; // 0–1
   enabled: boolean;
   colors: { hex: string; name: string }[];
 }
 
-interface LandmarkPoint { x: number; y: number; }
-
-interface CalibratedContours {
-  upperLipTop: LandmarkPoint[];
-  upperLipBottom: LandmarkPoint[];
-  lowerLipTop: LandmarkPoint[];
-  lowerLipBottom: LandmarkPoint[];
-  leftEye: LandmarkPoint[];
-  rightEye: LandmarkPoint[];
-  leftEyebrow: LandmarkPoint[];
-  rightEyebrow: LandmarkPoint[];
-  leftCheek: LandmarkPoint;
-  rightCheek: LandmarkPoint;
-  faceBounds: { x: number; y: number; width: number; height: number };
-}
-
-// ─── Initial makeup looks ────────────────────────────────────────────────────
-
 const INITIAL_LOOKS: MakeupLook[] = [
   {
     type: "lipstick", label: "Lèvres", emoji: "💄",
-    color: "#C0392B", intensity: 0.7, enabled: true,
+    color: "#C0392B", enabled: true,
     colors: [
       { hex: "#C0392B", name: "Rouge" }, { hex: "#E8B4A0", name: "Nude" },
       { hex: "#8B2252", name: "Berry" }, { hex: "#E8734A", name: "Corail" },
-      { hex: "#F4A8C0", name: "Rose" },  { hex: "#6D1A36", name: "Bordeaux" },
+      { hex: "#F4A8C0", name: "Rose" }, { hex: "#6D1A36", name: "Bordeaux" },
+    ],
+  },
+  {
+    type: "gloss", label: "Gloss", emoji: "✨",
+    color: "#F2C4B8", enabled: false,
+    colors: [
+      { hex: "#F2C4B8", name: "Nude" }, { hex: "#F5A0B8", name: "Pink" },
+      { hex: "#D44040", name: "Red" }, { hex: "#F08060", name: "Corail" },
     ],
   },
   {
     type: "blush", label: "Blush", emoji: "🌸",
-    color: "#F4A0B8", intensity: 0.5, enabled: false,
+    color: "#F4A0B8", enabled: false,
     colors: [
       { hex: "#F5B8A0", name: "Pêche" }, { hex: "#F4A0B8", name: "Rose" },
       { hex: "#E88070", name: "Corail" }, { hex: "#C87090", name: "Berry" },
     ],
   },
   {
-    type: "eyeliner", label: "Eyeliner", emoji: "✏️",
-    color: "#1A1A1A", intensity: 0.85, enabled: false,
-    colors: [
-      { hex: "#1A1A1A", name: "Noir" }, { hex: "#2C2C5A", name: "Navy" },
-      { hex: "#3D2B1F", name: "Brun" }, { hex: "#7B5EA0", name: "Violet" },
-    ],
-  },
-  {
     type: "eyeshadow", label: "Yeux", emoji: "👁️",
-    color: "#C8A882", intensity: 0.6, enabled: false,
+    color: "#C8A882", enabled: false,
     colors: [
       { hex: "#C8A882", name: "Nude" }, { hex: "#8B6540", name: "Bronze" },
       { hex: "#5C4030", name: "Brun" }, { hex: "#7B5EA0", name: "Mauve" },
@@ -106,7 +63,7 @@ const INITIAL_LOOKS: MakeupLook[] = [
   },
   {
     type: "foundation", label: "Teint", emoji: "🎨",
-    color: "#E8C8A0", intensity: 0.2, enabled: false,
+    color: "#E8C8A0", enabled: false,
     colors: [
       { hex: "#F5E0C8", name: "Porcelaine" }, { hex: "#E8C8A0", name: "Sable" },
       { hex: "#C8A070", name: "Beige" }, { hex: "#A07050", name: "Caramel" },
@@ -114,275 +71,101 @@ const INITIAL_LOOKS: MakeupLook[] = [
   },
 ];
 
-// ─── Coordinate calibration ───────────────────────────────────────────────────
+// ── Overlay component — positioned relative to face oval ──────────────────────
 
-function calibratePoint(
-  pt: { x: number; y: number },
-  frameW: number,
-  frameH: number,
-  screenW: number,
-  screenH: number
-): LandmarkPoint {
-  "worklet";
-  // Front camera: x is mirrored
-  const sx = (1 - pt.x / frameW) * screenW;
-  const sy = (pt.y / frameH) * screenH;
-  return { x: sx, y: sy };
+function MakeupOverlay({
+  looks, ovalTop, ovalLeft, ovalWidth, ovalHeight,
+}: {
+  looks: MakeupLook[];
+  ovalTop: number; ovalLeft: number; ovalWidth: number; ovalHeight: number;
+}) {
+  const cx = ovalLeft + ovalWidth / 2;
+  const oh = ovalHeight;
+  const oy = ovalTop;
+
+  return (
+    <>
+      {/* Foundation */}
+      {looks.find(l => l.type === "foundation")?.enabled && (() => {
+        const l = looks.find(l => l.type === "foundation")!;
+        return (
+          <View pointerEvents="none" style={{
+            position: "absolute", top: oy, left: ovalLeft,
+            width: ovalWidth, height: oh, borderRadius: ovalWidth / 2,
+            backgroundColor: l.color, opacity: 0.18,
+          }} />
+        );
+      })()}
+
+      {/* Eyeshadow */}
+      {looks.find(l => l.type === "eyeshadow")?.enabled && (() => {
+        const l = looks.find(l => l.type === "eyeshadow")!;
+        const eyeW = ovalWidth * 0.18; const eyeH = oh * 0.04;
+        const eyeTop = oy + oh * 0.31;
+        return (
+          <>
+            <View pointerEvents="none" style={{ position: "absolute", top: eyeTop, left: ovalLeft + ovalWidth * 0.18, width: eyeW, height: eyeH * 2.5, borderRadius: eyeH, backgroundColor: l.color, opacity: 0.55 }} />
+            <View pointerEvents="none" style={{ position: "absolute", top: eyeTop, left: ovalLeft + ovalWidth * 0.62, width: eyeW, height: eyeH * 2.5, borderRadius: eyeH, backgroundColor: l.color, opacity: 0.55 }} />
+          </>
+        );
+      })()}
+
+      {/* Blush */}
+      {looks.find(l => l.type === "blush")?.enabled && (() => {
+        const l = looks.find(l => l.type === "blush")!;
+        const r = ovalWidth * 0.14;
+        const blushTop = oy + oh * 0.50;
+        return (
+          <>
+            <View pointerEvents="none" style={{ position: "absolute", top: blushTop - r, left: ovalLeft + ovalWidth * 0.06 - r, width: r * 2, height: r * 2, borderRadius: r, backgroundColor: l.color, opacity: 0.3 }} />
+            <View pointerEvents="none" style={{ position: "absolute", top: blushTop - r, left: ovalLeft + ovalWidth * 0.94 - r, width: r * 2, height: r * 2, borderRadius: r, backgroundColor: l.color, opacity: 0.3 }} />
+          </>
+        );
+      })()}
+
+      {/* Lipstick / Gloss */}
+      {(looks.find(l => l.type === "lipstick")?.enabled || looks.find(l => l.type === "gloss")?.enabled) && (() => {
+        const l = looks.find(l => l.type === "lipstick")?.enabled
+          ? looks.find(l => l.type === "lipstick")!
+          : looks.find(l => l.type === "gloss")!;
+        const lipW = ovalWidth * 0.26; const lipH = oh * 0.05;
+        const lipTop = oy + oh * 0.70;
+        const opacity = l.type === "gloss" ? 0.5 : 0.65;
+        return (
+          <>
+            <View pointerEvents="none" style={{ position: "absolute", top: lipTop, left: cx - lipW / 2, width: lipW, height: lipH * 0.9, borderRadius: lipH, backgroundColor: l.color, opacity }} />
+            <View pointerEvents="none" style={{ position: "absolute", top: lipTop + lipH * 0.7, left: cx - lipW * 0.52, width: lipW * 1.04, height: lipH * 1.1, borderRadius: lipH, backgroundColor: l.color, opacity }} />
+          </>
+        );
+      })()}
+    </>
+  );
 }
 
-function calibrateArray(
-  pts: { x: number; y: number }[],
-  frameW: number,
-  frameH: number,
-  screenW: number,
-  screenH: number
-): LandmarkPoint[] {
-  "worklet";
-  return pts.map((p) => calibratePoint(p, frameW, frameH, screenW, screenH));
-}
-
-// Linear interpolation for smoothing
-function smoothPoints(
-  prev: LandmarkPoint[],
-  next: LandmarkPoint[],
-  factor: number
-): LandmarkPoint[] {
-  "worklet";
-  if (prev.length !== next.length) return next;
-  return next.map((p, i) => ({
-    x: interpolate(factor, [0, 1], [prev[i].x, p.x]),
-    y: interpolate(factor, [0, 1], [prev[i].y, p.y]),
-  }));
-}
-
-function buildClosedPath(points: LandmarkPoint[]): ReturnType<typeof Skia.Path.Make> {
-  "worklet";
-  const path = Skia.Path.Make();
-  if (points.length < 2) return path;
-  path.moveTo(points[0].x, points[0].y);
-  for (let i = 1; i < points.length; i++) {
-    path.lineTo(points[i].x, points[i].y);
-  }
-  path.close();
-  return path;
-}
-
-function hexToRgb(hex: string): { r: number; g: number; b: number } {
-  "worklet";
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return { r, g, b };
-}
-
-function rgbaColor(hex: string, alpha: number): number {
-  "worklet";
-  const { r, g, b } = hexToRgb(hex);
-  // Skia color: ARGB packed int
-  const a = Math.round(alpha * 255);
-  return ((a << 24) | (r << 16) | (g << 8) | b) >>> 0;
-}
-
-// ─── Main component ───────────────────────────────────────────────────────────
+// ── Main screen ───────────────────────────────────────────────────────────────
 
 export default function TryOnScreen() {
   const { width: W, height: H } = useWindowDimensions();
-  const { hasPermission, requestPermission } = useCameraPermission();
-  const device = useCameraDevice("front");
-  const cameraContainerRef = useRef<View>(null);
+  const [permission, requestPermission] = useCameraPermissions();
   const [looks, setLooks] = useState<MakeupLook[]>(INITIAL_LOOKS);
   const [activeLookType, setActiveLookType] = useState<MakeupLookType>("lipstick");
   const [capturing, setCapturing] = useState(false);
-  const [faceDetected, setFaceDetected] = useState(false);
+  const cameraContainerRef = useRef<View>(null);
 
-  // Shared values for face contours (updated from frame processor)
-  const contoursShared = useSharedValue<CalibratedContours | null>(null);
-  const prevContours = useSharedValue<CalibratedContours | null>(null);
+  const ovalW = W * 0.62;
+  const ovalH = H * 0.52;
+  const ovalLeft = (W - ovalW) / 2;
+  const ovalTop = H * 0.07;
 
-  // Makeup look shared values (updated from JS thread via runOnUI)
-  const looksShared = useSharedValue<MakeupLook[]>(INITIAL_LOOKS);
+  const activeLook = looks.find(l => l.type === activeLookType)!;
 
-  // Face detector
-  const { detectFaces } = useFaceDetector({
-    performanceMode: "fast",
-    contourMode: "all",
-    landmarkMode: "none",
-    classificationMode: "none",
-  });
+  const toggleLook = (type: MakeupLookType) => {
+    setLooks(prev => prev.map(l => l.type === type ? { ...l, enabled: !l.enabled } : l));
+  };
 
-  // Frame processor — runs on camera thread, no setState
-  const frameProcessor = useFrameProcessor(
-    (frame) => {
-      "worklet";
-      const faces = detectFaces(frame);
-      if (faces.length === 0) {
-        contoursShared.value = null;
-        return;
-      }
-
-      const face = faces[0];
-      const fw = frame.width;
-      const fh = frame.height;
-
-      const contours = face.contours;
-      if (!contours) return;
-
-      const cal: CalibratedContours = {
-        upperLipTop: calibrateArray(contours.UPPER_LIP_TOP ?? [], fw, fh, W, H),
-        upperLipBottom: calibrateArray(contours.UPPER_LIP_BOTTOM ?? [], fw, fh, W, H),
-        lowerLipTop: calibrateArray(contours.LOWER_LIP_TOP ?? [], fw, fh, W, H),
-        lowerLipBottom: calibrateArray(contours.LOWER_LIP_BOTTOM ?? [], fw, fh, W, H),
-        leftEye: calibrateArray(contours.LEFT_EYE ?? [], fw, fh, W, H),
-        rightEye: calibrateArray(contours.RIGHT_EYE ?? [], fw, fh, W, H),
-        leftEyebrow: calibrateArray(contours.LEFT_EYEBROW_TOP ?? [], fw, fh, W, H),
-        rightEyebrow: calibrateArray(contours.RIGHT_EYEBROW_TOP ?? [], fw, fh, W, H),
-        leftCheek: contours.LEFT_CHEEK?.[0]
-          ? calibratePoint(contours.LEFT_CHEEK[0], fw, fh, W, H)
-          : { x: W * 0.25, y: H * 0.5 },
-        rightCheek: contours.RIGHT_CHEEK?.[0]
-          ? calibratePoint(contours.RIGHT_CHEEK[0], fw, fh, W, H)
-          : { x: W * 0.75, y: H * 0.5 },
-        faceBounds: face.bounds
-          ? {
-              x: (1 - (face.bounds.x + face.bounds.width) / fw) * W,
-              y: (face.bounds.y / fh) * H,
-              width: (face.bounds.width / fw) * W,
-              height: (face.bounds.height / fh) * H,
-            }
-          : { x: W * 0.2, y: H * 0.15, width: W * 0.6, height: H * 0.65 },
-      };
-
-      // Smooth between frames
-      const prev = prevContours.value;
-      if (prev) {
-        cal.upperLipTop = smoothPoints(prev.upperLipTop, cal.upperLipTop, 0.3);
-        cal.lowerLipBottom = smoothPoints(prev.lowerLipBottom, cal.lowerLipBottom, 0.3);
-        cal.leftEye = smoothPoints(prev.leftEye, cal.leftEye, 0.3);
-        cal.rightEye = smoothPoints(prev.rightEye, cal.rightEye, 0.3);
-      }
-
-      prevContours.value = cal;
-      contoursShared.value = cal;
-    },
-    [detectFaces, W, H]
-  );
-
-  // ── Skia derived paths ──────────────────────────────────────────────────────
-
-  const lipPath = useDerivedValue(() => {
-    "worklet";
-    const c = contoursShared.value;
-    if (!c) return Skia.Path.Make();
-    const allLipPoints = [
-      ...c.upperLipTop,
-      ...[...c.upperLipBottom].reverse(),
-      ...c.lowerLipTop,
-      ...[...c.lowerLipBottom].reverse(),
-    ];
-    return buildClosedPath(allLipPoints);
-  });
-
-  const leftEyePath = useDerivedValue(() => {
-    "worklet";
-    const c = contoursShared.value;
-    if (!c) return Skia.Path.Make();
-    return buildClosedPath(c.leftEye);
-  });
-
-  const rightEyePath = useDerivedValue(() => {
-    "worklet";
-    const c = contoursShared.value;
-    if (!c) return Skia.Path.Make();
-    return buildClosedPath(c.rightEye);
-  });
-
-  const leftEyeshadowPath = useDerivedValue(() => {
-    "worklet";
-    const c = contoursShared.value;
-    if (!c) return Skia.Path.Make();
-    return buildClosedPath(c.leftEye.map((p) => ({ x: p.x, y: p.y - 15 })));
-  });
-
-  const rightEyeshadowPath = useDerivedValue(() => {
-    "worklet";
-    const c = contoursShared.value;
-    if (!c) return Skia.Path.Make();
-    return buildClosedPath(c.rightEye.map((p) => ({ x: p.x, y: p.y - 15 })));
-  });
-
-  // Shared values for makeup colors/intensities
-  const lipColor = useDerivedValue(() => {
-    "worklet";
-    const l = looksShared.value.find((x) => x.type === "lipstick");
-    if (!l?.enabled) return 0x00000000;
-    return rgbaColor(l.color, 0.6 * l.intensity);
-  });
-
-  const blushColor = useDerivedValue(() => {
-    "worklet";
-    const l = looksShared.value.find((x) => x.type === "blush");
-    if (!l?.enabled) return 0x00000000;
-    return rgbaColor(l.color, 0.3 * l.intensity);
-  });
-
-  const eyelinerColor = useDerivedValue(() => {
-    "worklet";
-    const l = looksShared.value.find((x) => x.type === "eyeliner");
-    if (!l?.enabled) return 0x00000000;
-    return rgbaColor(l.color, 0.85 * l.intensity);
-  });
-
-  const eyeshadowColor = useDerivedValue(() => {
-    "worklet";
-    const l = looksShared.value.find((x) => x.type === "eyeshadow");
-    if (!l?.enabled) return 0x00000000;
-    return rgbaColor(l.color, 0.55 * l.intensity);
-  });
-
-  const foundationColor = useDerivedValue(() => {
-    "worklet";
-    const l = looksShared.value.find((x) => x.type === "foundation");
-    if (!l?.enabled) return 0x00000000;
-    return rgbaColor(l.color, 0.18 * l.intensity);
-  });
-
-  const blushLeft = useDerivedValue(() => {
-    "worklet";
-    const c = contoursShared.value;
-    return c ? c.leftCheek : { x: W * 0.25, y: H * 0.5 };
-  });
-
-  const blushRight = useDerivedValue(() => {
-    "worklet";
-    const c = contoursShared.value;
-    return c ? c.rightCheek : { x: W * 0.75, y: H * 0.5 };
-  });
-
-  const faceBounds = useDerivedValue(() => {
-    "worklet";
-    const c = contoursShared.value;
-    return c
-      ? c.faceBounds
-      : { x: W * 0.2, y: H * 0.15, width: W * 0.6, height: H * 0.65 };
-  });
-
-  // ── UI handlers ─────────────────────────────────────────────────────────────
-
-  const toggleLook = useCallback((type: MakeupLookType) => {
-    const updated = looks.map((l) =>
-      l.type === type ? { ...l, enabled: !l.enabled } : l
-    );
-    setLooks(updated);
-    runOnUI(() => { "worklet"; looksShared.value = updated; })();
-  }, [looks]);
-
-  const setColor = useCallback((type: MakeupLookType, color: string) => {
-    const updated = looks.map((l) =>
-      l.type === type ? { ...l, color, enabled: true } : l
-    );
-    setLooks(updated);
-    runOnUI(() => { "worklet"; looksShared.value = updated; })();
-  }, [looks]);
+  const setColor = (type: MakeupLookType, color: string) => {
+    setLooks(prev => prev.map(l => l.type === type ? { ...l, color, enabled: true } : l));
+  };
 
   const handleCapture = useCallback(async () => {
     setCapturing(true);
@@ -402,17 +185,14 @@ export default function TryOnScreen() {
     }
   }, []);
 
-  // ── Permission / device guards ───────────────────────────────────────────────
+  if (!permission) return <View style={{ flex: 1, backgroundColor: "#000" }} />;
 
-  if (!hasPermission) {
+  if (!permission.granted) {
     return (
       <View style={styles.center}>
         <Text style={styles.title}>Caméra requise</Text>
-        <Text style={styles.subtitle}>
-          Lumis a besoin de ta caméra pour le Virtual Try-On.
-        </Text>
         <TouchableOpacity onPress={requestPermission} style={styles.btn}>
-          <Text style={styles.btnText}>Autoriser la caméra</Text>
+          <Text style={styles.btnText}>Autoriser</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 12 }}>
           <Text style={styles.back}>Retour</Text>
@@ -420,65 +200,25 @@ export default function TryOnScreen() {
       </View>
     );
   }
-
-  if (!device) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.subtitle}>Caméra frontale non disponible.</Text>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 12 }}>
-          <Text style={styles.back}>Retour</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  const activeLook = looks.find((l) => l.type === activeLookType)!;
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
-      {/* Camera + Skia overlay */}
       <View ref={cameraContainerRef} style={{ flex: 1 }} collapsable={false}>
-        <Camera
-          style={StyleSheet.absoluteFill}
-          device={device}
-          isActive
-          frameProcessor={frameProcessor}
-          frameProcessorFps={30}
-          pixelFormat="yuv"
+        <CameraView style={StyleSheet.absoluteFill} facing="front" />
+
+        {/* Face oval guide */}
+        <View pointerEvents="none" style={[styles.oval, {
+          width: ovalW, height: ovalH,
+          left: ovalLeft, top: ovalTop,
+          borderRadius: ovalW / 2,
+        }]} />
+
+        {/* Makeup overlays */}
+        <MakeupOverlay
+          looks={looks}
+          ovalTop={ovalTop} ovalLeft={ovalLeft}
+          ovalWidth={ovalW} ovalHeight={ovalH}
         />
-
-        {/* Skia makeup overlay */}
-        <Canvas style={StyleSheet.absoluteFill} pointerEvents="none">
-          {/* Foundation */}
-          <RoundedRect
-            x={faceBounds.value.x}
-            y={faceBounds.value.y}
-            width={faceBounds.value.width}
-            height={faceBounds.value.height}
-            r={faceBounds.value.width / 2}
-            color={foundationColor}
-            blendMode={BlendMode.Overlay}
-          />
-
-          {/* Eyeshadow */}
-          <Path path={leftEyeshadowPath} color={eyeshadowColor} blendMode={BlendMode.Multiply} />
-          <Path path={rightEyeshadowPath} color={eyeshadowColor} blendMode={BlendMode.Multiply} />
-
-          {/* Blush — radial gradient circles */}
-          <Circle cx={blushLeft.value.x} cy={blushLeft.value.y} r={60} color={blushColor} blendMode={BlendMode.Overlay}>
-            <RadialGradient c={vec(blushLeft.value.x, blushLeft.value.y)} r={60} colors={[blushColor, 0x00000000]} />
-          </Circle>
-          <Circle cx={blushRight.value.x} cy={blushRight.value.y} r={60} color={blushColor} blendMode={BlendMode.Overlay}>
-            <RadialGradient c={vec(blushRight.value.x, blushRight.value.y)} r={60} colors={[blushColor, 0x00000000]} />
-          </Circle>
-
-          {/* Eyeliner */}
-          <Path path={leftEyePath} color={eyelinerColor} style="stroke" strokeWidth={2.5} blendMode={BlendMode.Multiply} />
-          <Path path={rightEyePath} color={eyelinerColor} style="stroke" strokeWidth={2.5} blendMode={BlendMode.Multiply} />
-
-          {/* Lipstick */}
-          <Path path={lipPath} color={lipColor} blendMode={BlendMode.Multiply} />
-        </Canvas>
 
         {/* Top bar */}
         <View style={styles.topBar}>
@@ -486,92 +226,53 @@ export default function TryOnScreen() {
             <Text style={{ color: "#fff", fontSize: 18 }}>←</Text>
           </TouchableOpacity>
           <Text style={styles.topTitle}>Virtual Try-On</Text>
-          <View style={{ width: 40 }}>
-            {!faceDetected && (
-              <View style={styles.noFaceDot} />
-            )}
-          </View>
+          <View style={{ width: 40 }} />
         </View>
 
-        {/* Face guide */}
-        {!faceDetected && (
-          <View style={styles.guideOverlay} pointerEvents="none">
-            <Text style={styles.guideText}>Positionne ton visage dans le cadre</Text>
-          </View>
-        )}
+        <View pointerEvents="none" style={styles.guideHint}>
+          <Text style={styles.guideText}>Aligne ton visage dans l'ovale</Text>
+        </View>
       </View>
 
-      {/* Bottom controls */}
-      <Animated.View
-        entering={FadeInUp.delay(200)}
-        style={styles.bottomPanel}
-      >
-        {/* Look chips */}
+      {/* Bottom panel */}
+      <Animated.View entering={FadeInUp.delay(200)} style={styles.bottomPanel}>
         <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipsContainer}
+          horizontal showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsRow}
         >
-          {looks.map((look) => (
+          {looks.map(look => (
             <TouchableOpacity
               key={look.type}
-              onPress={() => {
-                setActiveLookType(look.type);
-                if (!look.enabled) toggleLook(look.type);
-              }}
-              style={[
-                styles.chip,
-                activeLookType === look.type && styles.chipActive,
-                look.enabled && activeLookType !== look.type && styles.chipEnabled,
-              ]}
+              onPress={() => { setActiveLookType(look.type); if (!look.enabled) toggleLook(look.type); }}
+              style={[styles.chip, activeLookType === look.type && styles.chipActive, look.enabled && activeLookType !== look.type && styles.chipOn]}
               activeOpacity={0.8}
             >
               <Text style={{ fontSize: 16 }}>{look.emoji}</Text>
               <Text style={[styles.chipLabel, activeLookType === look.type && styles.chipLabelActive]}>
                 {look.label}
               </Text>
-              {look.enabled && (
-                <View style={styles.enabledDot} />
-              )}
+              {look.enabled && <View style={styles.dot} />}
             </TouchableOpacity>
           ))}
         </ScrollView>
 
-        {/* Color palette for active look */}
         <View style={styles.paletteRow}>
-          {activeLook.colors.map((c) => (
+          {activeLook.colors.map(c => (
             <TouchableOpacity
               key={c.hex}
               onPress={() => setColor(activeLookType, c.hex)}
-              style={[
-                styles.swatch,
-                { backgroundColor: c.hex },
-                activeLook.color === c.hex && styles.swatchActive,
-              ]}
+              style={[styles.swatch, { backgroundColor: c.hex }, activeLook.color === c.hex && styles.swatchActive]}
               activeOpacity={0.8}
             />
           ))}
-          {/* Toggle enable/disable */}
-          <TouchableOpacity
-            onPress={() => toggleLook(activeLookType)}
-            style={[styles.toggleBtn, activeLook.enabled && styles.toggleBtnOn]}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.toggleBtnText}>{activeLook.enabled ? "ON" : "OFF"}</Text>
+          <TouchableOpacity onPress={() => toggleLook(activeLookType)} style={[styles.toggleBtn, activeLook.enabled && styles.toggleBtnOn]}>
+            <Text style={{ color: "#fff", fontSize: 11, fontWeight: "700" }}>{activeLook.enabled ? "ON" : "OFF"}</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Capture */}
-        <View style={styles.captureRow}>
-          <TouchableOpacity
-            onPress={handleCapture}
-            disabled={capturing}
-            style={[styles.captureBtn, { opacity: capturing ? 0.7 : 1 }]}
-            activeOpacity={0.85}
-          >
-            {capturing ? (
-              <ActivityIndicator color="#0A0A0A" size="small" />
-            ) : (
+        <View style={{ paddingHorizontal: 20 }}>
+          <TouchableOpacity onPress={handleCapture} disabled={capturing} style={[styles.captureBtn, { opacity: capturing ? 0.7 : 1 }]} activeOpacity={0.85}>
+            {capturing ? <ActivityIndicator color="#0A0A0A" size="small" /> : (
               <>
                 <Text style={{ fontSize: 20 }}>📸</Text>
                 <Text style={styles.captureBtnText}>Capturer le look</Text>
@@ -586,45 +287,29 @@ export default function TryOnScreen() {
 
 const styles = StyleSheet.create({
   center: { flex: 1, backgroundColor: "#0A0A0A", alignItems: "center", justifyContent: "center", padding: 32 },
-  title: { color: "#fff", fontSize: 22, fontWeight: "700", textAlign: "center", marginBottom: 12 },
-  subtitle: { color: "rgba(255,255,255,0.5)", fontSize: 15, textAlign: "center", marginBottom: 28 },
+  title: { color: "#fff", fontSize: 22, fontWeight: "700", textAlign: "center", marginBottom: 20 },
   btn: { backgroundColor: "#C9A84C", borderRadius: 16, paddingHorizontal: 28, paddingVertical: 14 },
   btnText: { color: "#000", fontWeight: "700", fontSize: 15 },
   back: { color: "rgba(255,255,255,0.4)", fontSize: 14 },
-  topBar: {
-    position: "absolute", top: 0, left: 0, right: 0,
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 20, paddingTop: 54, paddingBottom: 16,
-    backgroundColor: "rgba(0,0,0,0.3)",
-  },
+  oval: { position: "absolute", borderWidth: 2, borderColor: "rgba(201,168,76,0.5)", borderStyle: "dashed" },
+  topBar: { position: "absolute", top: 0, left: 0, right: 0, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 54, paddingBottom: 16, backgroundColor: "rgba(0,0,0,0.3)" },
   backBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.4)", borderRadius: 20 },
   topTitle: { color: "#fff", fontSize: 18, fontWeight: "700" },
-  noFaceDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#f87171", alignSelf: "center" },
-  guideOverlay: { position: "absolute", bottom: "35%", left: 0, right: 0, alignItems: "center" },
-  guideText: { color: "rgba(201,168,76,0.8)", fontSize: 13, textAlign: "center" },
+  guideHint: { position: "absolute", bottom: "34%", left: 0, right: 0, alignItems: "center" },
+  guideText: { color: "rgba(201,168,76,0.7)", fontSize: 12 },
   bottomPanel: { backgroundColor: "#0D0D0D", borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.08)", paddingBottom: 32 },
-  chipsContainer: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10, gap: 8 },
-  chip: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20,
-    borderWidth: 1, backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)",
-  },
+  chipsRow: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10, gap: 8 },
+  chip: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)" },
   chipActive: { backgroundColor: "rgba(201,168,76,0.2)", borderColor: "rgba(201,168,76,0.6)" },
-  chipEnabled: { borderColor: "rgba(201,168,76,0.3)" },
+  chipOn: { borderColor: "rgba(201,168,76,0.3)" },
   chipLabel: { fontSize: 12, color: "rgba(255,255,255,0.5)" },
   chipLabelActive: { color: "#C9A84C" },
-  enabledDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#C9A84C", marginLeft: 2 },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#C9A84C" },
   paletteRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, gap: 10, marginBottom: 14 },
   swatch: { width: 30, height: 30, borderRadius: 15 },
   swatchActive: { borderWidth: 3, borderColor: "#C9A84C", width: 36, height: 36, borderRadius: 18 },
   toggleBtn: { marginLeft: "auto", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,255,255,0.2)" },
   toggleBtnOn: { borderColor: "#C9A84C", backgroundColor: "rgba(201,168,76,0.15)" },
-  toggleBtnText: { color: "#fff", fontSize: 11, fontWeight: "700" },
-  captureRow: { paddingHorizontal: 20 },
-  captureBtn: {
-    backgroundColor: "#C9A84C", borderRadius: 16, paddingVertical: 16,
-    alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 10,
-    elevation: 6,
-  },
+  captureBtn: { backgroundColor: "#C9A84C", borderRadius: 16, paddingVertical: 16, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 10, elevation: 6 },
   captureBtnText: { color: "#0A0A0A", fontWeight: "700", fontSize: 16 },
 });

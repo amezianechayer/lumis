@@ -8,11 +8,7 @@ import {
   StyleSheet,
   useWindowDimensions,
 } from "react-native";
-import {
-  Camera,
-  useCameraDevice,
-  useCameraPermission,
-} from "react-native-vision-camera";
+import { CameraView, useCameraPermissions } from "expo-camera";
 import { router } from "expo-router";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSkinAnalysis } from "../../hooks/useSkinAnalysis";
@@ -20,9 +16,9 @@ import { SkinAnalysisResult } from "../../services/gemini";
 
 export default function SkinAnalysisScreen() {
   const { width: W } = useWindowDimensions();
-  const { hasPermission, requestPermission } = useCameraPermission();
-  const device = useCameraDevice("back"); // Back camera for better quality
-  const cameraRef = useRef<Camera>(null);
+  const [permission, requestPermission] = useCameraPermissions();
+  const cameraRef = useRef<CameraView>(null);
+  const hasPermission = permission?.granted ?? false;
 
   const {
     phase, countdown, geminiResult, localResult,
@@ -84,13 +80,10 @@ export default function SkinAnalysisScreen() {
   // ── Camera view ─────────────────────────────────────────────────────────────
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
-      <Camera
+      <CameraView
         ref={cameraRef}
         style={StyleSheet.absoluteFill}
-        device={device}
-        isActive
-        photo
-        pixelFormat="yuv"
+        facing="back"
       />
 
       {/* Face oval guide */}
