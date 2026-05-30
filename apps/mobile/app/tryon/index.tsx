@@ -15,7 +15,7 @@ import {
   useCameraPermission,
   useFrameProcessor,
 } from "react-native-vision-camera";
-import { useFaceDetector } from "vision-camera-face-detector";
+import { useFaceDetector } from "react-native-vision-camera-face-detector";
 import {
   Canvas,
   Path,
