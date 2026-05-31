@@ -1,0 +1,16 @@
+diff --git a/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNPaywallsModule.kt b/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNPaywallsModule.kt
+index 1684a2b..e5aa4bd 100644
+--- a/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNPaywallsModule.kt
++++ b/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNPaywallsModule.kt
+@@ -26,8 +26,9 @@ internal class RNPaywallsModule(
+ 
+     private val currentFragmentActivity: FragmentActivity?
+         get() {
+-            return when (val currentActivity = reactApplicationContext.currentActivity) {
+-                is FragmentActivity -> currentActivity
++            val activity = this.currentActivity
++            return when (activity) {
++                is FragmentActivity -> activity
+                 else -> {
+                     Log.e(NAME, "RevenueCat paywalls require applications to use a FragmentActivity")
+                     null
