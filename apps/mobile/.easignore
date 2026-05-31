@@ -1,0 +1,10 @@
+node_modules/
+android/
+ios/
+.expo/
+dist/
+build/
+*.log
+*.apk
+*.aab
+.git/
