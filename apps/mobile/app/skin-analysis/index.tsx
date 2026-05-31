@@ -12,7 +12,7 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { router } from "expo-router";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSkinAnalysis } from "../../hooks/useSkinAnalysis";
-import { SkinAnalysisResult } from "../../services/gemini";
+import { SkinAnalysisResult as SkinAnalysisResultData } from "../../services/gemini";
 
 export default function SkinAnalysisScreen() {
   const { width: W } = useWindowDimensions();
@@ -151,7 +151,7 @@ function SkinAnalysisResult({
   result,
   onRetry,
 }: {
-  result: SkinAnalysisResult;
+  result: SkinAnalysisResultData;
   onRetry: () => void;
 }) {
   const concernLevel = (v: string | null) => {
