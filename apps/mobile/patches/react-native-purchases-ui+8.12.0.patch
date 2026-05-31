@@ -1,0 +1,29 @@
+diff --git a/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNCustomerCenterModule.kt b/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNCustomerCenterModule.kt
+index b0821b9..26320aa 100644
+--- a/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNCustomerCenterModule.kt
++++ b/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNCustomerCenterModule.kt
+@@ -65,7 +65,7 @@ internal class RNCustomerCenterModule(
+     fun presentCustomerCenter(
+         promise: Promise
+     ) {
+-        currentActivity?.let {
++        reactApplicationContext.currentActivity?.let {
+             customerCenterPromise = promise
+             presentCustomerCenterFromActivity(it)
+         } ?: run {
+diff --git a/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNPaywallsModule.kt b/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNPaywallsModule.kt
+index abadc93..d545855 100644
+--- a/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNPaywallsModule.kt
++++ b/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNPaywallsModule.kt
+@@ -22,8 +22,9 @@ internal class RNPaywallsModule(
+ 
+     private val currentFragmentActivity: FragmentActivity?
+         get() {
+-            return when (val currentActivity = currentActivity) {
+-                is FragmentActivity -> currentActivity
++            val activity = currentActivity
++            return when (activity) {
++                is FragmentActivity -> activity
+                 else -> {
+                     Log.e(NAME, "RevenueCat paywalls require applications to use a FragmentActivity")
+                     null
