@@ -1,0 +1,27 @@
+# Backend (not needed for mobile build)
+backend/
+
+# Shared (Go/non-JS code not needed)
+shared/
+
+# Mobile node_modules (reinstalled by EAS)
+apps/mobile/node_modules/
+apps/mobile/android/
+apps/mobile/ios/
+apps/mobile/.expo/
+apps/mobile/dist/
+apps/mobile/build/
+
+# Logs and artifacts
+*.log
+*.err
+*.exe
+*.apk
+*.aab
+build-err.log
+build-out.log
+build.log
+build.err
+
+# Docker
+docker-compose.yml
