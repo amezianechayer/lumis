@@ -18,6 +18,9 @@
       "android": {
         "buildType": "apk"
       },
+      "cache": {
+        "disabled": true
+      },
       "env": {
         "EXPO_PUBLIC_API_URL": "https://lumis-production.up.railway.app"
       }
