@@ -24,6 +24,8 @@ type CoachService struct {
 	skinScanRepo    *repository.SkinScanRepository
 	faceProfileRepo *repository.FaceProfileRepository
 	productRepo     *repository.ScannedProductRepository
+	cycleSvc        *CycleService
+	routineSvc      *RoutineService
 	groqAPIKey      string
 	httpClient      *http.Client
 }
@@ -34,6 +36,8 @@ func NewCoachService(
 	skinScanRepo *repository.SkinScanRepository,
 	faceProfileRepo *repository.FaceProfileRepository,
 	productRepo *repository.ScannedProductRepository,
+	cycleSvc *CycleService,
+	routineSvc *RoutineService,
 	groqAPIKey string,
 ) *CoachService {
 	return &CoachService{
@@ -42,6 +46,8 @@ func NewCoachService(
 		skinScanRepo:    skinScanRepo,
 		faceProfileRepo: faceProfileRepo,
 		productRepo:     productRepo,
+		cycleSvc:        cycleSvc,
+		routineSvc:      routineSvc,
 		groqAPIKey:      groqAPIKey,
 		httpClient:      &http.Client{Timeout: 60 * time.Second},
 	}
@@ -152,9 +158,38 @@ func (s *CoachService) buildSystemPrompt(ctx context.Context, user *models.User,
 		}
 	}
 
+	// Menstrual cycle phase (if configured)
+	if s.cycleSvc != nil {
+		if phase, err := s.cycleSvc.GetPhase(ctx, userID); err == nil && phase != nil {
+			sb.WriteString("\n## Cycle hormonal actuel\n")
+			fmt.Fprintf(&sb, "- Phase : %s (jour %d du cycle)\n", phase.PhaseFr, phase.DayOfCycle)
+			fmt.Fprintf(&sb, "- Impact peau : %s\n", phase.SkinImpact)
+			sb.WriteString("→ Tiens compte de cette phase hormonale dans tes conseils (ex: acné lutéale, éclat folliculaire).\n")
+		}
+	}
+
+	// Routine adherence (streak)
+	if s.routineSvc != nil {
+		sum := s.routineSvc.Summary(ctx, userID, time.Now().Format("2006-01-02"))
+		if sum.TotalCompleted > 0 {
+			sb.WriteString("\n## Routine quotidienne\n")
+			fmt.Fprintf(&sb, "- Série actuelle : %d jour(s) consécutif(s)\n", sum.Streak)
+			fmt.Fprintf(&sb, "- Aujourd'hui : matin %s, soir %s\n",
+				boolFr(sum.MorningDone), boolFr(sum.EveningDone))
+			sb.WriteString("→ Encourage l'utilisateur à maintenir sa série, félicite ses efforts.\n")
+		}
+	}
+
 	sb.WriteString("\nUtilise ces données pour répondre de façon ultra-personnalisée. Ne répète pas ces infos sauf si pertinent.\n")
 
 	return sb.String()
+}
+
+func boolFr(b bool) string {
+	if b {
+		return "fait ✓"
+	}
+	return "pas encore"
 }
 
 // SendMessage sends a user message to the coach and returns the assistant reply.

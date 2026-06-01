@@ -25,6 +25,7 @@ type RecommendationService struct {
 	profileRepo  *repository.FaceProfileRepository
 	userRepo     *repository.UserRepository
 	skinScanRepo *repository.SkinScanRepository
+	cycleSvc     *CycleService
 	groqAPIKey   string
 	httpClient   *http.Client
 	rdb          *redis.Client
@@ -35,6 +36,7 @@ func NewRecommendationService(
 	profileRepo *repository.FaceProfileRepository,
 	userRepo *repository.UserRepository,
 	skinScanRepo *repository.SkinScanRepository,
+	cycleSvc *CycleService,
 	groqAPIKey string,
 	rdb *redis.Client,
 ) *RecommendationService {
@@ -43,6 +45,7 @@ func NewRecommendationService(
 		profileRepo:  profileRepo,
 		userRepo:     userRepo,
 		skinScanRepo: skinScanRepo,
+		cycleSvc:     cycleSvc,
 		groqAPIKey:   groqAPIKey,
 		httpClient:   &http.Client{Timeout: 60 * time.Second},
 		rdb:          rdb,
@@ -281,6 +284,14 @@ func (s *RecommendationService) generateAllWithGroq(
 	// 30-day trend
 	if len(scanHistory) >= 2 {
 		fmt.Fprintf(&sb, "## Tendance 30 jours\n%s\n\n", computeTrend(scanHistory))
+	}
+
+	// Menstrual cycle phase (impacts skin → adapt recommendations)
+	if s.cycleSvc != nil {
+		if phase, err := s.cycleSvc.GetPhase(ctx, userID); err == nil && phase != nil {
+			fmt.Fprintf(&sb, "## Phase hormonale actuelle : %s (jour %d)\n", phase.PhaseFr, phase.DayOfCycle)
+			fmt.Fprintf(&sb, "%s\nAdapte la routine skincare à cette phase (ex: anti-acné en phase lutéale, actifs forts en phase folliculaire).\n\n", phase.SkinImpact)
+		}
 	}
 
 	// Evidence-based ingredient & product rules (derived from scan scores)

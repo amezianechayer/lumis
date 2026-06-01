@@ -78,9 +78,11 @@ func main() {
 	storageSvc := services.NewStorageService(cfg.R2AccountID, cfg.R2AccessKey, cfg.R2SecretKey, cfg.R2Bucket, cfg.R2Endpoint)
 	stripeSvc := services.NewStripeService(cfg.StripeSecretKey, cfg.StripeWebhookSecret, cfg.StripePremiumPriceID, userRepo)
 	faceAnalysisSvc := services.NewFaceAnalysisService(faceProfileRepo, cfg.GroqAPIKey)
-	recSvc := services.NewRecommendationService(recRepo, faceProfileRepo, userRepo, skinScanRepo, cfg.GroqAPIKey, rdb)
+	cycleSvc := services.NewCycleService(cycleRepo)
+	routineSvc := services.NewRoutineService(routineRepo)
+	recSvc := services.NewRecommendationService(recRepo, faceProfileRepo, userRepo, skinScanRepo, cycleSvc, cfg.GroqAPIKey, rdb)
 	skinScanSvc := services.NewSkinScanService(skinScanRepo, cfg.GroqAPIKey, storageSvc)
-	coachSvc := services.NewCoachService(coachRepo, userRepo, skinScanRepo, faceProfileRepo, productRepo, cfg.GroqAPIKey)
+	coachSvc := services.NewCoachService(coachRepo, userRepo, skinScanRepo, faceProfileRepo, productRepo, cycleSvc, routineSvc, cfg.GroqAPIKey)
 	productSvc := services.NewProductService(productRepo, skinScanRepo, userRepo, cfg.GroqAPIKey)
 	makeupGuideSvc := services.NewMakeupGuideService(faceProfileRepo, skinScanRepo, userRepo, cfg.GroqAPIKey, rdb)
 
@@ -93,8 +95,8 @@ func main() {
 	coachHandler := handlers.NewCoachHandler(coachSvc, coachRepo, userRepo, cfg.FreeCoachDailyLimit)
 	productHandler := handlers.NewProductHandler(productSvc)
 	makeupGuideHandler := handlers.NewMakeupGuideHandler(makeupGuideSvc)
-	routineHandler := handlers.NewRoutineHandler(routineRepo)
-	cycleHandler := handlers.NewCycleHandler(cycleRepo)
+	routineHandler := handlers.NewRoutineHandler(routineSvc)
+	cycleHandler := handlers.NewCycleHandler(cycleSvc)
 	stripeHandler := handlers.NewStripeHandler(stripeSvc, userRepo)
 
 	// Middleware
