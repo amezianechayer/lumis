@@ -61,8 +61,7 @@ func (h *RoutineHandler) Uncomplete(c *fiber.Ctx) error {
 
 // GET /api/v1/routine/status
 func (h *RoutineHandler) Status(c *fiber.Ctx) error {
-	userID, err := parseUserID(c)
-	if err != nil {
+	if _, err := parseUserID(c); err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
 	}
 	return h.respond(c)
