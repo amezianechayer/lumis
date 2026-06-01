@@ -50,8 +50,16 @@ export default function RecDetailScreen() {
   }
 
   const diffColor = DIFFICULTY_COLORS[rec.difficulty] ?? "#94a3b8";
-  const steps: RecStep[] = Array.isArray(rec.steps) ? rec.steps : [];
-  const products: RecProduct[] = Array.isArray(rec.products) ? rec.products : [];
+  // steps/products can arrive as array, JSON string, or null depending on GORM serialization
+  const parseJsonField = <T,>(field: unknown): T[] => {
+    if (Array.isArray(field)) return field as T[];
+    if (typeof field === "string") {
+      try { const p = JSON.parse(field); return Array.isArray(p) ? p : []; } catch { return []; }
+    }
+    return [];
+  };
+  const steps: RecStep[] = parseJsonField<RecStep>(rec.steps);
+  const products: RecProduct[] = parseJsonField<RecProduct>(rec.products);
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: "#0f0e17" }}>

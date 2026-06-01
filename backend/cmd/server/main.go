@@ -78,7 +78,7 @@ func main() {
 	faceAnalysisSvc := services.NewFaceAnalysisService(faceProfileRepo, cfg.GroqAPIKey)
 	recSvc := services.NewRecommendationService(recRepo, faceProfileRepo, userRepo, skinScanRepo, cfg.GroqAPIKey, rdb)
 	skinScanSvc := services.NewSkinScanService(skinScanRepo, cfg.GroqAPIKey, storageSvc)
-	coachSvc := services.NewCoachService(coachRepo, userRepo, skinScanRepo, faceProfileRepo, cfg.GroqAPIKey)
+	coachSvc := services.NewCoachService(coachRepo, userRepo, skinScanRepo, faceProfileRepo, productRepo, cfg.GroqAPIKey)
 	productSvc := services.NewProductService(productRepo, skinScanRepo, userRepo, cfg.GroqAPIKey)
 
 	// Handlers

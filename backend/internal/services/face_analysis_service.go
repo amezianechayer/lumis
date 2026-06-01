@@ -103,25 +103,54 @@ func (s *FaceAnalysisService) Analyze(ctx context.Context, userID uuid.UUID, inp
 }
 
 func (s *FaceAnalysisService) analyzeWithVision(ctx context.Context, input FaceAnalysisInput) (faceVisionResult, error) {
+	gender := input.Gender
 	genderHint := ""
-	if input.Gender != "" {
-		genderHint = fmt.Sprintf(" The person identifies as %s.", input.Gender)
+	haircutGuide := ""
+	beardGuide := ""
+
+	switch gender {
+	case "male", "homme":
+		genderHint = " This person is MALE."
+		haircutGuide = `For MALE haircuts, recommend specific men's cuts based on face shape:
+- oval: versatile, most cuts work (undercut, textured_crop, side_part, quiff)
+- round: cuts with height on top (pompadour, faux_hawk, slick_back, undercut)
+- square: softening cuts (textured_fringe, messy_top, side_swept, long_top_fade)
+- heart: volume on sides/bottom (side_part, layered, buzz_cut_fade)
+- oblong: avoid height, add width (side_part, fringe, buzz_cut)
+- diamond: medium length, side_part, waves`
+		beardGuide = `Recommend beard styles that balance the face shape.`
+	case "female", "femme":
+		genderHint = " This person is FEMALE."
+		haircutGuide = `For FEMALE haircuts, recommend specific women's cuts based on face shape:
+- oval: versatile, most cuts work (long_layers, bob, lob, curtain_bangs, pixie)
+- round: elongating cuts (long_layers, side_swept_bangs, lob, high_bun)
+- square: softening cuts (curtain_bangs, long_waves, side_part, layered_bob)
+- heart: chin_length_bob, side_swept_bangs, long_layers_with_volume_below_chin
+- oblong: avoid too long, add width (bob, curtain_bangs, soft_waves, collarbone_length)
+- diamond: chin_length_bob, side_swept_bangs, full_fringe`
+		beardGuide = `Set beard_recommendations to empty array [] for female.`
+	default:
+		genderHint = ""
+		haircutGuide = "Recommend gender-neutral or unisex cuts appropriate for the face shape."
+		beardGuide = "If beard is visible suggest styles, otherwise empty array []."
 	}
 
-	prompt := fmt.Sprintf(`You are a professional facial analyst. Look very carefully at THIS specific person's face in the photo.%s
+	prompt := fmt.Sprintf(`You are a professional facial analyst and hairstyle consultant. Look very carefully at THIS specific person's face in the photo.%s
 
-CRITICAL: Every person's face is unique. You MUST observe and describe what you actually SEE in this photo, not generic defaults.
-- Look at the actual width vs height ratio of the face → determines face_shape
-- Look at the actual eye shape visible in the photo → do NOT default to "almond"
+CRITICAL: Every person's face is unique. You MUST observe what you actually SEE, not generic defaults.
+- Look at the actual width vs height ratio → face_shape
+- Look at the actual eye shape → do NOT default to "almond"
 - Look at the actual jaw structure → do NOT default to "defined"
-- If you cannot clearly see a feature, choose the option that seems most likely from what IS visible, but never just pick "oval/almond/defined" for everything
 
-Face shape guide: oval=balanced forehead+jaw, round=equal width+height, square=angular jaw≈forehead, heart=wide forehead+narrow jaw, oblong=longer than wide, diamond=narrow forehead+jaw+wide cheekbones
+Face shape guide: oval=balanced, round=equal width+height, square=angular jaw, heart=wide forehead+narrow jaw, oblong=longer than wide, diamond=narrow forehead+jaw+wide cheeks
+
+%s
+%s
 
 Return ONLY valid JSON (no markdown):
 {
   "face_shape": <"oval"|"round"|"square"|"heart"|"oblong"|"diamond">,
-  "face_shape_confidence": <0.0-1.0, be honest about uncertainty>,
+  "face_shape_confidence": <0.0-1.0>,
   "eye_shape": <"almond"|"round"|"hooded"|"monolid"|"upturned"|"downturned">,
   "eye_distance": <"close"|"average"|"wide">,
   "nose_shape": <"straight"|"button"|"wide"|"narrow"|"upturned">,
@@ -130,9 +159,9 @@ Return ONLY valid JSON (no markdown):
   "skin_tone": <"fitzpatrick_1"|"fitzpatrick_2"|"fitzpatrick_3"|"fitzpatrick_4"|"fitzpatrick_5"|"fitzpatrick_6">,
   "undertone": <"cool"|"warm"|"neutral">,
   "color_season": <"spring"|"summer"|"autumn"|"winter">,
-  "beard_recommendations": <array of 2-3 specific styles based on THEIR face shape>,
-  "haircut_recommendations": <array of 2-3 specific cuts based on THEIR face shape>
-}`, genderHint)
+  "beard_recommendations": <array of 2-3 specific styles OR [] if female>,
+  "haircut_recommendations": <array of 2-3 gender-appropriate specific cuts for THIS face shape>
+}`, genderHint, haircutGuide, beardGuide)
 
 	type imageURL struct {
 		URL string `json:"url"`

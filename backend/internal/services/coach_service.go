@@ -23,6 +23,7 @@ type CoachService struct {
 	userRepo        *repository.UserRepository
 	skinScanRepo    *repository.SkinScanRepository
 	faceProfileRepo *repository.FaceProfileRepository
+	productRepo     *repository.ScannedProductRepository
 	groqAPIKey      string
 	httpClient      *http.Client
 }
@@ -32,6 +33,7 @@ func NewCoachService(
 	userRepo *repository.UserRepository,
 	skinScanRepo *repository.SkinScanRepository,
 	faceProfileRepo *repository.FaceProfileRepository,
+	productRepo *repository.ScannedProductRepository,
 	groqAPIKey string,
 ) *CoachService {
 	return &CoachService{
@@ -39,6 +41,7 @@ func NewCoachService(
 		userRepo:        userRepo,
 		skinScanRepo:    skinScanRepo,
 		faceProfileRepo: faceProfileRepo,
+		productRepo:     productRepo,
 		groqAPIKey:      groqAPIKey,
 		httpClient:      &http.Client{Timeout: 60 * time.Second},
 	}
@@ -129,6 +132,23 @@ func (s *CoachService) buildSystemPrompt(ctx context.Context, user *models.User,
 			fmt.Fprintf(&sb, "- Undertone : %s\n", profile.Undertone)
 			fmt.Fprintf(&sb, "- Saison couleur : %s\n", profile.ColorSeason)
 			fmt.Fprintf(&sb, "- Forme des yeux : %s\n", profile.EyeShape)
+		}
+	}
+
+	// Scanned products (last 5)
+	if s.productRepo != nil {
+		if products, err := s.productRepo.FindHistoryByUser(ctx, userID, 5); err == nil && len(products) > 0 {
+			sb.WriteString("\n## Produits récemment scannés par l'utilisateur\n")
+			for _, p := range products {
+				if p.NotFound {
+					continue
+				}
+				fmt.Fprintf(&sb, "- %s (%s) — %s, score compatibilité : %d/100, verdict : %s\n",
+					p.ProductName, p.Brand, p.Category, p.CompatibilityScore, p.Verdict)
+				if p.Tip != "" {
+					fmt.Fprintf(&sb, "  Conseil : %s\n", p.Tip)
+				}
+			}
 		}
 	}
 

@@ -141,10 +141,42 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
           </Text>
         </Animated.View>
 
-        {/* 2-col: undertone + season */}
-        <Animated.View entering={FadeInDown.delay(160)} className="flex-row gap-3 mb-4">
-          <InfoTile label="Undertone" value={profile.undertone} gold={false} />
-          <InfoTile label="Saison" value={seasonLabel} gold />
+        {/* Undertone + Season avec explications */}
+        <Animated.View entering={FadeInDown.delay(160)} className="mb-4">
+          <View className="flex-row gap-3 mb-3">
+            <View className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4">
+              <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
+                Sous-ton de peau
+              </Text>
+              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 16, textTransform: "capitalize", marginBottom: 4 }}>
+                {profile.undertone === "warm" ? "Chaud" : profile.undertone === "cool" ? "Froid" : "Neutre"}
+              </Text>
+              <Text style={{ color: "rgba(255,255,255,0.45)", fontSize: 11, lineHeight: 16 }}>
+                {profile.undertone === "warm"
+                  ? "Reflets dorés/pêche. Tes veines sont vertes. Les couleurs terre & or te subliment."
+                  : profile.undertone === "cool"
+                  ? "Reflets rosés/bleutés. Tes veines sont bleutées. L'argent et les tons fuchsia t'avantagent."
+                  : "Mixte. Tu peux porter aussi bien l'or que l'argent selon les couleurs."}
+              </Text>
+            </View>
+            <View className="flex-1 bg-lumis-gold/10 border border-lumis-gold/30 rounded-2xl p-4">
+              <Text style={{ color: "rgba(201,168,76,0.6)", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
+                Saison couleur
+              </Text>
+              <Text style={{ color: "#C9A84C", fontWeight: "700", fontSize: 16, marginBottom: 4 }}>
+                {seasonLabel}
+              </Text>
+              <Text style={{ color: "rgba(255,255,255,0.45)", fontSize: 11, lineHeight: 16 }}>
+                {profile.color_season === "spring"
+                  ? "Couleurs chaudes & lumineuses : corail, pêche, ivoire. Évite le noir pur."
+                  : profile.color_season === "summer"
+                  ? "Couleurs douces & fraîches : lavande, rose poudré, bleu ciel. Évite l'orange."
+                  : profile.color_season === "autumn"
+                  ? "Couleurs profondes & chaudes : rouille, olive, brun. Évite le rose vif."
+                  : "Couleurs vives & contrastées : blanc pur, noir, rouge. Évite les tons trop doux."}
+              </Text>
+            </View>
+          </View>
         </Animated.View>
 
         {/* Color palette */}
@@ -153,12 +185,17 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
             entering={FadeInDown.delay(200)}
             className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-4"
           >
-            <Text className="text-lumis-white/40 font-body text-[10px] uppercase tracking-widest mb-3">
-              Palette {seasonLabel}
+            <Text className="text-lumis-white/40 font-body text-[10px] uppercase tracking-widest mb-1">
+              Ta palette de couleurs à porter
+            </Text>
+            <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, marginBottom: 10 }}>
+              Ces couleurs subliment naturellement ton teint
             </Text>
             <View className="flex-row gap-2">
               {palette.map((c) => (
-                <View key={c} className="flex-1 h-10 rounded-xl" style={{ backgroundColor: c }} />
+                <View key={c} className="flex-1 h-12 rounded-xl items-end justify-end p-1" style={{ backgroundColor: c }}>
+                  <Text style={{ color: "rgba(0,0,0,0.5)", fontSize: 8 }}>{c}</Text>
+                </View>
               ))}
             </View>
           </Animated.View>

@@ -143,10 +143,8 @@ export default function CoachScreen() {
     <KeyboardAvoidingView
       style={{ flex: 1, backgroundColor: "#0A0A0A" }}
       behavior="padding"
-      keyboardVerticalOffset={Platform.select({
-        ios: 90,
-        android: 80 + insets.bottom,
-      })}
+      keyboardVerticalOffset={Platform.select({ ios: 90, android: 0 })}
+      style={{ flex: 1, backgroundColor: "#0A0A0A" }}
     >
       {/* History modal */}
       <Modal
