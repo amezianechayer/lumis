@@ -8,14 +8,11 @@ import {
   ActivityIndicator,
   useWindowDimensions,
   StyleSheet,
-  Image,
-  InteractionManager,
 } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router } from "expo-router";
 import Animated, { FadeInUp } from "react-native-reanimated";
 import * as MediaLibrary from "expo-media-library";
-import { captureRef } from "react-native-view-shot";
 
 type MakeupLookType = "lipstick" | "gloss" | "blush" | "eyeshadow" | "foundation";
 
@@ -152,8 +149,6 @@ export default function TryOnScreen() {
   const [looks, setLooks] = useState<MakeupLook[]>(INITIAL_LOOKS);
   const [activeLookType, setActiveLookType] = useState<MakeupLookType>("lipstick");
   const [capturing, setCapturing] = useState(false);
-  const [frozenUri, setFrozenUri] = useState<string | null>(null);
-  const cameraContainerRef = useRef<View>(null);
   const cameraRef = useRef<CameraView>(null);
 
   const ovalW = W * 0.62;
@@ -180,22 +175,15 @@ export default function TryOnScreen() {
         Alert.alert("Permission", "Autorise l'accès à la galerie.");
         return;
       }
-      // Step 1 : figer la caméra → surface statique capturable
-      const photo = await cameraRef.current.takePictureAsync({ quality: 0.92, skipProcessing: true });
-      setFrozenUri(photo.uri);
-      // Step 2 : attendre le re-render avec l'image statique
-      await new Promise<void>(resolve =>
-        InteractionManager.runAfterInteractions(() => setTimeout(resolve, 80))
-      );
-      // Step 3 : capturer vue statique + overlays makeup
-      const uri = await captureRef(cameraContainerRef, { format: "jpg", quality: 0.92 });
-      await MediaLibrary.saveToLibraryAsync(uri);
+      // On Android, captureRef ne peut pas capturer les surfaces caméra hardware-accélérées.
+      // On prend la photo directement avec takePictureAsync et on la sauvegarde.
+      const photo = await cameraRef.current.takePictureAsync({ quality: 0.92 });
+      await MediaLibrary.saveToLibraryAsync(photo.uri);
       Alert.alert("📸 Sauvegardé !", "Le look a été enregistré dans ta galerie.");
     } catch (e) {
       console.warn("[TryOn] capture error:", e);
-      Alert.alert("Erreur", "Impossible de capturer le look.");
+      Alert.alert("Erreur", "Impossible de capturer le look. Vérifie les permissions caméra.");
     } finally {
-      setFrozenUri(null);
       setCapturing(false);
     }
   }, []);
@@ -218,12 +206,8 @@ export default function TryOnScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
-      <View ref={cameraContainerRef} style={{ flex: 1 }} collapsable={false}>
-        {frozenUri ? (
-          <Image source={{ uri: frozenUri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-        ) : (
-          <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" />
-        )}
+      <View style={{ flex: 1 }}>
+        <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="front" />
 
         {/* Face oval guide */}
         <View pointerEvents="none" style={[styles.oval, {

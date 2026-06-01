@@ -70,6 +70,8 @@ export function analyzeColorLocally(avgR: number, avgG: number, avgB: number): L
   return { fitzpatrickType, undertone, dominantHex };
 }
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 // ─── Gemini Flash 2.0 analysis ────────────────────────────────────────────────
 export async function analyzeSkinWithGemini(
   imageBase64: string
@@ -96,20 +98,45 @@ export async function analyzeSkinWithGemini(
   "confidence": 0.0-1.0
 }`;
 
-  const result = await model.generateContent([
-    { inlineData: { mimeType: "image/jpeg", data: imageBase64 } },
-    { text: `${SKIN_ANALYSIS_PROMPT}\n\nFormat JSON attendu :\n${jsonSchema}` },
-  ]);
+  const MAX_RETRIES = 3;
+  const BASE_DELAY_MS = 3000; // 3s, 6s, 12s
 
-  const text = result.response.text().trim();
+  let lastError: unknown;
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      const result = await model.generateContent([
+        { inlineData: { mimeType: "image/jpeg", data: imageBase64 } },
+        { text: `${SKIN_ANALYSIS_PROMPT}\n\nFormat JSON attendu :\n${jsonSchema}` },
+      ]);
 
-  // Strip any accidental markdown fences
-  const cleaned = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+      const text = result.response.text().trim();
+      const cleaned = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
 
-  try {
-    const parsed: SkinAnalysisResult = JSON.parse(cleaned);
-    return parsed;
-  } catch {
-    throw new Error("Réponse IA invalide. Réessaie avec un meilleur éclairage.");
+      try {
+        const parsed: SkinAnalysisResult = JSON.parse(cleaned);
+        return parsed;
+      } catch {
+        throw new Error("Réponse IA invalide. Réessaie avec un meilleur éclairage.");
+      }
+    } catch (err: unknown) {
+      lastError = err;
+      const isQuotaError =
+        err instanceof Error &&
+        (err.message.includes("429") || err.message.toLowerCase().includes("quota"));
+
+      if (isQuotaError && attempt < MAX_RETRIES - 1) {
+        const delay = BASE_DELAY_MS * Math.pow(2, attempt);
+        console.warn(`[Gemini] quota 429, retry ${attempt + 1}/${MAX_RETRIES} dans ${delay}ms`);
+        await sleep(delay);
+        continue;
+      }
+      break;
+    }
   }
+
+  const errMsg = lastError instanceof Error ? lastError.message : String(lastError);
+  if (errMsg.includes("429") || errMsg.toLowerCase().includes("quota")) {
+    throw new Error("Quota Gemini dépassé. Réessaie dans quelques minutes.");
+  }
+  throw lastError;
 }

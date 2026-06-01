@@ -15,7 +15,10 @@ import (
 	"github.com/lib/pq"
 	"github.com/lumis/backend/internal/models"
 	"github.com/lumis/backend/internal/repository"
+	"github.com/redis/go-redis/v9"
 )
+
+const recCacheTTL = 24 * time.Hour
 
 type RecommendationService struct {
 	recRepo      *repository.RecommendationRepository
@@ -24,6 +27,7 @@ type RecommendationService struct {
 	skinScanRepo *repository.SkinScanRepository
 	groqAPIKey   string
 	httpClient   *http.Client
+	rdb          *redis.Client
 }
 
 func NewRecommendationService(
@@ -32,6 +36,7 @@ func NewRecommendationService(
 	userRepo *repository.UserRepository,
 	skinScanRepo *repository.SkinScanRepository,
 	groqAPIKey string,
+	rdb *redis.Client,
 ) *RecommendationService {
 	return &RecommendationService{
 		recRepo:      recRepo,
@@ -40,10 +45,28 @@ func NewRecommendationService(
 		skinScanRepo: skinScanRepo,
 		groqAPIKey:   groqAPIKey,
 		httpClient:   &http.Client{Timeout: 60 * time.Second},
+		rdb:          rdb,
 	}
 }
 
+func recCacheKey(userID uuid.UUID) string {
+	return fmt.Sprintf("recs:v1:%s", userID)
+}
+
+// GetOrGenerate returns cached recs if fresh, otherwise generates new ones.
 func (s *RecommendationService) GetOrGenerate(ctx context.Context, userID uuid.UUID, recType, occasion string) ([]models.Recommendation, error) {
+	// Try Redis cache first
+	if s.rdb != nil {
+		if cached, err := s.rdb.Get(ctx, recCacheKey(userID)).Bytes(); err == nil {
+			var recs []models.Recommendation
+			if json.Unmarshal(cached, &recs) == nil {
+				log.Printf("[RecService] cache HIT for user %s", userID)
+				return filterRecs(recs, recType, occasion), nil
+			}
+		}
+	}
+
+	// Fall back to DB
 	count, err := s.recRepo.CountByUser(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -53,22 +76,31 @@ func (s *RecommendationService) GetOrGenerate(ctx context.Context, userID uuid.U
 			return nil, err
 		}
 	}
-	return s.recRepo.FindByUser(ctx, userID, recType, occasion)
+	recs, err := s.recRepo.FindByUser(ctx, userID, "", "")
+	if err != nil {
+		return nil, err
+	}
+	s.cacheRecs(ctx, userID, recs)
+	return filterRecs(recs, recType, occasion), nil
 }
 
 func (s *RecommendationService) Generate(ctx context.Context, userID uuid.UUID) ([]models.Recommendation, error) {
 	profile, _ := s.profileRepo.FindLatestByUser(ctx, userID)
 	user, _ := s.userRepo.FindByID(ctx, userID)
-	var skinScan *models.SkinScan
+
+	// Latest scan + 30-day history for trend analysis
+	var latestScan *models.SkinScan
+	var scanHistory []models.SkinScan
 	if s.skinScanRepo != nil {
-		skinScan, _ = s.skinScanRepo.FindLatestByUser(ctx, userID)
+		latestScan, _ = s.skinScanRepo.FindLatestByUser(ctx, userID)
+		scanHistory, _ = s.skinScanRepo.FindHistoryByUser(ctx, userID, 10)
 	}
 
 	var recs []models.Recommendation
 	var err error
 
 	if s.groqAPIKey != "" {
-		recs, err = s.generateAllWithGroq(ctx, userID, profile, skinScan, user)
+		recs, err = s.generateAllWithGroq(ctx, userID, profile, latestScan, scanHistory, user)
 		if err != nil {
 			log.Printf("[RecService] Groq generation failed, using fallback: %v", err)
 			recs = buildFallbackRecs(userID, profile, user)
@@ -77,13 +109,122 @@ func (s *RecommendationService) Generate(ctx context.Context, userID uuid.UUID) 
 		recs = buildFallbackRecs(userID, profile, user)
 	}
 
+	// Mark premium-only recommendations (the 2 most advanced ones)
+	markPremiumRecs(recs)
+
 	if err := s.recRepo.DeleteByUser(ctx, userID); err != nil {
 		return nil, err
 	}
 	if err := s.recRepo.BulkCreate(ctx, recs); err != nil {
 		return nil, err
 	}
+
+	// Invalidate and refresh cache
+	s.cacheRecs(ctx, userID, recs)
 	return recs, nil
+}
+
+func (s *RecommendationService) cacheRecs(ctx context.Context, userID uuid.UUID, recs []models.Recommendation) {
+	if s.rdb == nil {
+		return
+	}
+	b, err := json.Marshal(recs)
+	if err != nil {
+		return
+	}
+	if err := s.rdb.Set(ctx, recCacheKey(userID), b, recCacheTTL).Err(); err != nil {
+		log.Printf("[RecService] Redis cache SET failed: %v", err)
+	}
+}
+
+func (s *RecommendationService) InvalidateCache(ctx context.Context, userID uuid.UUID) {
+	if s.rdb != nil {
+		s.rdb.Del(ctx, recCacheKey(userID))
+	}
+}
+
+// filterRecs applies optional type/occasion filters in-memory.
+func filterRecs(recs []models.Recommendation, recType, occasion string) []models.Recommendation {
+	if recType == "" && occasion == "" {
+		return recs
+	}
+	out := make([]models.Recommendation, 0, len(recs))
+	for _, r := range recs {
+		if recType != "" && r.Type != recType {
+			continue
+		}
+		if occasion != "" {
+			found := false
+			for _, o := range r.Occasions {
+				if o == occasion {
+					found = true
+					break
+				}
+			}
+			if !found {
+				continue
+			}
+		}
+		out = append(out, r)
+	}
+	return out
+}
+
+// markPremiumRecs marks the 2 most detailed recommendation types as premium-only.
+// color_season and the best grooming/makeup rec require premium context.
+func markPremiumRecs(recs []models.Recommendation) {
+	premiumTypes := map[string]bool{"color_season": true}
+	count := 0
+	for i := range recs {
+		if premiumTypes[recs[i].Type] {
+			recs[i].IsPremiumOnly = true
+			count++
+		}
+	}
+	// Also mark the advanced difficulty rec if we haven't hit 2 premium yet
+	for i := range recs {
+		if count >= 2 {
+			break
+		}
+		if recs[i].Difficulty == "advanced" && !recs[i].IsPremiumOnly {
+			recs[i].IsPremiumOnly = true
+			count++
+		}
+	}
+}
+
+// computeTrend returns a short trend summary for the Groq prompt.
+func computeTrend(scans []models.SkinScan) string {
+	if len(scans) < 2 {
+		return "Historique insuffisant pour calculer une tendance."
+	}
+	// Most recent = index 0 (ordered DESC)
+	recent := scans[0]
+	// Compare against scan from 5+ scans ago if available
+	ref := scans[len(scans)-1]
+	deltaOverall := recent.OverallScore - ref.OverallScore
+	deltaAcne := recent.AcneScore - ref.AcneScore
+	deltaHydra := recent.HydrationScore - ref.HydrationScore
+
+	trend := fmt.Sprintf("Sur les %d derniers scans :", len(scans))
+	if deltaOverall > 5 {
+		trend += fmt.Sprintf(" score global EN HAUSSE (+%d pts)", deltaOverall)
+	} else if deltaOverall < -5 {
+		trend += fmt.Sprintf(" score global EN BAISSE (%d pts)", deltaOverall)
+	} else {
+		trend += " score global STABLE"
+	}
+	if deltaAcne > 5 {
+		trend += fmt.Sprintf(", acné s'améliore (+%d)", deltaAcne)
+	} else if deltaAcne < -5 {
+		trend += fmt.Sprintf(", acné s'aggrave (%d)", deltaAcne)
+	}
+	if deltaHydra > 5 {
+		trend += fmt.Sprintf(", hydratation en hausse (+%d)", deltaHydra)
+	} else if deltaHydra < -5 {
+		trend += fmt.Sprintf(", hydratation en baisse (%d)", deltaHydra)
+	}
+	return trend
 }
 
 // generateAllWithGroq generates all 5 recommendation types in a single Groq call.
@@ -92,6 +233,7 @@ func (s *RecommendationService) generateAllWithGroq(
 	userID uuid.UUID,
 	profile *models.FaceProfile,
 	skinScan *models.SkinScan,
+	scanHistory []models.SkinScan,
 	user *models.User,
 ) ([]models.Recommendation, error) {
 	var sb strings.Builder
@@ -110,14 +252,14 @@ func (s *RecommendationService) generateAllWithGroq(
 	}
 	fmt.Fprintf(&sb, "## Genre : %s\n\n", gender)
 
-	// Skin scan
+	// Latest skin scan
 	if skinScan != nil {
-		sb.WriteString("## Analyse de peau récente\n")
+		sb.WriteString("## Dernier scan de peau\n")
 		fmt.Fprintf(&sb, "- Score global : %d/100\n", skinScan.OverallScore)
-		fmt.Fprintf(&sb, "- Hydratation : %d/100\n", skinScan.HydrationScore)
-		fmt.Fprintf(&sb, "- Acné : %d/100 (100=aucune)\n", skinScan.AcneScore)
-		fmt.Fprintf(&sb, "- Texture : %d/100\n", skinScan.TextureScore)
-		fmt.Fprintf(&sb, "- Uniformité : %d/100\n", skinScan.UniformityScore)
+		fmt.Fprintf(&sb, "- Hydratation : %d/100 (100=parfaite)\n", skinScan.HydrationScore)
+		fmt.Fprintf(&sb, "- Acné : %d/100 (100=aucune acné)\n", skinScan.AcneScore)
+		fmt.Fprintf(&sb, "- Texture : %d/100 (100=lisse)\n", skinScan.TextureScore)
+		fmt.Fprintf(&sb, "- Uniformité : %d/100 (100=teint parfait)\n", skinScan.UniformityScore)
 		fmt.Fprintf(&sb, "- Rougeur : %s | Pores : %s | Hyperpigmentation : %s\n",
 			skinScan.RednessLevel, skinScan.PoresCondition, skinScan.HyperpigmentationLevel)
 		if len(skinScan.AcneZones) > 0 {
@@ -126,11 +268,19 @@ func (s *RecommendationService) generateAllWithGroq(
 		if len(skinScan.DrynessZones) > 0 {
 			fmt.Fprintf(&sb, "- Zones sèches : %s\n", strings.Join(skinScan.DrynessZones, ", "))
 		}
-		fmt.Fprintf(&sb, "- Sommeil : %.1fh/nuit, Stress : %d/10, Eau : %.1fL/j\n",
+		if len(skinScan.OilinessZones) > 0 {
+			fmt.Fprintf(&sb, "- Zones grasses : %s\n", strings.Join(skinScan.OilinessZones, ", "))
+		}
+		fmt.Fprintf(&sb, "- Lifestyle : sommeil %.1fh/nuit, stress %d/10, eau %.1fL/j\n",
 			skinScan.SleepHours, skinScan.StressLevel, skinScan.WaterIntakeLiters)
 		sb.WriteString("\n")
 	} else {
-		sb.WriteString("## Analyse de peau : non disponible — base-toi sur le profil facial.\n\n")
+		sb.WriteString("## Analyse de peau : non disponible — base-toi sur le profil facial et les objectifs.\n\n")
+	}
+
+	// 30-day trend
+	if len(scanHistory) >= 2 {
+		fmt.Fprintf(&sb, "## Tendance 30 jours\n%s\n\n", computeTrend(scanHistory))
 	}
 
 	// Face profile

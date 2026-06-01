@@ -52,14 +52,37 @@ function ScoreRing({ score, size = 80 }: { score: number; size?: number }) {
   );
 }
 
+// ─── Score helpers ─────────────────────────────────────────────────────────────
+// All scores use "high = good" convention (100 = perfect skin, 0 = severe issue)
+function scoreLabel(score: number, type: "acne" | "hydration" | "texture" | "uniformity"): string {
+  const levels: Record<typeof type, [string, string, string, string]> = {
+    acne:       ["Aucune", "Légère", "Modérée", "Sévère"],
+    hydration:  ["Excellente", "Bonne", "Moyenne", "Faible"],
+    texture:    ["Lisse", "Bonne", "Irrégulière", "Rugueuse"],
+    uniformity: ["Uniforme", "Bonne", "Inégale", "Très inégale"],
+  };
+  const [l0, l1, l2, l3] = levels[type];
+  if (score >= 80) return l0;
+  if (score >= 60) return l1;
+  if (score >= 40) return l2;
+  return l3;
+}
+
 // ─── Score bar ────────────────────────────────────────────────────────────────
-function ScoreBar({ label, score, icon }: { label: string; score: number; icon: string }) {
+function ScoreBar({ label, score, icon, type }: {
+  label: string; score: number; icon: string;
+  type: "acne" | "hydration" | "texture" | "uniformity";
+}) {
   const color = score >= 75 ? "#4ade80" : score >= 50 ? "#C9A96E" : "#f87171";
+  const qual = scoreLabel(score, type);
   return (
     <View className="mb-4">
       <View className="flex-row justify-between mb-1.5">
         <Text className="text-lumis-white/70 font-body text-sm">{icon} {label}</Text>
-        <Text style={{ color }} className="font-body-bold text-sm">{score}/100</Text>
+        <View className="flex-row items-center gap-2">
+          <Text style={{ color, fontSize: 11 }} className="font-body">{qual}</Text>
+          <Text style={{ color }} className="font-body-bold text-sm">{score}/100</Text>
+        </View>
       </View>
       <View className="h-2 bg-white/8 rounded-full overflow-hidden">
         <View className="h-full rounded-full" style={{ width: `${score}%`, backgroundColor: color }} />
@@ -129,10 +152,10 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
 
       <Animated.View entering={FadeInDown.delay(160)} className="bg-white/5 border border-white/10 rounded-3xl p-5 mb-4">
         <Text className="text-lumis-white/40 font-body text-xs uppercase tracking-widest mb-4">Détail</Text>
-        <ScoreBar label="Acné" score={scan.acne_score} icon="🔴" />
-        <ScoreBar label="Hydratation" score={scan.hydration_score} icon="💧" />
-        <ScoreBar label="Texture" score={scan.texture_score} icon="✨" />
-        <ScoreBar label="Uniformité" score={scan.uniformity_score} icon="🎨" />
+        <ScoreBar label="Acné" score={scan.acne_score} icon="🔴" type="acne" />
+        <ScoreBar label="Hydratation" score={scan.hydration_score} icon="💧" type="hydration" />
+        <ScoreBar label="Texture" score={scan.texture_score} icon="✨" type="texture" />
+        <ScoreBar label="Uniformité" score={scan.uniformity_score} icon="🎨" type="uniformity" />
       </Animated.View>
 
       <Animated.View entering={FadeInDown.delay(240)} className="bg-white/5 border border-white/10 rounded-3xl p-5 mb-4">
