@@ -51,7 +51,7 @@ func main() {
 	logger.Info("database connected")
 
 	// Auto-migrate models (supplements SQL migrations)
-	if err := db.AutoMigrate(&models.User{}, &models.RefreshToken{}, &models.FaceProfile{}, &models.Recommendation{}, &models.SkinScan{}, &models.CoachConversation{}, &models.CoachMessage{}, &models.ScannedProduct{}, &models.RoutineLog{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.RefreshToken{}, &models.FaceProfile{}, &models.Recommendation{}, &models.SkinScan{}, &models.CoachConversation{}, &models.CoachMessage{}, &models.ScannedProduct{}, &models.RoutineLog{}, &models.CycleData{}); err != nil {
 		logger.Fatal("automigrate failed", zap.Error(err))
 	}
 
@@ -71,6 +71,7 @@ func main() {
 	coachRepo := repository.NewCoachRepository(db)
 	productRepo := repository.NewScannedProductRepository(db)
 	routineRepo := repository.NewRoutineRepository(db)
+	cycleRepo := repository.NewCycleRepository(db)
 
 	// Services
 	authSvc := services.NewAuthService(userRepo, tokenRepo, cfg)
@@ -93,6 +94,7 @@ func main() {
 	productHandler := handlers.NewProductHandler(productSvc)
 	makeupGuideHandler := handlers.NewMakeupGuideHandler(makeupGuideSvc)
 	routineHandler := handlers.NewRoutineHandler(routineRepo)
+	cycleHandler := handlers.NewCycleHandler(cycleRepo)
 	stripeHandler := handlers.NewStripeHandler(stripeSvc, userRepo)
 
 	// Middleware
@@ -189,6 +191,10 @@ func main() {
 	routine.Get("/status", routineHandler.Status)
 	routine.Post("/complete", routineHandler.Complete)
 	routine.Delete("/complete", routineHandler.Uncomplete)
+
+	// Menstrual cycle → skin
+	protected.Get("/cycle", cycleHandler.Get)
+	protected.Post("/cycle", cycleHandler.Save)
 
 	// Stripe / Premium
 	stripeGroup := protected.Group("/stripe")

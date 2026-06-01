@@ -14,6 +14,7 @@ import {
   Recommendation,
   MakeupGuide,
   RoutineStatus,
+  CycleStatus,
   RecommendationsResponse,
   RefreshResponse,
   ScannedProduct,
@@ -241,6 +242,16 @@ class ApiClient {
   }
   async uncompleteRoutine(period: "morning" | "evening"): Promise<RoutineStatus> {
     const { data } = await this.client.delete<RoutineStatus>("/routine/complete", { data: { period } });
+    return data;
+  }
+
+  // Menstrual cycle
+  async getCycle(): Promise<CycleStatus> {
+    const { data } = await this.client.get<CycleStatus>("/cycle");
+    return data;
+  }
+  async saveCycle(payload: { last_period_date: string; cycle_length: number; period_length: number }): Promise<CycleStatus> {
+    const { data } = await this.client.post<CycleStatus>("/cycle", payload);
     return data;
   }
 

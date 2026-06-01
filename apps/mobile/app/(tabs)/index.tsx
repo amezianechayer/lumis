@@ -212,6 +212,24 @@ export default function HomeScreen() {
           <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 18 }}>→</Text>
         </TouchableOpacity>
 
+        {/* Cycle (female only) */}
+        {user?.gender === "female" && (
+          <TouchableOpacity
+            onPress={() => router.push("/cycle" as any)}
+            className="flex-row items-center bg-white/5 border border-white/10 rounded-2xl p-4 overflow-hidden"
+            activeOpacity={0.8}
+          >
+            <View className="w-11 h-11 rounded-xl bg-purple-500/20 items-center justify-center mr-4">
+              <Text className="text-2xl">🌙</Text>
+            </View>
+            <View className="flex-1">
+              <Text className="text-lumis-white font-body-medium text-sm mb-0.5">Cycle & Peau</Text>
+              <Text className="text-lumis-white/40 font-body text-xs">Conseils adaptés à ta phase hormonale</Text>
+            </View>
+            <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 18 }}>→</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Try-On AR */}
         <TouchableOpacity
           onPress={() => router.push("/tryon" as any)}

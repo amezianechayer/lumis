@@ -108,6 +108,23 @@ export interface RoutineStatus {
   total_completed: number;
 }
 
+export interface CyclePhase {
+  phase: string;
+  phase_fr: string;
+  day_of_cycle: number;
+  cycle_length: number;
+  skin_impact: string;
+  tips: string[];
+  next_period_in_days: number;
+}
+
+export interface CycleStatus {
+  configured: boolean;
+  last_period_date?: string;
+  cycle_length?: number;
+  phase?: CyclePhase;
+}
+
 export interface MakeupGuide {
   title: string;
   intro: string;
