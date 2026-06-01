@@ -9,15 +9,16 @@ import (
 )
 
 type SkinScanHandler struct {
-	svc          *services.SkinScanService
-	repo         *repository.SkinScanRepository
-	userRepo     *repository.UserRepository
-	recSvc       *services.RecommendationService
-	freeScanLimit int
+	svc            *services.SkinScanService
+	repo           *repository.SkinScanRepository
+	userRepo       *repository.UserRepository
+	recSvc         *services.RecommendationService
+	makeupGuideSvc *services.MakeupGuideService
+	freeScanLimit  int
 }
 
-func NewSkinScanHandler(svc *services.SkinScanService, repo *repository.SkinScanRepository, userRepo *repository.UserRepository, recSvc *services.RecommendationService, freeScanLimit int) *SkinScanHandler {
-	return &SkinScanHandler{svc: svc, repo: repo, userRepo: userRepo, recSvc: recSvc, freeScanLimit: freeScanLimit}
+func NewSkinScanHandler(svc *services.SkinScanService, repo *repository.SkinScanRepository, userRepo *repository.UserRepository, recSvc *services.RecommendationService, makeupGuideSvc *services.MakeupGuideService, freeScanLimit int) *SkinScanHandler {
+	return &SkinScanHandler{svc: svc, repo: repo, userRepo: userRepo, recSvc: recSvc, makeupGuideSvc: makeupGuideSvc, freeScanLimit: freeScanLimit}
 }
 
 // POST /api/v1/analysis/skin
@@ -69,9 +70,12 @@ func (h *SkinScanHandler) Analyze(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "skin scan failed"})
 	}
 
-	// Invalidate recommendation cache so next fetch regenerates with fresh scan data
+	// Invalidate caches so next fetch regenerates with fresh scan data
 	if h.recSvc != nil {
 		h.recSvc.InvalidateCache(c.Context(), userID)
+	}
+	if h.makeupGuideSvc != nil {
+		h.makeupGuideSvc.InvalidateCache(c.Context(), userID)
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"skin_scan": scan})

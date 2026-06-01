@@ -12,6 +12,7 @@ import {
   FaceAnalysisResponse,
   FaceProfile,
   Recommendation,
+  MakeupGuide,
   RecommendationsResponse,
   RefreshResponse,
   ScannedProduct,
@@ -214,6 +215,12 @@ class ApiClient {
   async getRecommendationById(id: string): Promise<Recommendation> {
     const { data } = await this.client.get<Recommendation>(`/recommendations/${id}`);
     return data;
+  }
+
+  // AI-personalized makeup/grooming guide
+  async getMakeupGuide(): Promise<MakeupGuide> {
+    const { data } = await this.client.get<{ guide: MakeupGuide }>("/makeup-guide");
+    return data.guide;
   }
 
   // Coach

@@ -80,15 +80,17 @@ func main() {
 	skinScanSvc := services.NewSkinScanService(skinScanRepo, cfg.GroqAPIKey, storageSvc)
 	coachSvc := services.NewCoachService(coachRepo, userRepo, skinScanRepo, faceProfileRepo, productRepo, cfg.GroqAPIKey)
 	productSvc := services.NewProductService(productRepo, skinScanRepo, userRepo, cfg.GroqAPIKey)
+	makeupGuideSvc := services.NewMakeupGuideService(faceProfileRepo, skinScanRepo, userRepo, cfg.GroqAPIKey, rdb)
 
 	// Handlers
 	authHandler := handlers.NewAuthHandler(authSvc)
 	userHandler := handlers.NewUserHandler(userRepo)
 	analysisHandler := handlers.NewAnalysisHandler(faceAnalysisSvc, faceProfileRepo)
 	recHandler := handlers.NewRecommendationHandler(recSvc)
-	skinScanHandler := handlers.NewSkinScanHandler(skinScanSvc, skinScanRepo, userRepo, recSvc, cfg.FreeScanLimit)
+	skinScanHandler := handlers.NewSkinScanHandler(skinScanSvc, skinScanRepo, userRepo, recSvc, makeupGuideSvc, cfg.FreeScanLimit)
 	coachHandler := handlers.NewCoachHandler(coachSvc, coachRepo, userRepo, cfg.FreeCoachDailyLimit)
 	productHandler := handlers.NewProductHandler(productSvc)
+	makeupGuideHandler := handlers.NewMakeupGuideHandler(makeupGuideSvc)
 	stripeHandler := handlers.NewStripeHandler(stripeSvc, userRepo)
 
 	// Middleware
@@ -175,6 +177,9 @@ func main() {
 	recs.Get("/", recHandler.List)
 	recs.Post("/generate", recHandler.Generate)
 	recs.Get("/:id", recHandler.GetByID)
+
+	// Makeup guide (AI-personalized)
+	protected.Get("/makeup-guide", makeupGuideHandler.Get)
 
 	// Stripe / Premium
 	stripeGroup := protected.Group("/stripe")

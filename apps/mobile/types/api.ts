@@ -101,6 +101,15 @@ export interface Recommendation {
   created_at: string;
 }
 
+export interface MakeupGuide {
+  title: string;
+  intro: string;
+  color_tips: string[];
+  steps: { title: string; description: string; tip: string }[];
+  products: { name: string; category: string; why: string }[];
+  is_male: boolean;
+}
+
 export interface RecommendationsResponse {
   recommendations: Recommendation[];
 }

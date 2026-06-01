@@ -302,8 +302,36 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
           </View>
         </Animated.View>
 
-        {/* ─── Step-by-step guide ─── */}
+        {/* ─── CTA Guide IA personnalisé ─── */}
+        <Animated.View entering={FadeInDown.delay(400)} className="mb-4">
+          <TouchableOpacity
+            onPress={() => router.push("/makeup-guide")}
+            activeOpacity={0.85}
+            style={{
+              backgroundColor: "rgba(201,168,76,0.12)",
+              borderWidth: 1, borderColor: "rgba(201,168,76,0.4)",
+              borderRadius: 16, padding: 16,
+              flexDirection: "row", alignItems: "center", gap: 12,
+            }}
+          >
+            <Text style={{ fontSize: 26 }}>✨</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: "#C9A84C", fontWeight: "700", fontSize: 15 }}>
+                Guide {isMale ? "grooming" : "maquillage"} personnalisé par IA
+              </Text>
+              <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, marginTop: 2 }}>
+                Adapté à ton teint, ton scan peau et tes objectifs
+              </Text>
+            </View>
+            <Text style={{ color: "#C9A84C", fontSize: 20 }}>→</Text>
+          </TouchableOpacity>
+        </Animated.View>
+
+        {/* ─── Step-by-step guide (base) ─── */}
         <Animated.View entering={FadeInDown.delay(420)} className="bg-lumis-gold/8 border border-lumis-gold/25 rounded-2xl p-5 mb-4">
+          <Text style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, marginBottom: 12 }}>
+            Conseils de base · le guide IA ci-dessus est personnalisé
+          </Text>
           <Text className="text-lumis-gold font-body-bold text-xs uppercase tracking-widest mb-4">
             📋 Étape par étape
           </Text>
