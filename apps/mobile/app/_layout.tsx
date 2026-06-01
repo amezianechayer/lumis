@@ -40,11 +40,12 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    // Initialize RevenueCat early — before any purchase screen is shown
+    if (!fontsLoaded) return;
+    // Hide splash as soon as fonts are ready — don't block on network calls
+    SplashScreen.hideAsync().catch(() => {});
+    // Auth + RevenueCat run in background, they navigate independently
     initRevenueCat().catch(() => {});
-    checkAuth().finally(() => {
-      if (fontsLoaded) SplashScreen.hideAsync();
-    });
+    checkAuth().catch(() => {});
   }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
