@@ -158,29 +158,55 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
         <ScoreBar label="Uniformité" score={scan.uniformity_score} icon="🎨" type="uniformity" />
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(240)} className="bg-white/5 border border-white/10 rounded-3xl p-5 mb-4">
-        <Text className="text-lumis-white/40 font-body text-xs uppercase tracking-widest mb-4">Insights</Text>
-        <View className="flex-row flex-wrap gap-2">
-          <Tag label={`Pores ${scan.pores_condition}`} />
-          <Tag label={`Rougeurs ${scan.redness_level}`} />
-          <Tag label={`Hyperpig. ${scan.hyperpigmentation_level}`} />
-          {scan.acne_count > 0 && <Tag label={`${scan.acne_count} imperfections`} warn />}
-          {scan.dark_spots_count > 0 && <Tag label={`${scan.dark_spots_count} taches`} warn />}
-          {scan.fine_lines_detected && <Tag label="Fines rides" warn />}
+      {/* Priority actions */}
+      <Animated.View entering={FadeInDown.delay(240)} className="bg-lumis-gold/8 border border-lumis-gold/25 rounded-3xl p-5 mb-4">
+        <Text className="text-lumis-gold font-body text-xs uppercase tracking-widest mb-3">⚡ Priorités pour toi</Text>
+        {buildPriorityActions(scan).map((action, i) => (
+          <View key={i} className="flex-row items-start gap-3 mb-3">
+            <View className="w-6 h-6 rounded-full bg-lumis-gold/20 items-center justify-center mt-0.5" style={{ minWidth: 24 }}>
+              <Text style={{ color: "#C9A84C", fontSize: 11, fontWeight: "700" }}>{i + 1}</Text>
+            </View>
+            <View className="flex-1">
+              <Text className="text-lumis-white font-body-medium text-sm mb-0.5">{action.title}</Text>
+              <Text className="text-lumis-white/50 font-body text-xs leading-5">{action.desc}</Text>
+            </View>
+          </View>
+        ))}
+      </Animated.View>
+
+      {/* Indicateurs qualitatifs */}
+      <Animated.View entering={FadeInDown.delay(300)} className="bg-white/5 border border-white/10 rounded-3xl p-5 mb-4">
+        <Text className="text-lumis-white/40 font-body text-xs uppercase tracking-widest mb-4">Indicateurs qualitatifs</Text>
+        <View className="flex-row flex-wrap gap-2 mb-3">
+          <Tag label={`Pores ${scan.pores_condition}`} warn={scan.pores_condition === "larges"} />
+          <Tag label={`Rougeurs ${scan.redness_level}`} warn={scan.redness_level === "élevé"} />
+          <Tag label={`Hyperpig. ${scan.hyperpigmentation_level}`} warn={scan.hyperpigmentation_level === "élevé"} />
+          {scan.acne_count > 0 && <Tag label={`${scan.acne_count} imperfection${scan.acne_count > 1 ? "s" : ""}`} warn />}
+          {scan.dark_spots_count > 0 && <Tag label={`${scan.dark_spots_count} tache${scan.dark_spots_count > 1 ? "s" : ""}`} warn />}
+          {scan.fine_lines_detected && <Tag label="Ridules détectées" warn />}
         </View>
+
         {scan.acne_zones && scan.acne_zones.length > 0 && (
-          <View className="mt-4">
-            <Text className="text-lumis-white/40 font-body text-xs mb-2">Zones acné :</Text>
+          <View className="mb-3">
+            <Text className="text-lumis-white/40 font-body text-xs mb-2">🔴 Zones acnéiques</Text>
             <View className="flex-row flex-wrap gap-2">
               {scan.acne_zones.map((z) => <Tag key={z} label={z} warn />)}
             </View>
           </View>
         )}
         {scan.dryness_zones && scan.dryness_zones.length > 0 && (
-          <View className="mt-3">
-            <Text className="text-lumis-white/40 font-body text-xs mb-2">Zones sèches :</Text>
+          <View className="mb-3">
+            <Text className="text-lumis-white/40 font-body text-xs mb-2">💧 Zones sèches</Text>
             <View className="flex-row flex-wrap gap-2">
               {scan.dryness_zones.map((z) => <Tag key={z} label={z} />)}
+            </View>
+          </View>
+        )}
+        {scan.oiliness_zones && scan.oiliness_zones.length > 0 && (
+          <View>
+            <Text className="text-lumis-white/40 font-body text-xs mb-2">✨ Zones grasses</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {scan.oiliness_zones.map((z) => <Tag key={z} label={z} warn />)}
             </View>
           </View>
         )}
@@ -213,6 +239,73 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
       </Animated.View>
     </ScrollView>
   );
+}
+
+// Génère les top 3 priorités basées sur les scores réels
+function buildPriorityActions(scan: SkinScan): { title: string; desc: string }[] {
+  const actions: { score: number; title: string; desc: string }[] = [];
+
+  if (scan.acne_score < 70) {
+    actions.push({
+      score: 100 - scan.acne_score,
+      title: "Traiter l'acné avec du niacinamide",
+      desc: `Ton score acné est ${scan.acne_score}/100. Applique un sérum niacinamide 10% matin et soir pour réduire le sébum et les imperfections.`,
+    });
+  }
+  if (scan.hydration_score < 65) {
+    actions.push({
+      score: 100 - scan.hydration_score,
+      title: "Booster l'hydratation immédiatement",
+      desc: `Hydratation à ${scan.hydration_score}/100. Utilise de l'acide hyaluronique sur peau humide avant ta crème. Bois minimum 2L d'eau par jour.`,
+    });
+  }
+  if (scan.texture_score < 65) {
+    actions.push({
+      score: 100 - scan.texture_score,
+      title: "Lisser la texture avec des AHA",
+      desc: `Texture à ${scan.texture_score}/100. Introduis un exfoliant chimique (AHA/glycolique) 2-3x par semaine le soir pour accélérer le renouvellement cellulaire.`,
+    });
+  }
+  if (scan.uniformity_score < 65) {
+    actions.push({
+      score: 100 - scan.uniformity_score,
+      title: "Uniformiser le teint avec la vitamine C",
+      desc: `Uniformité à ${scan.uniformity_score}/100. Applique de la vitamine C (10-20%) chaque matin pour réduire les taches et illuminer le teint.`,
+    });
+  }
+  if (scan.redness_level === "élevé") {
+    actions.push({
+      score: 80,
+      title: "Calmer les rougeurs avec centella asiatica",
+      desc: "Rougeurs élevées détectées. Évite les produits avec alcool et parfum. Utilise un soin à la centella asiatica ou à l'acide azélaïque.",
+    });
+  }
+  if (scan.sleep_hours < 6) {
+    actions.push({
+      score: 60,
+      title: "Améliorer le sommeil (impact direct sur la peau)",
+      desc: `Tu dors ${scan.sleep_hours}h/nuit. Le renouvellement cellulaire se fait pendant le sommeil. Vise 7-8h pour améliorer texture et acné.`,
+    });
+  }
+  if (scan.stress_level >= 7) {
+    actions.push({
+      score: 50,
+      title: "Réduire le stress (cortisol = sébum)",
+      desc: `Stress à ${scan.stress_level}/10. Le cortisol stimule les glandes sébacées et aggrave l'acné. Méditation, exercice ou respiration profonde.`,
+    });
+  }
+
+  // Toujours recommander le SPF
+  if (actions.length < 3) {
+    actions.push({
+      score: 30,
+      title: "SPF 50+ chaque matin sans exception",
+      desc: "Le soleil est responsable de 80% du vieillissement cutané. Un SPF 50+ fluide protège et préserve tous tes acquis.",
+    });
+  }
+
+  // Trier par priorité et garder les 3 plus importantes
+  return actions.sort((a, b) => b.score - a.score).slice(0, 3);
 }
 
 function Tag({ label, warn }: { label: string; warn?: boolean }) {
