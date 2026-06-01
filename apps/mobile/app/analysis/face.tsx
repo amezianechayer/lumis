@@ -265,7 +265,7 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
           </Text>
 
           {/* Visual diagram */}
-          <FaceMakeupDiagram guide={makeupGuide} faceShape={(profile.face_shape as FaceShape) ?? "oval"} isMale={isMale} />
+          <FaceMakeupDiagram guide={makeupGuide} faceShape={(profile.face_shape as FaceShape) ?? "oval"} isMale={isMale} skinTone={profile.skin_tone} />
 
           {/* Zone hints */}
           <View style={{ marginTop: 16, gap: 8 }}>
