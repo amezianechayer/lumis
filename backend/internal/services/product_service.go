@@ -436,8 +436,6 @@ Return ONLY valid JSON:
 		return product, nil
 	}
 
-	prosJSON, _ := json.Marshal(result.Pros)
-	consJSON, _ := json.Marshal(result.Cons)
 	product := &models.ScannedProduct{
 		UserID:             userID,
 		Barcode:            barcode,
@@ -446,8 +444,8 @@ Return ONLY valid JSON:
 		Category:           result.Category,
 		CompatibilityScore: result.CompatibilityScore,
 		Verdict:            result.Verdict,
-		Pros:               models.JSON(prosJSON),
-		Cons:               models.JSON(consJSON),
+		Pros:               pq.StringArray(result.Pros),
+		Cons:               pq.StringArray(result.Cons),
 		Tip:                result.Tip,
 	}
 	_ = s.repo.Create(ctx, product)

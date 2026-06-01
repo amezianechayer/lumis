@@ -288,12 +288,9 @@ func (s *RecommendationService) generateAllWithGroq(
 	if user != nil && user.SkinType != nil {
 		skinType = *user.SkinType
 	}
-	rulesContext, _ := BuildProductRulesFromScan(skinScan, skinType)
-	if rulesContext != "" {
-		sb.WriteString("## Ingrédients actifs REQUIS selon les problèmes détectés\n")
-		sb.WriteString("Ces ingrédients sont scientifiquement validés pour ces problèmes.\n")
-		sb.WriteString("TU DOIS recommander des produits contenant ces actifs spécifiques :\n")
-		sb.WriteString(rulesContext)
+	ingredientCtx := BuildIngredientConstraints(skinScan, skinType)
+	if ingredientCtx != "" {
+		sb.WriteString(ingredientCtx)
 		sb.WriteString("\n")
 	}
 
@@ -515,15 +512,11 @@ func buildFallbackRecs(userID uuid.UUID, profile *models.FaceProfile, user *mode
 	if user != nil && user.SkinType != nil {
 		skinType = *user.SkinType
 	}
-	defaultSteps, _ := json.Marshal(buildDefaultSteps(skinType))
-	// Personalized products from rules engine using actual scan data
-	skincareProds := BuildFallbackSkincareProducts(scan, skinType)
-	if len(skincareProds) == 0 {
-		skincareProds = []map[string]interface{}{
-			{"name": "CeraVe Moisturizing Cream", "category": "hydratant", "why": "Céramides universels pour toute peau", "premium": false},
-		}
-	}
-	defaultProds, _ := json.Marshal(skincareProds)
+	defaultSteps, _ := json.Marshal(BuildFallbackSkincareSteps(skinType))
+	// Fallback products: ingredient-based advice (no hardcoded brands)
+	concerns := DetectConcerns(scan, skinType)
+	fallbackProds := buildIngredientBasedProducts(concerns)
+	defaultProds, _ := json.Marshal(fallbackProds)
 
 	skincareTitle, skincareSum := buildSkincareTitle(scan, skinType)
 
