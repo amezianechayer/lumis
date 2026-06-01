@@ -103,10 +103,10 @@ func (s *RecommendationService) Generate(ctx context.Context, userID uuid.UUID) 
 		recs, err = s.generateAllWithGroq(ctx, userID, profile, latestScan, scanHistory, user)
 		if err != nil {
 			log.Printf("[RecService] Groq generation failed, using fallback: %v", err)
-			recs = buildFallbackRecs(userID, profile, user)
+			recs = buildFallbackRecs(userID, profile, user, latestScan)
 		}
 	} else {
-		recs = buildFallbackRecs(userID, profile, user)
+		recs = buildFallbackRecs(userID, profile, user, latestScan)
 	}
 
 	// Mark premium-only recommendations (the 2 most advanced ones)
@@ -281,6 +281,20 @@ func (s *RecommendationService) generateAllWithGroq(
 	// 30-day trend
 	if len(scanHistory) >= 2 {
 		fmt.Fprintf(&sb, "## Tendance 30 jours\n%s\n\n", computeTrend(scanHistory))
+	}
+
+	// Evidence-based ingredient & product rules (derived from scan scores)
+	skinType := ""
+	if user != nil && user.SkinType != nil {
+		skinType = *user.SkinType
+	}
+	rulesContext, _ := BuildProductRulesFromScan(skinScan, skinType)
+	if rulesContext != "" {
+		sb.WriteString("## Ingrédients actifs REQUIS selon les problèmes détectés\n")
+		sb.WriteString("Ces ingrédients sont scientifiquement validés pour ces problèmes.\n")
+		sb.WriteString("TU DOIS recommander des produits contenant ces actifs spécifiques :\n")
+		sb.WriteString(rulesContext)
+		sb.WriteString("\n")
 	}
 
 	// Face profile
@@ -482,8 +496,8 @@ func extractJSONArray(s string) string {
 	return s
 }
 
-// buildFallbackRecs returns minimal static recs when Groq is unavailable.
-func buildFallbackRecs(userID uuid.UUID, profile *models.FaceProfile, user *models.User) []models.Recommendation {
+// buildFallbackRecs returns personalized recs based on rules engine when Groq is unavailable.
+func buildFallbackRecs(userID uuid.UUID, profile *models.FaceProfile, user *models.User, scan *models.SkinScan) []models.Recommendation {
 	gender := ""
 	if user != nil && user.Gender != nil {
 		gender = *user.Gender
@@ -496,20 +510,29 @@ func buildFallbackRecs(userID uuid.UUID, profile *models.FaceProfile, user *mode
 		makeupSummary = "Une routine discrète pour unifier le teint et corriger les imperfections sans effet maquillé."
 	}
 
-	defaultSteps, _ := json.Marshal([]map[string]interface{}{
-		{"order": 1, "title": "Préparation", "description": "Hydrate bien ta peau avant d'appliquer quoi que ce soit.", "tip": "", "duration_min": 2},
-		{"order": 2, "title": "Application", "description": "Applique le produit en tapotant avec les doigts pour un rendu naturel.", "tip": "Moins c'est plus.", "duration_min": 3},
-	})
-	defaultProds, _ := json.Marshal([]map[string]interface{}{
-		{"name": "BB Cream SPF 30", "category": "teint", "why": "Couvre légèrement tout en protégeant", "premium": false},
-	})
+	// Personalized steps based on skin type
+	skinType := ""
+	if user != nil && user.SkinType != nil {
+		skinType = *user.SkinType
+	}
+	defaultSteps, _ := json.Marshal(buildDefaultSteps(skinType))
+	// Personalized products from rules engine using actual scan data
+	skincareProds := BuildFallbackSkincareProducts(scan, skinType)
+	if len(skincareProds) == 0 {
+		skincareProds = []map[string]interface{}{
+			{"name": "CeraVe Moisturizing Cream", "category": "hydratant", "why": "Céramides universels pour toute peau", "premium": false},
+		}
+	}
+	defaultProds, _ := json.Marshal(skincareProds)
+
+	skincareTitle, skincareSum := buildSkincareTitle(scan, skinType)
 
 	recs := []models.Recommendation{
 		{
 			UserID: userID, Type: "skincare", GenderTarget: "all",
-			Title: "Routine Skincare Essentielle", Summary: "Une routine de base pour prendre soin de ta peau au quotidien.",
+			Title: skincareTitle, Summary: skincareSum,
 			Steps: models.JSON(defaultSteps), Products: models.JSON(defaultProds),
-			Occasions: pq.StringArray{"daily"}, IconEmoji: "🌿", DurationMin: 5, Difficulty: "easy",
+			Occasions: pq.StringArray{"daily"}, IconEmoji: "🌿", DurationMin: 8, Difficulty: "easy",
 		},
 		{
 			UserID: userID, Type: "makeup", GenderTarget: "all",
