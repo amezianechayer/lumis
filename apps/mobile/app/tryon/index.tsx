@@ -16,7 +16,7 @@ import * as MediaLibrary from "expo-media-library";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import { captureRef } from "react-native-view-shot";
-import Svg, { Polygon, Circle, Ellipse, Defs, RadialGradient, Stop } from "react-native-svg";
+import Svg, { Polygon, Polyline, Circle, Ellipse, Path, Defs, RadialGradient, LinearGradient, Stop } from "react-native-svg";
 import MediaPipeWebView, { MediaPipeRef } from "../../components/FaceAnalyzer/MediaPipeWebView";
 
 type MakeupLookType = "lipstick" | "blush" | "eyeshadow" | "foundation";
@@ -82,6 +82,11 @@ const LEFT_EYE_OUTER = 33;
 const RIGHT_EYE_TOP = 386;
 const RIGHT_EYE_INNER = 362;
 const RIGHT_EYE_OUTER = 263;
+// Upper lash line (for eyeliner) — left then right eye, outer→inner
+const LEFT_UPPER_LID = [33, 246, 161, 160, 159, 158, 157, 173, 133];
+const RIGHT_UPPER_LID = [362, 398, 384, 385, 386, 387, 388, 466, 263];
+// Inner + outer lip for gloss separation
+const LOWER_LIP_CENTER = 17;
 
 type Pt = [number, number, number]; // x, y, z (normalized 0-1)
 
@@ -107,27 +112,49 @@ function MakeupMesh({
 
   // Cheek positions + radius (proportional to face width)
   const faceW = Math.abs(px(454) - px(234));
-  const blushR = faceW * 0.14;
+  const blushR = faceW * 0.15;
 
   // Eye dimensions
   const leftEyeW = Math.abs(px(LEFT_EYE_OUTER) - px(LEFT_EYE_INNER));
   const rightEyeW = Math.abs(px(RIGHT_EYE_OUTER) - px(RIGHT_EYE_INNER));
 
+  // Eyeliner paths (follow the upper lash line)
+  const leftLiner = LEFT_UPPER_LID.map(i => `${px(i)},${py(i)}`).join(" ");
+  const rightLiner = RIGHT_UPPER_LID.map(i => `${px(i)},${py(i)}`).join(" ");
+  const linerW = Math.max(1.5, faceW * 0.012);
+
+  // Gloss highlight position (center of lower lip)
+  const glossX = px(LOWER_LIP_CENTER);
+  const glossY = py(LOWER_LIP_CENTER) - faceW * 0.015;
+
   return (
     <Svg width={w} height={h} style={StyleSheet.absoluteFill} pointerEvents="none">
       <Defs>
         <RadialGradient id="blushGrad" cx="50%" cy="50%" r="50%">
-          <Stop offset="0%" stopColor={blush?.color ?? "#F4A0B8"} stopOpacity={0.45} />
+          <Stop offset="0%" stopColor={blush?.color ?? "#F4A0B8"} stopOpacity={0.55} />
+          <Stop offset="60%" stopColor={blush?.color ?? "#F4A0B8"} stopOpacity={0.28} />
           <Stop offset="100%" stopColor={blush?.color ?? "#F4A0B8"} stopOpacity={0} />
         </RadialGradient>
+        <RadialGradient id="eyeGradL" cx="50%" cy="60%" r="55%">
+          <Stop offset="0%" stopColor={eye?.color ?? "#C8A882"} stopOpacity={0.7} />
+          <Stop offset="100%" stopColor={eye?.color ?? "#C8A882"} stopOpacity={0.05} />
+        </RadialGradient>
+        <RadialGradient id="eyeGradR" cx="50%" cy="60%" r="55%">
+          <Stop offset="0%" stopColor={eye?.color ?? "#C8A882"} stopOpacity={0.7} />
+          <Stop offset="100%" stopColor={eye?.color ?? "#C8A882"} stopOpacity={0.05} />
+        </RadialGradient>
+        <LinearGradient id="lipGrad" x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0%" stopColor={lip?.color ?? "#C0392B"} stopOpacity={0.82} />
+          <Stop offset="100%" stopColor={lip?.color ?? "#C0392B"} stopOpacity={0.62} />
+        </LinearGradient>
       </Defs>
 
-      {/* Foundation — light overlay on whole face */}
+      {/* Foundation — light evening overlay */}
       {found?.enabled && (
-        <Polygon points={facePoints} fill={found.color} fillOpacity={0.18} />
+        <Polygon points={facePoints} fill={found.color} fillOpacity={0.16} />
       )}
 
-      {/* Blush — soft radial circles on cheeks */}
+      {/* Blush — soft natural radial on cheeks */}
       {blush?.enabled && (
         <>
           <Circle cx={px(LEFT_CHEEK)} cy={py(LEFT_CHEEK)} r={blushR} fill="url(#blushGrad)" />
@@ -135,25 +162,34 @@ function MakeupMesh({
         </>
       )}
 
-      {/* Eyeshadow — ellipses above the eyes */}
+      {/* Eyeshadow — graded ellipses on the lids */}
       {eye?.enabled && (
         <>
           <Ellipse
-            cx={px(LEFT_EYE_TOP)} cy={py(LEFT_EYE_TOP) - leftEyeW * 0.12}
-            rx={leftEyeW * 0.55} ry={leftEyeW * 0.32}
-            fill={eye.color} fillOpacity={0.5}
+            cx={px(LEFT_EYE_TOP)} cy={py(LEFT_EYE_TOP) - leftEyeW * 0.1}
+            rx={leftEyeW * 0.62} ry={leftEyeW * 0.4}
+            fill="url(#eyeGradL)"
           />
           <Ellipse
-            cx={px(RIGHT_EYE_TOP)} cy={py(RIGHT_EYE_TOP) - rightEyeW * 0.12}
-            rx={rightEyeW * 0.55} ry={rightEyeW * 0.32}
-            fill={eye.color} fillOpacity={0.5}
+            cx={px(RIGHT_EYE_TOP)} cy={py(RIGHT_EYE_TOP) - rightEyeW * 0.1}
+            rx={rightEyeW * 0.62} ry={rightEyeW * 0.4}
+            fill="url(#eyeGradR)"
           />
+          {/* Eyeliner + mascara — dark lash line */}
+          <Polyline points={leftLiner} fill="none" stroke="#1A1209" strokeWidth={linerW} strokeOpacity={0.85} strokeLinecap="round" strokeLinejoin="round" />
+          <Polyline points={rightLiner} fill="none" stroke="#1A1209" strokeWidth={linerW} strokeOpacity={0.85} strokeLinecap="round" strokeLinejoin="round" />
         </>
       )}
 
-      {/* Lipstick — precise lip polygon */}
+      {/* Lipstick — gradient fill + contour + gloss */}
       {lip?.enabled && (
-        <Polygon points={lipPoints} fill={lip.color} fillOpacity={0.55} />
+        <>
+          <Polygon points={lipPoints} fill="url(#lipGrad)" />
+          {/* Defined lip contour */}
+          <Polygon points={lipPoints} fill="none" stroke={lip.color} strokeOpacity={0.9} strokeWidth={linerW * 0.7} strokeLinejoin="round" />
+          {/* Gloss highlight on lower lip */}
+          <Ellipse cx={glossX} cy={glossY} rx={faceW * 0.05} ry={faceW * 0.018} fill="#FFFFFF" fillOpacity={0.28} />
+        </>
       )}
     </Svg>
   );

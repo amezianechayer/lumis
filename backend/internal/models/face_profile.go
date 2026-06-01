@@ -54,6 +54,24 @@ func (j *JSON) Scan(value interface{}) error {
 	return nil
 }
 
+// MarshalJSON outputs the raw JSON (not base64). Without this, the API would
+// encode steps/products as a base64 string, making them unparsable client-side.
+func (j JSON) MarshalJSON() ([]byte, error) {
+	if len(j) == 0 {
+		return []byte("null"), nil
+	}
+	return j, nil
+}
+
+// UnmarshalJSON stores the raw JSON bytes as-is.
+func (j *JSON) UnmarshalJSON(data []byte) error {
+	if j == nil {
+		return nil
+	}
+	*j = append((*j)[0:0], data...)
+	return nil
+}
+
 func (f *FaceProfile) BeforeCreate(tx *gorm.DB) error {
 	if f.ID == uuid.Nil {
 		f.ID = uuid.New()

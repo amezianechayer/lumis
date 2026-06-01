@@ -26,13 +26,25 @@ const TYPE_THEME: Record<string, { from: string; to: string; accent: string; lab
   color_season: { from: "rgba(251,191,36,0.22)",  to: "rgba(251,191,36,0.04)",  accent: "#fbbf24", label: "Couleurs" },
 };
 
+// steps/products can arrive as array, JSON string, or null depending on serialization
+function parseArr<T>(field: unknown): T[] {
+  if (Array.isArray(field)) return field as T[];
+  if (typeof field === "string") {
+    try { const p = JSON.parse(field); return Array.isArray(p) ? p : []; } catch { return []; }
+  }
+  return [];
+}
+
 export function RecommendationCard({ rec, index }: Props) {
   const router = useRouter();
   const diffColor = DIFFICULTY_COLORS[rec.difficulty] ?? "#94a3b8";
   const theme = TYPE_THEME[rec.type] ?? { from: "rgba(255,255,255,0.1)", to: "rgba(255,255,255,0.02)", accent: "#C9A84C", label: rec.type };
 
-  const stepCount = rec.steps?.length ?? 0;
-  const productCount = rec.products?.length ?? 0;
+  const steps = parseArr<{ title: string }>(rec.steps);
+  const products = parseArr<unknown>(rec.products);
+  const stepCount = steps.length;
+  const productCount = products.length;
+  const firstStepTitle = steps[0]?.title ?? "";
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 70).springify().damping(16)}>
@@ -75,14 +87,14 @@ export function RecommendationCard({ rec, index }: Props) {
             </Text>
           </View>
 
-          {/* First step preview */}
-          {stepCount > 0 && rec.steps[0] && (
+          {/* First step preview — only if a real title exists */}
+          {firstStepTitle.length > 0 && (
             <View style={{ marginHorizontal: 16, marginBottom: 12, backgroundColor: "rgba(0,0,0,0.25)", borderRadius: 14, padding: 12, flexDirection: "row", gap: 10, alignItems: "center" }}>
               <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: `${theme.accent}30`, alignItems: "center", justifyContent: "center" }}>
                 <Text style={{ color: theme.accent, fontSize: 11, fontWeight: "800" }}>1</Text>
               </View>
               <Text numberOfLines={1} style={{ color: "rgba(255,255,255,0.75)", fontSize: 12, flex: 1 }}>
-                {rec.steps[0].title}
+                {firstStepTitle}
               </Text>
             </View>
           )}
