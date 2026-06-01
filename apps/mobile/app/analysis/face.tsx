@@ -207,6 +207,31 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
           </Animated.View>
         )}
 
+        {/* Color quiz CTA — precise undertone test */}
+        <Animated.View entering={FadeInDown.delay(220)} className="mb-4">
+          <TouchableOpacity
+            onPress={() => router.push("/skin-tone-quiz")}
+            activeOpacity={0.85}
+            style={{
+              backgroundColor: "rgba(255,255,255,0.05)",
+              borderWidth: 1, borderColor: "rgba(255,255,255,0.12)",
+              borderRadius: 16, padding: 16,
+              flexDirection: "row", alignItems: "center", gap: 12,
+            }}
+          >
+            <Text style={{ fontSize: 24 }}>🎨</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14 }}>
+                Affiner avec le test colorimétrie
+              </Text>
+              <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, marginTop: 2 }}>
+                6 questions pour déterminer ton sous-ton précis (veines, bijoux, soleil…)
+              </Text>
+            </View>
+            <Text style={{ color: "#C9A84C", fontSize: 18 }}>→</Text>
+          </TouchableOpacity>
+        </Animated.View>
+
         {/* Features grid */}
         <Animated.View entering={FadeInDown.delay(240)} className="flex-row flex-wrap gap-3 mb-4">
           <FeatureTile label="Yeux" value={profile.eye_shape} />

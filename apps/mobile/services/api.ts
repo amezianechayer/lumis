@@ -223,6 +223,12 @@ class ApiClient {
     return data.guide;
   }
 
+  // Save color quiz result (undertone / skin tone / season)
+  async saveColorQuiz(payload: { undertone: string; skin_tone: string; color_season: string }): Promise<FaceProfile> {
+    const { data } = await this.client.post<{ face_profile: FaceProfile }>("/analysis/color-quiz", payload);
+    return data.face_profile;
+  }
+
   // Coach
   async createCoachConversation(): Promise<CoachConversation> {
     const { data } = await this.client.post<CoachConversationResponse>("/coach/conversations");

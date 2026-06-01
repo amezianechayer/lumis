@@ -153,6 +153,7 @@ func main() {
 	analysis.Get("/face/latest", analysisHandler.GetLatest)
 	analysis.Get("/face/history", analysisHandler.GetHistory)
 	analysis.Get("/face/:id", analysisHandler.GetByID)
+	analysis.Post("/color-quiz", analysisHandler.SaveColorQuiz)
 
 	// Skin scan
 	analysis.Post("/skin", skinScanHandler.Analyze)

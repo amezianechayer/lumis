@@ -21,6 +21,10 @@ func (r *FaceProfileRepository) Create(ctx context.Context, profile *models.Face
 	return r.db.WithContext(ctx).Create(profile).Error
 }
 
+func (r *FaceProfileRepository) Update(ctx context.Context, profile *models.FaceProfile) error {
+	return r.db.WithContext(ctx).Save(profile).Error
+}
+
 func (r *FaceProfileRepository) FindLatestByUser(ctx context.Context, userID uuid.UUID) (*models.FaceProfile, error) {
 	var profile models.FaceProfile
 	err := r.db.WithContext(ctx).

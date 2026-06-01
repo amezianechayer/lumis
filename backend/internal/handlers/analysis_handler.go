@@ -5,6 +5,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/lumis/backend/internal/middleware"
+	"github.com/lumis/backend/internal/models"
 	"github.com/lumis/backend/internal/repository"
 	"github.com/lumis/backend/internal/services"
 )
@@ -115,6 +116,51 @@ func (h *AnalysisHandler) GetHistory(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"face_profiles": profiles})
+}
+
+// POST /api/v1/analysis/color-quiz
+// Saves precise undertone/skin tone/color season from the questionnaire.
+// Updates the latest face profile, or creates a minimal one if none exists.
+func (h *AnalysisHandler) SaveColorQuiz(c *fiber.Ctx) error {
+	userID, err := parseUserID(c)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
+	}
+
+	var body struct {
+		Undertone   string `json:"undertone"`
+		SkinTone    string `json:"skin_tone"`
+		ColorSeason string `json:"color_season"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid body"})
+	}
+
+	profile, _ := h.faceRepo.FindLatestByUser(c.Context(), userID)
+	if profile != nil {
+		profile.Undertone = body.Undertone
+		profile.SkinTone = body.SkinTone
+		profile.ColorSeason = body.ColorSeason
+		if err := h.faceRepo.Update(c.Context(), profile); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "update failed"})
+		}
+		return c.JSON(fiber.Map{"face_profile": profile})
+	}
+
+	// No photo analysis yet — create a minimal colorimetry-only profile
+	newProfile := &models.FaceProfile{
+		UserID:          userID,
+		PhotoURL:        "quiz",
+		FaceShape:       "oval",
+		Undertone:       body.Undertone,
+		SkinTone:        body.SkinTone,
+		ColorSeason:     body.ColorSeason,
+		AnalysisVersion: "quiz-1.0",
+	}
+	if err := h.faceRepo.Create(c.Context(), newProfile); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "create failed"})
+	}
+	return c.JSON(fiber.Map{"face_profile": newProfile})
 }
 
 func parseUserID(c *fiber.Ctx) (uuid.UUID, error) {
