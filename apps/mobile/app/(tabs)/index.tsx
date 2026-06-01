@@ -12,6 +12,7 @@ import { useAuthStore } from "../../stores/auth.store";
 import { useLanguageStore } from "../../stores/language.store";
 import { t } from "../../utils/i18n";
 import { Skeleton, SkeletonCard } from "../../components/ui/Skeleton";
+import { WeatherTipCard } from "../../components/ui/WeatherTipCard";
 import { api } from "../../services/api";
 
 function PulseScoreRing({ score, color }: { score: number; color: string }) {
@@ -96,8 +97,13 @@ export default function HomeScreen() {
         </Text>
       </Animated.View>
 
+      {/* Weather tip of the day */}
+      <Animated.View entering={FadeInDown.delay(100)} className="mt-6">
+        <WeatherTipCard />
+      </Animated.View>
+
       {/* Skin Score — cliquable pour voir le détail */}
-      <Animated.View entering={FadeInDown.delay(150)} className="mt-8">
+      <Animated.View entering={FadeInDown.delay(150)} className="mt-6">
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={() => router.navigate("/(tabs)/scan")}

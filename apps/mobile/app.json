@@ -47,6 +47,12 @@
       ],
       "expo-localization",
       [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Lumis utilise ta position pour te donner un conseil skincare adapté à la météo et l'index UV."
+        }
+      ],
+      [
         "expo-media-library",
         {
           "photosPermission": "Lumis needs access to save your try-on photos.",
