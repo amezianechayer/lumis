@@ -32,7 +32,7 @@ const queryClient = new QueryClient({
 export default function RootLayout() {
   const { checkAuth } = useAuthStore();
 
-  const [fontsLoaded] = useFonts({
+  const [fontsLoaded, fontError] = useFonts({
     PlayfairDisplay_700Bold,
     DMSans_400Regular,
     DMSans_500Medium,
@@ -40,15 +40,22 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (!fontsLoaded) return;
-    // Hide splash as soon as fonts are ready — don't block on network calls
+    // Hide splash when fonts are ready OR if fonts fail — never block forever
+    if (!fontsLoaded && !fontError) return;
     SplashScreen.hideAsync().catch(() => {});
-    // Auth + RevenueCat run in background, they navigate independently
     initRevenueCat().catch(() => {});
     checkAuth().catch(() => {});
-  }, [fontsLoaded]);
+  }, [fontsLoaded, fontError]);
 
-  if (!fontsLoaded) return null;
+  // Safety timeout — force hide splash after 4s no matter what
+  useEffect(() => {
+    const t = setTimeout(() => {
+      SplashScreen.hideAsync().catch(() => {});
+    }, 4000);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (!fontsLoaded && !fontError) return null;
 
   return (
     <QueryClientProvider client={queryClient}>

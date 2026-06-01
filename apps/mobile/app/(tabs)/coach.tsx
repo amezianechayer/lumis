@@ -10,10 +10,9 @@ import {
   Alert,
   Modal,
   ScrollView,
-  StatusBar,
 } from "react-native";
 import { useEffect, useRef, useState } from "react";
-import Animated, { FadeInDown, FadeInUp, SlideInRight, SlideOutRight } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { api } from "../../services/api";
 import type { CoachConversation, CoachMessage } from "../../types/api";
@@ -146,7 +145,7 @@ export default function CoachScreen() {
       behavior="padding"
       keyboardVerticalOffset={Platform.select({
         ios: 90,
-        android: (StatusBar.currentHeight ?? 24) + 56 + insets.bottom,
+        android: 80 + insets.bottom,
       })}
     >
       {/* History modal */}
