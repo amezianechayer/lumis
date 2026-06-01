@@ -564,7 +564,14 @@ export default function ScanScreen() {
             <Text className="text-lumis-white/60 text-xl">←</Text>
           </TouchableOpacity>
           <Text className="text-lumis-white font-display text-xl flex-1">Historique scans</Text>
-          <Text className="text-lumis-white/30 font-body text-xs">{history.length} scan{history.length > 1 ? "s" : ""}</Text>
+          {history.length >= 2 && (
+            <TouchableOpacity
+              onPress={() => router.push("/scan/compare")}
+              style={{ backgroundColor: "rgba(201,168,76,0.15)", borderWidth: 1, borderColor: "rgba(201,168,76,0.4)", borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5 }}
+            >
+              <Text style={{ color: "#C9A84C", fontSize: 11, fontWeight: "600" }}>⇄ Comparer</Text>
+            </TouchableOpacity>
+          )}
         </View>
         <ScrollView
           contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 40 }}
