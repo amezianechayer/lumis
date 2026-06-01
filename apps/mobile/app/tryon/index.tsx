@@ -10,10 +10,10 @@ import {
   StyleSheet,
   Image,
 } from "react-native";
-import { CameraView, useCameraPermissions } from "expo-camera";
 import { router } from "expo-router";
-import Animated, { FadeInUp, FadeIn } from "react-native-reanimated";
+import Animated, { FadeInUp, FadeIn, FadeInDown } from "react-native-reanimated";
 import * as MediaLibrary from "expo-media-library";
+import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import { captureRef } from "react-native-view-shot";
 import Svg, { Polygon, Circle, Ellipse, Defs, RadialGradient, Stop } from "react-native-svg";
@@ -159,12 +159,11 @@ function MakeupMesh({
   );
 }
 
-type Phase = "camera" | "detecting" | "result";
+type Phase = "intro" | "detecting" | "result";
 
 export default function TryOnScreen() {
   const { width: W, height: H } = useWindowDimensions();
-  const [permission, requestPermission] = useCameraPermissions();
-  const [phase, setPhase] = useState<Phase>("camera");
+  const [phase, setPhase] = useState<Phase>("intro");
   const [looks, setLooks] = useState<MakeupLook[]>(INITIAL_LOOKS);
   const [activeLookType, setActiveLookType] = useState<MakeupLookType>("lipstick");
   const [capturing, setCapturing] = useState(false);
@@ -173,8 +172,6 @@ export default function TryOnScreen() {
   const [landmarks, setLandmarks] = useState<Pt[] | null>(null);
   const [mpReady, setMpReady] = useState(false);
 
-  const cameraRef = useRef<CameraView>(null);
-  const cameraReady = useRef(false);
   const mediaPipeRef = useRef<MediaPipeRef>(null);
   const captureViewRef = useRef<View>(null);
 
@@ -192,20 +189,36 @@ export default function TryOnScreen() {
     setLooks(prev => prev.map(l => l.type === type ? { ...l, color, enabled: true } : l));
   };
 
-  // ── Take photo + run face detection ──────────────────────────────────────────
-  const handleTakePhoto = useCallback(async () => {
-    if (!cameraRef.current || !cameraReady.current) {
-      Alert.alert("Patiente", "La caméra n'est pas encore prête.");
-      return;
-    }
+  // ── Pick photo (native camera or gallery) + run face detection ───────────────
+  const handlePickImage = useCallback(async (source: "camera" | "gallery") => {
     try {
-      setPhase("detecting");
-      const photo = await cameraRef.current.takePictureAsync({ quality: 0.9, base64: false });
-      if (!photo) throw new Error("no photo");
+      let result: ImagePicker.ImagePickerResult;
+      if (source === "camera") {
+        const perm = await ImagePicker.requestCameraPermissionsAsync();
+        if (!perm.granted) {
+          Alert.alert("Permission refusée", "Autorise l'accès à la caméra dans les paramètres.");
+          return;
+        }
+        result = await ImagePicker.launchCameraAsync({
+          mediaTypes: "images", cameraType: ImagePicker.CameraType.front, quality: 0.9,
+        });
+      } else {
+        const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!perm.granted) {
+          Alert.alert("Permission refusée", "Autorise l'accès à la galerie.");
+          return;
+        }
+        result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: "images", quality: 0.9 });
+      }
 
-      // Resize for faster MediaPipe processing
+      if (result.canceled || !result.assets?.[0]) return;
+
+      setPhase("detecting");
+      setLandmarks(null);
+
+      // Resize for faster, reliable MediaPipe processing
       const manipulated = await ImageManipulator.manipulateAsync(
-        photo.uri,
+        result.assets[0].uri,
         [{ resize: { width: 720 } }],
         { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG, base64: true }
       );
@@ -216,7 +229,6 @@ export default function TryOnScreen() {
       if (manipulated.base64 && mediaPipeRef.current) {
         const dataUri = `data:image/jpeg;base64,${manipulated.base64}`;
         mediaPipeRef.current.analyzeImage(dataUri);
-        // Safety timeout — if MediaPipe doesn't respond in 8s, show result without makeup mesh
         setTimeout(() => {
           setPhase(p => (p === "detecting" ? "result" : p));
         }, 8000);
@@ -225,8 +237,8 @@ export default function TryOnScreen() {
       }
     } catch (e) {
       console.warn("[TryOn] photo error:", e);
-      Alert.alert("Erreur", "Impossible de prendre la photo. Réessaie.");
-      setPhase("camera");
+      Alert.alert("Erreur", "Impossible de charger la photo. Réessaie.");
+      setPhase("intro");
     }
   }, []);
 
@@ -239,7 +251,7 @@ export default function TryOnScreen() {
     console.warn("[TryOn] MediaPipe:", msg);
     if (msg === "no_face_detected") {
       Alert.alert("Visage non détecté", "Assure-toi que ton visage est bien visible et éclairé, puis réessaie.");
-      setPhase("camera");
+      setPhase("intro");
       setPhotoUri(null);
     } else {
       // Show photo anyway, makeup mesh just won't render
@@ -271,24 +283,8 @@ export default function TryOnScreen() {
   const handleRetake = () => {
     setPhotoUri(null);
     setLandmarks(null);
-    setPhase("camera");
+    setPhase("intro");
   };
-
-  // ── Permission gate ─────────────────────────────────────────────────────────
-  if (!permission) return <View style={{ flex: 1, backgroundColor: "#000" }} />;
-  if (!permission.granted) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.title}>Caméra requise</Text>
-        <TouchableOpacity onPress={requestPermission} style={styles.btn}>
-          <Text style={styles.btnText}>Autoriser</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 12 }}>
-          <Text style={styles.back}>Retour</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
@@ -300,20 +296,9 @@ export default function TryOnScreen() {
         onReady={() => setMpReady(true)}
       />
 
-      {/* ── CAMERA PHASE ── */}
-      {phase === "camera" && (
-        <>
-          <CameraView
-            ref={cameraRef}
-            style={StyleSheet.absoluteFill}
-            facing="front"
-            onCameraReady={() => { cameraReady.current = true; }}
-          />
-          <View pointerEvents="none" style={[styles.oval, {
-            width: W * 0.62, height: H * 0.52,
-            left: (W - W * 0.62) / 2, top: H * 0.08,
-            borderRadius: W * 0.31,
-          }]} />
+      {/* ── INTRO PHASE ── */}
+      {phase === "intro" && (
+        <View style={{ flex: 1, backgroundColor: "#0A0A0A" }}>
           <View style={styles.topBar}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
               <Text style={{ color: "#fff", fontSize: 18 }}>←</Text>
@@ -321,22 +306,54 @@ export default function TryOnScreen() {
             <Text style={styles.topTitle}>Virtual Try-On</Text>
             <View style={{ width: 40 }} />
           </View>
-          <View pointerEvents="none" style={styles.guideHint}>
-            <Text style={styles.guideText}>
-              {mpReady ? "Aligne ton visage dans l'ovale" : "Chargement de la détection faciale…"}
-            </Text>
+
+          <View style={{ flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+            <Animated.View entering={FadeInDown} style={{ alignItems: "center", marginBottom: 40 }}>
+              <Text style={{ fontSize: 56, marginBottom: 16 }}>💄</Text>
+              <Text style={{ color: "#fff", fontSize: 24, fontWeight: "700", textAlign: "center", marginBottom: 10 }}>
+                Essaie ton maquillage
+              </Text>
+              <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 14, textAlign: "center", lineHeight: 21 }}>
+                Prends un selfie ou choisis une photo. L'IA détecte ton visage et applique le maquillage sur tes vrais traits.
+              </Text>
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(120)} style={{ width: "100%", gap: 12 }}>
+              <TouchableOpacity
+                onPress={() => handlePickImage("camera")}
+                disabled={!mpReady}
+                style={[styles.bigBtn, { opacity: mpReady ? 1 : 0.5 }]}
+                activeOpacity={0.85}
+              >
+                <Text style={{ fontSize: 22 }}>📸</Text>
+                <Text style={styles.bigBtnText}>Prendre un selfie</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => handlePickImage("gallery")}
+                disabled={!mpReady}
+                style={[styles.bigBtnOutline, { opacity: mpReady ? 1 : 0.5 }]}
+                activeOpacity={0.85}
+              >
+                <Text style={{ fontSize: 20 }}>🖼️</Text>
+                <Text style={styles.bigBtnOutlineText}>Choisir une photo</Text>
+              </TouchableOpacity>
+
+              {!mpReady && (
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 8 }}>
+                  <ActivityIndicator color="#C9A84C" size="small" />
+                  <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>Chargement de la détection faciale…</Text>
+                </View>
+              )}
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(200)} style={{ marginTop: 32, flexDirection: "row", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+              <Text style={{ color: "rgba(255,255,255,0.35)", fontSize: 12, textAlign: "center" }}>
+                💡 Astuce : bonne lumière + visage de face = meilleur résultat
+              </Text>
+            </Animated.View>
           </View>
-          <View style={styles.cameraBottom}>
-            <TouchableOpacity
-              onPress={handleTakePhoto}
-              disabled={!mpReady}
-              style={[styles.shutterBtn, { opacity: mpReady ? 1 : 0.4 }]}
-              activeOpacity={0.8}
-            >
-              <View style={styles.shutterInner} />
-            </TouchableOpacity>
-          </View>
-        </>
+        </View>
       )}
 
       {/* ── DETECTING PHASE ── */}
@@ -447,11 +464,10 @@ const styles = StyleSheet.create({
   topBar: { position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 54, paddingBottom: 16, backgroundColor: "rgba(0,0,0,0.4)" },
   backBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.4)", borderRadius: 20 },
   topTitle: { color: "#fff", fontSize: 18, fontWeight: "700" },
-  guideHint: { position: "absolute", bottom: "22%", left: 0, right: 0, alignItems: "center" },
-  guideText: { color: "rgba(201,168,76,0.8)", fontSize: 13, backgroundColor: "rgba(0,0,0,0.4)", paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, overflow: "hidden" },
-  cameraBottom: { position: "absolute", bottom: 48, left: 0, right: 0, alignItems: "center" },
-  shutterBtn: { width: 76, height: 76, borderRadius: 38, borderWidth: 4, borderColor: "#C9A84C", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(201,168,76,0.2)" },
-  shutterInner: { width: 56, height: 56, borderRadius: 28, backgroundColor: "#C9A84C" },
+  bigBtn: { backgroundColor: "#C9A84C", borderRadius: 16, paddingVertical: 16, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, elevation: 6 },
+  bigBtnText: { color: "#0A0A0A", fontWeight: "700", fontSize: 16 },
+  bigBtnOutline: { borderWidth: 1, borderColor: "rgba(201,168,76,0.4)", borderRadius: 16, paddingVertical: 16, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
+  bigBtnOutlineText: { color: "#C9A84C", fontWeight: "600", fontSize: 16 },
   detectOverlay: { alignItems: "center", gap: 16, backgroundColor: "rgba(0,0,0,0.5)", padding: 32, borderRadius: 24 },
   detectText: { color: "#C9A84C", fontSize: 16, fontWeight: "600" },
   noFaceBanner: { marginHorizontal: 20, marginTop: 16, backgroundColor: "rgba(249,115,22,0.15)", borderWidth: 1, borderColor: "rgba(249,115,22,0.3)", borderRadius: 12, padding: 12 },
