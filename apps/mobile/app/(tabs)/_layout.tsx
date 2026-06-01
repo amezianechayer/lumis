@@ -1,14 +1,19 @@
 import { Tabs } from "expo-router";
-import { Text, View } from "react-native";
+import { Text, View, Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 function TabIcon({ icon, label, focused }: { icon: string; label: string; focused: boolean }) {
   return (
-    <View className="items-center gap-0.5 pt-1">
-      <Text className={`text-xl ${focused ? "opacity-100" : "opacity-40"}`}>{icon}</Text>
+    <View style={{ alignItems: "center", justifyContent: "center", paddingTop: 6, gap: 2 }}>
+      <Text style={{ fontSize: 18, opacity: focused ? 1 : 0.35 }}>{icon}</Text>
       <Text
-        className={`font-body text-[10px] ${
-          focused ? "text-lumis-gold" : "text-lumis-white/40"
-        }`}
+        style={{
+          fontSize: 9,
+          fontWeight: focused ? "700" : "400",
+          color: focused ? "#C9A84C" : "rgba(255,255,255,0.35)",
+          letterSpacing: 0.2,
+        }}
+        numberOfLines={1}
       >
         {label}
       </Text>
@@ -17,18 +22,25 @@ function TabIcon({ icon, label, focused }: { icon: string; label: string; focuse
 }
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = 52 + insets.bottom;
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
           backgroundColor: "#0A0A0A",
-          borderTopColor: "#ffffff15",
+          borderTopColor: "rgba(255,255,255,0.08)",
           borderTopWidth: 1,
-          height: 80,
-          paddingBottom: 16,
+          height: tabBarHeight,
+          paddingBottom: insets.bottom,
+          paddingTop: 0,
         },
         tabBarShowLabel: false,
+        tabBarItemStyle: {
+          paddingVertical: 0,
+        },
       }}
     >
       <Tabs.Screen

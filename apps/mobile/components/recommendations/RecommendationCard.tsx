@@ -69,11 +69,28 @@ export function RecommendationCard({ rec, index }: Props) {
         </View>
 
         {/* Summary */}
-        <View className="px-4 pb-3">
-          <Text numberOfLines={2} className="text-lumis-white/45 font-body text-xs leading-5">
+        <View className="px-4 pb-2">
+          <Text numberOfLines={2} className="text-lumis-white/55 font-body text-xs leading-5">
             {rec.summary}
           </Text>
         </View>
+
+        {/* First step preview */}
+        {rec.steps && rec.steps.length > 0 && (
+          <View className="mx-4 mb-3 px-3 py-2 rounded-xl" style={{ backgroundColor: "rgba(201,168,76,0.07)", borderWidth: 1, borderColor: "rgba(201,168,76,0.15)" }}>
+            <Text style={{ color: "rgba(201,168,76,0.6)", fontSize: 9, fontWeight: "700", letterSpacing: 0.8, marginBottom: 2 }}>
+              ÉTAPE 1
+            </Text>
+            <Text numberOfLines={1} style={{ color: "rgba(255,255,255,0.7)", fontSize: 12 }}>
+              {rec.steps[0].title}
+            </Text>
+            {rec.steps[0].description ? (
+              <Text numberOfLines={1} style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, marginTop: 1 }}>
+                {rec.steps[0].description}
+              </Text>
+            ) : null}
+          </View>
+        )}
 
         {/* Footer */}
         <View
@@ -87,9 +104,16 @@ export function RecommendationCard({ rec, index }: Props) {
                 {t(`recs.difficulty_${rec.difficulty}` as any)}
               </Text>
             </View>
-            <Text className="text-lumis-white/25 font-body text-xs">
-              {rec.steps?.length ?? 0} étapes
-            </Text>
+            {(rec.steps?.length ?? 0) > 0 && (
+              <Text className="text-lumis-white/25 font-body text-xs">
+                {rec.steps!.length} étape{rec.steps!.length > 1 ? "s" : ""}
+              </Text>
+            )}
+            {(rec.products?.length ?? 0) > 0 && (
+              <Text style={{ color: "rgba(255,255,255,0.2)", fontSize: 11 }}>
+                🛍️ {rec.products!.length} produit{rec.products!.length > 1 ? "s" : ""}
+              </Text>
+            )}
           </View>
           <Text className="text-lumis-white/30 font-body text-xs">
             {rec.duration_min} min →

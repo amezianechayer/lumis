@@ -44,17 +44,6 @@ export default function SkinAnalysisScreen() {
     );
   }
 
-  if (!device) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.subtitle}>Caméra non disponible.</Text>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 12 }}>
-          <Text style={styles.backText}>Retour</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
   // ── Result ──────────────────────────────────────────────────────────────────
   if (phase === "done" && geminiResult) {
     return <SkinAnalysisResult result={geminiResult} onRetry={reset} />;

@@ -145,30 +145,38 @@ func (s *RecommendationService) generateAllWithGroq(
 		sb.WriteString("\n")
 	}
 
-	sb.WriteString(`## Instructions
-Génère EXACTEMENT 5 recommandations, une par type : skincare, makeup, haircut, grooming, color_season.
-- Pour "makeup" : si genre masculin, propose une routine teint naturel/BB cream/correcteur adaptée aux hommes.
-- Pour "grooming" : si genre féminin, propose une routine sourcils/lèvres/soin visage.
-- Chaque recommandation doit être TRÈS spécifique aux problèmes détectés (cite les scores, les zones, les problèmes réels).
-- Pas de conseils génériques. Chaque étape et produit doit être justifié par les données.
+	sb.WriteString(`## Instructions STRICTES
+Génère EXACTEMENT 5 recommandations ultra-personnalisées, une par type : skincare, makeup, haircut, grooming, color_season.
 
-Réponds UNIQUEMENT avec un tableau JSON valide (sans markdown) :
+RÈGLES ABSOLUES :
+1. INTERDICTION de conseils génériques comme "hydrate ta peau" sans mentionner POURQUOI selon les données (score, zone, problème détecté).
+2. Cite TOUJOURS les données réelles : "ton score acné de X/100", "ta zone T", "ton undertone warm", "ta forme de visage ovale", etc.
+3. Les produits doivent être des MARQUES RÉELLES connues (ex: CeraVe, La Roche-Posay, Neutrogena, L'Oréal, Fenty Beauty, etc.)
+4. Pour "haircut" : décris précisément la coupe (ex: "dégradé haut sur les côtés, longueur 5cm sur le dessus"), comment la demander au coiffeur, et quels produits de coiffage utiliser.
+5. Pour "grooming" (genre masculin) : routine barbe/sourcils/soin spécifique. Pour (genre féminin) : sourcils/lèvres/finitions.
+6. Pour "color_season" : cite les couleurs HEX spécifiques à porter, les couleurs à éviter, et pourquoi selon l'undertone et la teinte de peau.
+7. Pour "makeup" : technique d'application précise (stippling, baking, etc.), ordre d'application, et comment adapter selon les problèmes détectés.
+8. Chaque étape doit avoir une description de 2-3 phrases minimum avec la technique exacte.
+9. Pour chaque produit, le champ "why" doit expliquer POURQUOI ce produit spécifiquement pour CE profil (pas de généralités).
+10. Occasions variées selon le type : ["daily", "evening", "professional", "date", "weekend"].
+
+Réponds UNIQUEMENT avec un tableau JSON valide (sans markdown, sans commentaires) :
 [
   {
     "type": "skincare",
     "icon": "🌿",
-    "title": "<titre spécifique, max 60 chars>",
-    "summary": "<2-3 phrases très spécifiques aux problèmes détectés>",
+    "title": "<titre spécifique avec le problème cité, max 60 chars>",
+    "summary": "<2-3 phrases citant les données réelles : scores, zones, problèmes spécifiques>",
     "duration_min": <int>,
     "difficulty": <"easy"|"medium"|"advanced">,
+    "occasions": ["daily"],
     "steps": [
-      {"order": 1, "title": "<nom étape>", "description": "<instruction précise>", "tip": "<astuce ou vide>", "duration_min": <int>}
+      {"order": 1, "title": "<nom étape précis>", "description": "<technique exacte 2-3 phrases, pourquoi pour ce profil>", "tip": "<astuce spécifique ou vide>", "duration_min": <int>}
     ],
     "products": [
-      {"name": "<produit>", "category": "<catégorie>", "why": "<pourquoi CE produit pour CE profil>", "premium": false}
+      {"name": "<Marque + Nom Exact>", "category": "<catégorie>", "why": "<explication spécifique au profil>", "premium": false}
     ]
-  },
-  ... (4 autres)
+  }
 ]
 Génère 4-6 étapes et 3-5 produits par recommandation. Types requis : skincare, makeup, haircut, grooming, color_season.`)
 
@@ -229,12 +237,13 @@ Génère 4-6 étapes et 3-5 produits par recommandation. Types requis : skincare
 	raw = extractJSONArray(raw)
 
 	var parsed []struct {
-		Type        string `json:"type"`
-		Icon        string `json:"icon"`
-		Title       string `json:"title"`
-		Summary     string `json:"summary"`
-		DurationMin int    `json:"duration_min"`
-		Difficulty  string `json:"difficulty"`
+		Type        string   `json:"type"`
+		Icon        string   `json:"icon"`
+		Title       string   `json:"title"`
+		Summary     string   `json:"summary"`
+		DurationMin int      `json:"duration_min"`
+		Difficulty  string   `json:"difficulty"`
+		Occasions   []string `json:"occasions"`
 		Steps       []struct {
 			Order       int    `json:"order"`
 			Title       string `json:"title"`
@@ -281,6 +290,11 @@ Génère 4-6 étapes et 3-5 produits par recommandation. Types requis : skincare
 			icon = icons[recType]
 		}
 
+		occasions := p.Occasions
+		if len(occasions) == 0 {
+			occasions = []string{"daily"}
+		}
+
 		recs = append(recs, models.Recommendation{
 			UserID:        userID,
 			FaceProfileID: faceProfileID,
@@ -290,7 +304,7 @@ Génère 4-6 étapes et 3-5 produits par recommandation. Types requis : skincare
 			Summary:       p.Summary,
 			Steps:         models.JSON(stepsJSON),
 			Products:      models.JSON(prodsJSON),
-			Occasions:     pq.StringArray{"daily"},
+			Occasions:     pq.StringArray(occasions),
 			IconEmoji:     icon,
 			DurationMin:   p.DurationMin,
 			Difficulty:    difficulty,

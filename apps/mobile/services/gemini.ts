@@ -106,6 +106,10 @@ export async function analyzeSkinWithGemini(
   // Strip any accidental markdown fences
   const cleaned = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
 
-  const parsed: SkinAnalysisResult = JSON.parse(cleaned);
-  return parsed;
+  try {
+    const parsed: SkinAnalysisResult = JSON.parse(cleaned);
+    return parsed;
+  } catch {
+    throw new Error("Réponse IA invalide. Réessaie avec un meilleur éclairage.");
+  }
 }

@@ -41,6 +41,15 @@ export default function PremiumScreen() {
 
   // ── Present RevenueCat Paywall ──────────────────────────────────────────────
   const handlePresentPaywall = async () => {
+    // Si les packages sont vides (pas encore configurés en store), afficher un message clair
+    if (!isLoading && packages.length === 0) {
+      Alert.alert(
+        "Bientôt disponible",
+        "Les offres Premium seront disponibles lors du lancement officiel de l'app.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
     try {
       const result = await RevenueCatUI.presentPaywall();
       if (
@@ -54,8 +63,17 @@ export default function PremiumScreen() {
         Alert.alert("🎉 Bienvenue Premium !", "Ton abonnement est maintenant actif.");
       }
     } catch (e: unknown) {
-      const err = e as { message?: string };
-      Alert.alert("Erreur", err?.message ?? "Impossible d'afficher le paywall.");
+      const err = e as { code?: number; message?: string };
+      // Code 23 = CONFIGURATION_ERROR (produits pas encore publiés en store)
+      if (err?.code === 23) {
+        Alert.alert(
+          "Bientôt disponible",
+          "Les offres Premium seront disponibles lors du lancement officiel de l'app.",
+          [{ text: "OK" }]
+        );
+      } else {
+        Alert.alert("Erreur", err?.message ?? "Impossible d'afficher le paywall.");
+      }
     }
   };
 

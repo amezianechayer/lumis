@@ -53,11 +53,15 @@ export function useRevenueCat() {
         error: null,
       });
     } catch (e: unknown) {
+      const err = e as { code?: number };
+      // Code 23 = CONFIGURATION_ERROR : produits pas encore publiés → pas une vraie erreur
+      const isConfigError = err?.code === 23;
       setState((s) => ({
         ...s,
         isReady: true,
         isLoading: false,
-        error: "Impossible de charger les offres.",
+        packages: [],
+        error: isConfigError ? null : "Impossible de charger les offres.",
       }));
     }
   }
