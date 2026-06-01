@@ -15,7 +15,10 @@ import { api } from "../../services/api";
 import { ColorSeason, FaceProfile } from "../../types/api";
 import { Skeleton, SkeletonCard } from "../../components/ui/Skeleton";
 import { useLanguageStore } from "../../stores/language.store";
+import { useAuthStore } from "../../stores/auth.store";
 import { t } from "../../utils/i18n";
+import { getMakeupGuide, FaceShape } from "../../utils/makeupTips";
+import { FaceMakeupDiagram } from "../../components/ui/FaceMakeupDiagram";
 
 const SEASON_PALETTES: Record<ColorSeason, string[]> = {
   spring: ["#FF9E80", "#FFD180", "#CCFF90", "#EA80FC", "#FFF9C4"],
@@ -82,9 +85,12 @@ export default function FaceAnalysisScreen() {
 }
 
 function ProfileDetail({ profile }: { profile: FaceProfile }) {
+  const { user } = useAuthStore();
+  const isMale = user?.gender === "male";
   const faceShapes = t("onboarding.selfie.face_shapes") as unknown as Record<string, string>;
   const seasons = t("onboarding.selfie.seasons") as unknown as Record<string, string>;
   const faceDescs = t("onboarding.selfie.face_descriptions") as unknown as Record<string, string>;
+  const makeupGuide = getMakeupGuide(profile.face_shape, user?.gender);
 
   const faceLabel = faceShapes[profile.face_shape] ?? profile.face_shape.toUpperCase();
   const seasonLabel = seasons[profile.color_season] ?? profile.color_season.toUpperCase();
@@ -249,8 +255,78 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
           </Animated.View>
         )}
 
+        {/* ─── Guide maquillage / grooming par forme de visage ─── */}
+        <Animated.View entering={FadeInDown.delay(380)} className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-4">
+          <Text className="text-lumis-gold font-body-bold text-xs uppercase tracking-widest mb-1">
+            {isMale ? "💈 Guide grooming" : "💄 Guide maquillage"}
+          </Text>
+          <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, lineHeight: 18, marginBottom: 16 }}>
+            {makeupGuide.goal}
+          </Text>
+
+          {/* Visual diagram */}
+          <FaceMakeupDiagram guide={makeupGuide} faceShape={(profile.face_shape as FaceShape) ?? "oval"} isMale={isMale} />
+
+          {/* Zone hints */}
+          <View style={{ marginTop: 16, gap: 8 }}>
+            {makeupGuide.contour.map((z, i) => (
+              <View key={`c${i}`} style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
+                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "#7A5C3E", marginTop: 3 }} />
+                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, flex: 1 }}>
+                  <Text style={{ fontWeight: "700" }}>{z.zone} :</Text> {z.action}
+                </Text>
+              </View>
+            ))}
+            {makeupGuide.highlight.map((z, i) => (
+              <View key={`h${i}`} style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
+                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "#FFF4D6", marginTop: 3 }} />
+                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, flex: 1 }}>
+                  <Text style={{ fontWeight: "700" }}>{z.zone} :</Text> {z.action}
+                </Text>
+              </View>
+            ))}
+            {makeupGuide.blush ? (
+              <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
+                <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "#F4A0B8", marginTop: 3 }} />
+                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, flex: 1 }}>
+                  <Text style={{ fontWeight: "700" }}>Blush :</Text> {makeupGuide.blush}
+                </Text>
+              </View>
+            ) : null}
+            <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start", marginTop: 2 }}>
+              <Text style={{ fontSize: 13 }}>✏️</Text>
+              <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, flex: 1 }}>
+                <Text style={{ fontWeight: "700" }}>Sourcils :</Text> {makeupGuide.brows}
+              </Text>
+            </View>
+          </View>
+        </Animated.View>
+
+        {/* ─── Step-by-step guide ─── */}
+        <Animated.View entering={FadeInDown.delay(420)} className="bg-lumis-gold/8 border border-lumis-gold/25 rounded-2xl p-5 mb-4">
+          <Text className="text-lumis-gold font-body-bold text-xs uppercase tracking-widest mb-4">
+            📋 Étape par étape
+          </Text>
+          {makeupGuide.steps.map((step, i) => (
+            <View key={i} style={{ flexDirection: "row", gap: 12, marginBottom: i === makeupGuide.steps.length - 1 ? 0 : 16 }}>
+              <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: "rgba(201,168,76,0.2)", alignItems: "center", justifyContent: "center", marginTop: 1 }}>
+                <Text style={{ color: "#C9A84C", fontSize: 12, fontWeight: "800" }}>{i + 1}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14, marginBottom: 2 }}>{step.title}</Text>
+                <Text style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, lineHeight: 19 }}>{step.description}</Text>
+                {step.tip ? (
+                  <View style={{ marginTop: 6, backgroundColor: "rgba(201,168,76,0.1)", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
+                    <Text style={{ color: "#C9A84C", fontSize: 12 }}>💡 {step.tip}</Text>
+                  </View>
+                ) : null}
+              </View>
+            </View>
+          ))}
+        </Animated.View>
+
         {/* Re-analyze CTA */}
-        <Animated.View entering={FadeInDown.delay(400)}>
+        <Animated.View entering={FadeInDown.delay(460)}>
           <TouchableOpacity
             onPress={() => router.push("/(auth)/onboarding/selfie")}
             className="border border-lumis-gold/40 rounded-xl py-4 items-center"
