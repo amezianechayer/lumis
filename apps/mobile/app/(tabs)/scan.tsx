@@ -29,6 +29,7 @@ import { router } from "expo-router";
 import { api } from "../../services/api";
 import { SkinScan } from "../../types/api";
 import { PremiumGateModal } from "../../components/ui/PremiumGateModal";
+import { SkinProgressChart } from "../../components/ui/SkinProgressChart";
 
 // ─── Score ring ───────────────────────────────────────────────────────────────
 function ScoreRing({ score, size = 80 }: { score: number; size?: number }) {
@@ -575,8 +576,17 @@ export default function ScanScreen() {
             </View>
           ) : history.length > 0 ? (
             <View className="gap-3">
+              {/* Graphique d'évolution */}
+              <Animated.View entering={FadeInDown.delay(0)}
+                style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", borderRadius: 20, padding: 20, marginBottom: 4 }}>
+                <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>
+                  📈 Évolution de ta peau
+                </Text>
+                <SkinProgressChart scans={history} />
+              </Animated.View>
+
               {history.map((s, i) => (
-                <Animated.View key={s.id} entering={FadeInDown.delay(i * 40)}>
+                <Animated.View key={s.id} entering={FadeInDown.delay(i * 40 + 100)}>
                   <HistoryCard
                     scan={s}
                     onPress={() => router.push(`/scan/${s.id}` as any)}
