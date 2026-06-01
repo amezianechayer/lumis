@@ -1,5 +1,11 @@
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, {
+  FadeInDown, FadeInUp,
+  useSharedValue, useAnimatedStyle,
+  withRepeat, withSequence, withTiming, withSpring,
+  Easing,
+} from "react-native-reanimated";
+import { useEffect } from "react";
 import { router } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "../../stores/auth.store";
@@ -7,6 +13,32 @@ import { useLanguageStore } from "../../stores/language.store";
 import { t } from "../../utils/i18n";
 import { Skeleton, SkeletonCard } from "../../components/ui/Skeleton";
 import { api } from "../../services/api";
+
+function PulseScoreRing({ score, color }: { score: number; color: string }) {
+  const pulse = useSharedValue(1);
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(1.07, { duration: 1400, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 1400, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      true,
+    );
+  }, []);
+  const ringStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
+  return (
+    <Animated.View style={[{
+      width: 72, height: 72, borderRadius: 36,
+      borderWidth: 3, borderColor: color,
+      backgroundColor: `${color}18`,
+      alignItems: "center", justifyContent: "center",
+    }, ringStyle]}>
+      <Text style={{ color, fontWeight: "700", fontSize: 22 }}>{score}</Text>
+      <Text style={{ color: `${color}90`, fontSize: 10 }}>/100</Text>
+    </Animated.View>
+  );
+}
 
 export default function HomeScreen() {
   useLanguageStore();
@@ -83,18 +115,8 @@ export default function HomeScreen() {
         {skinScore !== null ? (
           <>
             <View className="flex-row items-center gap-4">
-              {/* Score ring */}
-              <View
-                style={{
-                  width: 72, height: 72, borderRadius: 36,
-                  borderWidth: 3, borderColor: scoreColor,
-                  backgroundColor: `${scoreColor}18`,
-                  alignItems: "center", justifyContent: "center",
-                }}
-              >
-                <Text style={{ color: scoreColor, fontWeight: "700", fontSize: 22 }}>{skinScore}</Text>
-                <Text style={{ color: `${scoreColor}90`, fontSize: 10 }}>/100</Text>
-              </View>
+              {/* Score ring — animated pulse */}
+              <PulseScoreRing score={skinScore} color={scoreColor} />
 
               {/* Sub-scores */}
               <View className="flex-1 gap-1.5">

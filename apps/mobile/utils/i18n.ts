@@ -9,7 +9,7 @@ export type SupportedLocale = "fr" | "en" | "ar";
 export const SUPPORTED_LOCALES: { code: SupportedLocale; label: string; flag: string; rtl: boolean }[] = [
   { code: "fr", label: "Français", flag: "🇫🇷", rtl: false },
   { code: "en", label: "English", flag: "🇬🇧", rtl: false },
-  { code: "ar", label: "العربية", flag: "🇲🇦", rtl: true },
+  { code: "ar", label: "العربية", flag: "🇦🇪", rtl: true },
 ];
 
 const i18n = new I18n({ fr, en, ar });

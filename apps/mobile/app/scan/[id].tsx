@@ -1,7 +1,12 @@
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated, {
+  FadeInDown, FadeIn, ZoomIn,
+  useSharedValue, useAnimatedStyle, withTiming, withSpring,
+  withRepeat, withSequence, Easing,
+} from "react-native-reanimated";
+import { useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "../../services/api";
 import { SkinScan } from "../../types/api";
@@ -24,14 +29,28 @@ function scoreLabel(score: number, type: "acne" | "hydration" | "texture" | "uni
   return l3;
 }
 
-function ScoreRow({ label, score, type, icon }: {
+function ScoreRow({ label, score, type, icon, delay = 0 }: {
   label: string; score: number; icon: string;
   type: "acne" | "hydration" | "texture" | "uniformity";
+  delay?: number;
 }) {
   const color = scoreColor(score);
   const qual = scoreLabel(score, type);
+  const width = useSharedValue(0);
+
+  useEffect(() => {
+    width.value = withTiming(score, {
+      duration: 900,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [score]);
+
+  const barStyle = useAnimatedStyle(() => ({
+    width: `${width.value}%`,
+  }));
+
   return (
-    <View style={{ marginBottom: 16 }}>
+    <Animated.View entering={FadeInDown.delay(delay).springify()} style={{ marginBottom: 16 }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
         <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 14 }}>{icon} {label}</Text>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
@@ -40,9 +59,9 @@ function ScoreRow({ label, score, type, icon }: {
         </View>
       </View>
       <View style={{ height: 8, backgroundColor: "rgba(255,255,255,0.08)", borderRadius: 4, overflow: "hidden" }}>
-        <View style={{ height: "100%", width: `${score}%`, backgroundColor: color, borderRadius: 4 }} />
+        <Animated.View style={[{ height: "100%", backgroundColor: color, borderRadius: 4 }, barStyle]} />
       </View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -59,6 +78,49 @@ function TagList({ label, items, color }: { label: string; items: string[]; colo
         ))}
       </View>
     </View>
+  );
+}
+
+function OverallScoreCard({ overall, oc }: { overall: number; oc: string }) {
+  const pulse = useSharedValue(1);
+  const countVal = useSharedValue(0);
+
+  useEffect(() => {
+    // Animate the score counting up
+    countVal.value = withTiming(overall, { duration: 1200, easing: Easing.out(Easing.cubic) });
+    // Pulse the ring
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(1.06, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+      ),
+      -1,
+      true,
+    );
+  }, []);
+
+  const ringStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulse.value }],
+  }));
+
+  return (
+    <Animated.View entering={ZoomIn.duration(500).springify()} style={{
+      backgroundColor: `${oc}10`, borderWidth: 1, borderColor: `${oc}30`,
+      borderRadius: 24, padding: 24, alignItems: "center", marginBottom: 20,
+    }}>
+      <Animated.View style={[{
+        width: 110, height: 110, borderRadius: 55, borderWidth: 4,
+        borderColor: oc, backgroundColor: `${oc}18`,
+        alignItems: "center", justifyContent: "center", marginBottom: 12,
+      }, ringStyle]}>
+        <Text style={{ color: oc, fontWeight: "800", fontSize: 36 }}>{overall}</Text>
+        <Text style={{ color: `${oc}80`, fontSize: 12 }}>/100</Text>
+      </Animated.View>
+      <Animated.Text entering={FadeIn.delay(400)} style={{ color: oc, fontWeight: "700", fontSize: 18 }}>
+        {overall >= 80 ? "Excellente santé" : overall >= 65 ? "Bonne santé" : overall >= 50 ? "À améliorer" : "Besoins importants"}
+      </Animated.Text>
+      <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 12, marginTop: 4 }}>Score global de peau</Text>
+    </Animated.View>
   );
 }
 
@@ -116,23 +178,8 @@ export default function ScanDetailScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
-        {/* Overall score */}
-        <Animated.View entering={FadeInDown.delay(0)} style={{
-          backgroundColor: `${oc}10`, borderWidth: 1, borderColor: `${oc}30`,
-          borderRadius: 24, padding: 24, alignItems: "center", marginBottom: 20,
-        }}>
-          <View style={{
-            width: 100, height: 100, borderRadius: 50, borderWidth: 4,
-            borderColor: oc, backgroundColor: `${oc}18`, alignItems: "center", justifyContent: "center", marginBottom: 12,
-          }}>
-            <Text style={{ color: oc, fontWeight: "800", fontSize: 32 }}>{overall}</Text>
-            <Text style={{ color: `${oc}80`, fontSize: 12 }}>/100</Text>
-          </View>
-          <Text style={{ color: oc, fontWeight: "700", fontSize: 18 }}>
-            {overall >= 80 ? "Excellente santé" : overall >= 65 ? "Bonne santé" : overall >= 50 ? "À améliorer" : "Besoins importants"}
-          </Text>
-          <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 12, marginTop: 4 }}>Score global de peau</Text>
-        </Animated.View>
+        {/* Overall score with pulse ring */}
+        <OverallScoreCard overall={overall} oc={oc} />
 
         {/* Sub-scores */}
         <Animated.View entering={FadeInDown.delay(80)} style={{
@@ -140,10 +187,10 @@ export default function ScanDetailScreen() {
           borderRadius: 20, padding: 20, marginBottom: 16,
         }}>
           <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 16 }}>Métriques détaillées</Text>
-          <ScoreRow label="Acné" score={scan.acne_score} icon="🔴" type="acne" />
-          <ScoreRow label="Hydratation" score={scan.hydration_score} icon="💧" type="hydration" />
-          <ScoreRow label="Texture" score={scan.texture_score} icon="✨" type="texture" />
-          <ScoreRow label="Uniformité" score={scan.uniformity_score} icon="🎨" type="uniformity" />
+          <ScoreRow label="Acné" score={scan.acne_score} icon="🔴" type="acne" delay={0} />
+          <ScoreRow label="Hydratation" score={scan.hydration_score} icon="💧" type="hydration" delay={80} />
+          <ScoreRow label="Texture" score={scan.texture_score} icon="✨" type="texture" delay={160} />
+          <ScoreRow label="Uniformité" score={scan.uniformity_score} icon="🎨" type="uniformity" delay={240} />
         </Animated.View>
 
         {/* Qualitative indicators */}
