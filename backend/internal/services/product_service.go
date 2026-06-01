@@ -76,78 +76,104 @@ type productCompatibility struct {
 	Tip                string   `json:"tip"`
 }
 
-func (s *ProductService) ScanBarcode(ctx context.Context, userID uuid.UUID, barcode string) (*models.ScannedProduct, error) {
-	// 1. Call Open Beauty Facts
-	obfURL := fmt.Sprintf("https://world.openbeautyfacts.org/api/v2/product/%s.json", barcode)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, obfURL, nil)
+// fetchFromOpenBeautyFacts tries Open Beauty Facts (cosmetics database)
+func (s *ProductService) fetchFromOpenBeautyFacts(ctx context.Context, barcode string) (*obfProduct, error) {
+	url := fmt.Sprintf("https://world.openbeautyfacts.org/api/v2/product/%s.json", barcode)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("build OBF request: %w", err)
+		return nil, err
 	}
 	req.Header.Set("User-Agent", "Lumis/1.0 (contact@lumis.app)")
-
 	resp, err := s.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("OBF request failed: %w", err)
+		return nil, err
 	}
 	defer resp.Body.Close()
+	b, _ := io.ReadAll(resp.Body)
+	var result obfProduct
+	if err := json.Unmarshal(b, &result); err != nil {
+		return nil, err
+	}
+	if result.StatusVerbose != "product found" {
+		return nil, nil
+	}
+	return &result, nil
+}
 
-	respBytes, err := io.ReadAll(resp.Body)
+// fetchFromOpenFoodFacts tries Open Food Facts (much larger, includes some cosmetics)
+func (s *ProductService) fetchFromOpenFoodFacts(ctx context.Context, barcode string) (*obfProduct, error) {
+	url := fmt.Sprintf("https://world.openfoodfacts.org/api/v2/product/%s.json", barcode)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("read OBF response: %w", err)
+		return nil, err
 	}
+	req.Header.Set("User-Agent", "Lumis/1.0 (contact@lumis.app)")
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	b, _ := io.ReadAll(resp.Body)
+	var result obfProduct
+	if err := json.Unmarshal(b, &result); err != nil {
+		return nil, err
+	}
+	if result.StatusVerbose != "product found" {
+		return nil, nil
+	}
+	return &result, nil
+}
 
-	var obfResp obfProduct
-	if err := json.Unmarshal(respBytes, &obfResp); err != nil {
-		return nil, fmt.Errorf("parse OBF response: %w", err)
-	}
-
-	// 2. Product not found
-	if obfResp.StatusVerbose != "product found" {
-		product := &models.ScannedProduct{
-			UserID:   userID,
-			Barcode:  barcode,
-			NotFound: true,
-		}
-		if err := s.repo.Create(ctx, product); err != nil {
-			return nil, fmt.Errorf("save not-found product: %w", err)
-		}
-		return product, nil
-	}
-
-	p := obfResp.Product
-
-	// Use the first non-empty name available
-	productName := p.ProductName
-	if productName == "" {
-		productName = p.ProductNameFr
-	}
-	if productName == "" {
-		productName = p.ProductNameEn
-	}
-	if productName == "" {
-		productName = p.GenericName
-	}
-	if productName == "" && p.Brands != "" {
-		productName = p.Brands
-	}
-
-	category := ""
-	if len(p.CategoriesTags) > 0 {
-		category = p.CategoriesTags[0]
-		// Strip "en:" prefix if present
+func extractProductName(p obfProduct) (name, brand, category, ingredients, imageURL string) {
+	name = p.Product.ProductName
+	if name == "" { name = p.Product.ProductNameFr }
+	if name == "" { name = p.Product.ProductNameEn }
+	if name == "" { name = p.Product.GenericName }
+	if name == "" && p.Product.Brands != "" { name = p.Product.Brands }
+	brand = p.Product.Brands
+	if len(p.Product.CategoriesTags) > 0 {
+		category = p.Product.CategoriesTags[0]
 		if idx := strings.Index(category, ":"); idx >= 0 {
 			category = category[idx+1:]
 		}
 	}
+	ingredients = p.Product.IngredientsText
+	imageURL = p.Product.ImageFrontURL
+	return
+}
+
+func (s *ProductService) ScanBarcode(ctx context.Context, userID uuid.UUID, barcode string) (*models.ScannedProduct, error) {
+	// 1. Try Open Beauty Facts first (cosmetics-specific)
+	obfResp, err := s.fetchFromOpenBeautyFacts(ctx, barcode)
+	if err != nil {
+		log.Printf("[ProductService] OBF error: %v", err)
+	}
+
+	// 2. Fallback to Open Food Facts (much larger database)
+	if obfResp == nil {
+		log.Printf("[ProductService] OBF miss — trying Open Food Facts for barcode %s", barcode)
+		obfResp, err = s.fetchFromOpenFoodFacts(ctx, barcode)
+		if err != nil {
+			log.Printf("[ProductService] OFF error: %v", err)
+		}
+	}
+
+	// 3. If still not found, use Groq to identify by barcode prefix (brand/country heuristics)
+	if obfResp == nil {
+		log.Printf("[ProductService] both APIs missed barcode %s — using Groq identification", barcode)
+		return s.identifyWithGroqAndSave(ctx, userID, barcode)
+	}
+
+	productName, brand, category, ingredients, imageURL := extractProductName(*obfResp)
 
 	product := &models.ScannedProduct{
 		UserID:      userID,
 		Barcode:     barcode,
 		ProductName: productName,
-		Brand:       p.Brands,
+		Brand:       brand,
 		Category:    category,
-		Ingredients: p.IngredientsText,
-		ImageURL:    p.ImageFrontURL,
+		Ingredients: ingredients,
+		ImageURL:    imageURL,
 	}
 
 	// 3. Fetch user's latest skin scan for AI context
@@ -325,4 +351,105 @@ Règles verdict : excellent=85+, good=65-84, neutral=40-64, avoid=0-39.`)
 
 func (s *ProductService) GetHistory(ctx context.Context, userID uuid.UUID) ([]models.ScannedProduct, error) {
 	return s.repo.FindHistoryByUser(ctx, userID, 30)
+}
+
+// identifyWithGroqAndSave uses Groq to identify a product from its barcode when both OBF/OFF miss.
+// It generates a "best guess" based on barcode prefix (GS1 country + brand heuristics).
+func (s *ProductService) identifyWithGroqAndSave(ctx context.Context, userID uuid.UUID, barcode string) (*models.ScannedProduct, error) {
+	if s.groqAPIKey == "" {
+		product := &models.ScannedProduct{UserID: userID, Barcode: barcode, NotFound: true}
+		_ = s.repo.Create(ctx, product)
+		return product, nil
+	}
+
+	prompt := fmt.Sprintf(`A user scanned a product barcode: %s
+
+This barcode was not found in Open Beauty Facts or Open Food Facts databases.
+Based on the barcode structure (GS1 prefix, length, format), make your best guess about:
+1. What type of product this likely is (cosmetic, food, cleaning product, etc.)
+2. What country/region it likely comes from (based on GS1 prefix)
+3. A suggested product name and brand if you can infer from the structure
+
+Then generate a generic but useful skin compatibility analysis assuming it could be a cosmetic product.
+
+Return ONLY valid JSON:
+{
+  "product_name": "<best guess name or 'Produit inconnu'>",
+  "brand": "<brand or empty>",
+  "category": "<likely category>",
+  "compatibility_score": <40-70, neutral since unknown>,
+  "verdict": "neutral",
+  "pros": ["<1 generic pro>"],
+  "cons": ["<1 concern about unknown ingredients>"],
+  "tip": "Ce produit n'est pas dans notre base de données. Vérifie les ingrédients manuellement avant utilisation."
+}`, barcode)
+
+	reqBody := productGroqReq{
+		Model: groqModel,
+		Messages: []productGroqMsg{
+			{Role: "user", Content: prompt},
+		},
+		Temperature: 0.3,
+		MaxTokens:   400,
+	}
+
+	b, _ := json.Marshal(reqBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, groqAPIURL, bytes.NewReader(b))
+	if err != nil {
+		product := &models.ScannedProduct{UserID: userID, Barcode: barcode, NotFound: true}
+		_ = s.repo.Create(ctx, product)
+		return product, nil
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+s.groqAPIKey)
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil || resp == nil {
+		product := &models.ScannedProduct{UserID: userID, Barcode: barcode, NotFound: true}
+		_ = s.repo.Create(ctx, product)
+		return product, nil
+	}
+	defer resp.Body.Close()
+
+	respBytes, _ := io.ReadAll(resp.Body)
+	var groqResp groqResponse
+	if err := json.Unmarshal(respBytes, &groqResp); err != nil || len(groqResp.Choices) == 0 {
+		product := &models.ScannedProduct{UserID: userID, Barcode: barcode, NotFound: true}
+		_ = s.repo.Create(ctx, product)
+		return product, nil
+	}
+
+	raw := extractJSON(groqResp.Choices[0].Message.Content)
+	var result struct {
+		ProductName        string   `json:"product_name"`
+		Brand              string   `json:"brand"`
+		Category           string   `json:"category"`
+		CompatibilityScore int      `json:"compatibility_score"`
+		Verdict            string   `json:"verdict"`
+		Pros               []string `json:"pros"`
+		Cons               []string `json:"cons"`
+		Tip                string   `json:"tip"`
+	}
+	if err := json.Unmarshal([]byte(raw), &result); err != nil {
+		product := &models.ScannedProduct{UserID: userID, Barcode: barcode, NotFound: true}
+		_ = s.repo.Create(ctx, product)
+		return product, nil
+	}
+
+	prosJSON, _ := json.Marshal(result.Pros)
+	consJSON, _ := json.Marshal(result.Cons)
+	product := &models.ScannedProduct{
+		UserID:             userID,
+		Barcode:            barcode,
+		ProductName:        result.ProductName,
+		Brand:              result.Brand,
+		Category:           result.Category,
+		CompatibilityScore: result.CompatibilityScore,
+		Verdict:            result.Verdict,
+		Pros:               models.JSON(prosJSON),
+		Cons:               models.JSON(consJSON),
+		Tip:                result.Tip,
+	}
+	_ = s.repo.Create(ctx, product)
+	return product, nil
 }

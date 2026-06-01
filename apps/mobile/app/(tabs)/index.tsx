@@ -64,14 +64,21 @@ export default function HomeScreen() {
         </Text>
       </Animated.View>
 
-      {/* Skin Score */}
-      <Animated.View
-        entering={FadeInDown.delay(150)}
-        className="mt-8 bg-lumis-gold/10 border border-lumis-gold/30 rounded-3xl p-6"
-      >
-        <Text className="text-lumis-white/60 font-body text-xs uppercase tracking-widest mb-3">
-          {t("home.skin_score_label")}
-        </Text>
+      {/* Skin Score — cliquable pour voir le détail */}
+      <Animated.View entering={FadeInDown.delay(150)} className="mt-8">
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => router.navigate("/(tabs)/scan")}
+          className="bg-lumis-gold/10 border border-lumis-gold/30 rounded-3xl p-6"
+        >
+        <View className="flex-row items-center justify-between mb-3">
+          <Text className="text-lumis-white/60 font-body text-xs uppercase tracking-widest">
+            {t("home.skin_score_label")}
+          </Text>
+          {skinScore !== null && (
+            <Text style={{ color: "#C9A84C", fontSize: 12 }}>Voir détails →</Text>
+          )}
+        </View>
 
         {skinScore !== null ? (
           <>
@@ -79,19 +86,13 @@ export default function HomeScreen() {
               {/* Score ring */}
               <View
                 style={{
-                  width: 72,
-                  height: 72,
-                  borderRadius: 36,
-                  borderWidth: 3,
-                  borderColor: scoreColor,
+                  width: 72, height: 72, borderRadius: 36,
+                  borderWidth: 3, borderColor: scoreColor,
                   backgroundColor: `${scoreColor}18`,
-                  alignItems: "center",
-                  justifyContent: "center",
+                  alignItems: "center", justifyContent: "center",
                 }}
               >
-                <Text style={{ color: scoreColor, fontWeight: "700", fontSize: 22 }}>
-                  {skinScore}
-                </Text>
+                <Text style={{ color: scoreColor, fontWeight: "700", fontSize: 22 }}>{skinScore}</Text>
                 <Text style={{ color: `${scoreColor}90`, fontSize: 10 }}>/100</Text>
               </View>
 
@@ -105,22 +106,9 @@ export default function HomeScreen() {
 
             {skinScan && (
               <Text className="text-lumis-white/40 font-body text-xs mt-3">
-                Dernière analyse ·{" "}
-                {new Date(skinScan.created_at).toLocaleDateString("fr-FR", {
-                  day: "numeric",
-                  month: "short",
-                })}
+                Dernière analyse · {new Date(skinScan.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
               </Text>
             )}
-
-            <TouchableOpacity
-              onPress={() => router.navigate("/(tabs)/scan")}
-              className="mt-4 bg-lumis-gold/20 border border-lumis-gold/40 rounded-xl py-3 items-center"
-            >
-              <Text className="text-lumis-gold font-body-medium text-sm">
-                Nouveau scan
-              </Text>
-            </TouchableOpacity>
           </>
         ) : (
           <>
@@ -128,16 +116,12 @@ export default function HomeScreen() {
             <Text className="text-lumis-white/50 font-body text-sm mt-2">
               {t("home.skin_score_empty")}
             </Text>
-            <TouchableOpacity
-              onPress={() => router.navigate("/(tabs)/scan")}
-              className="mt-4 bg-lumis-gold/20 border border-lumis-gold/40 rounded-xl py-3 items-center"
-            >
-              <Text className="text-lumis-gold font-body-medium text-sm">
-                {t("home.start_scan")}
-              </Text>
-            </TouchableOpacity>
+            <Text className="text-lumis-gold font-body-medium text-sm mt-3">
+              Commencer mon premier scan →
+            </Text>
           </>
         )}
+        </TouchableOpacity>
       </Animated.View>
 
       {/* Face profile card */}

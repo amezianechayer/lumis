@@ -320,13 +320,18 @@ function ScanningLoader({ photoUri }: { photoUri: string | null }) {
   );
 }
 
-function HistoryCard({ scan }: { scan: SkinScan }) {
+function HistoryCard({ scan, onPress }: { scan: SkinScan; onPress: () => void }) {
   const color = scan.overall_score >= 75 ? "#4ade80" : scan.overall_score >= 50 ? "#C9A96E" : "#f87171";
-  const date = new Date(scan.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  const date = new Date(scan.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
   return (
-    <View className="bg-white/5 border border-white/10 rounded-2xl p-4 flex-row items-center gap-4">
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.8}
+      className="bg-white/5 border border-white/10 rounded-2xl p-4 flex-row items-center gap-4"
+    >
       <View style={{ borderColor: color }} className="w-14 h-14 rounded-full border-2 items-center justify-center">
         <Text style={{ color }} className="font-body-bold text-lg">{scan.overall_score}</Text>
+        <Text style={{ color: `${color}80`, fontSize: 9 }}>/100</Text>
       </View>
       <View className="flex-1">
         <Text className="text-lumis-white font-body-medium text-sm mb-0.5">{date}</Text>
@@ -334,7 +339,8 @@ function HistoryCard({ scan }: { scan: SkinScan }) {
           Acné {scan.acne_score} · Hydra {scan.hydration_score} · Texture {scan.texture_score}
         </Text>
       </View>
-    </View>
+      <Text style={{ color: "rgba(255,255,255,0.25)", fontSize: 18 }}>›</Text>
+    </TouchableOpacity>
   );
 }
 
@@ -478,7 +484,10 @@ export default function ScanScreen() {
             <View className="gap-3">
               {history.map((s, i) => (
                 <Animated.View key={s.id} entering={FadeInDown.delay(i * 40)}>
-                  <HistoryCard scan={s} />
+                  <HistoryCard
+                    scan={s}
+                    onPress={() => router.push(`/scan/${s.id}` as any)}
+                  />
                 </Animated.View>
               ))}
             </View>

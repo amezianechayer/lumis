@@ -108,10 +108,20 @@ func (s *FaceAnalysisService) analyzeWithVision(ctx context.Context, input FaceA
 		genderHint = fmt.Sprintf(" The person identifies as %s.", input.Gender)
 	}
 
-	prompt := fmt.Sprintf(`Analyze this face photo carefully.%s Return ONLY a valid JSON object (no markdown, no explanation) with these exact fields:
+	prompt := fmt.Sprintf(`You are a professional facial analyst. Look very carefully at THIS specific person's face in the photo.%s
+
+CRITICAL: Every person's face is unique. You MUST observe and describe what you actually SEE in this photo, not generic defaults.
+- Look at the actual width vs height ratio of the face → determines face_shape
+- Look at the actual eye shape visible in the photo → do NOT default to "almond"
+- Look at the actual jaw structure → do NOT default to "defined"
+- If you cannot clearly see a feature, choose the option that seems most likely from what IS visible, but never just pick "oval/almond/defined" for everything
+
+Face shape guide: oval=balanced forehead+jaw, round=equal width+height, square=angular jaw≈forehead, heart=wide forehead+narrow jaw, oblong=longer than wide, diamond=narrow forehead+jaw+wide cheekbones
+
+Return ONLY valid JSON (no markdown):
 {
   "face_shape": <"oval"|"round"|"square"|"heart"|"oblong"|"diamond">,
-  "face_shape_confidence": <0.0-1.0>,
+  "face_shape_confidence": <0.0-1.0, be honest about uncertainty>,
   "eye_shape": <"almond"|"round"|"hooded"|"monolid"|"upturned"|"downturned">,
   "eye_distance": <"close"|"average"|"wide">,
   "nose_shape": <"straight"|"button"|"wide"|"narrow"|"upturned">,
@@ -120,8 +130,8 @@ func (s *FaceAnalysisService) analyzeWithVision(ctx context.Context, input FaceA
   "skin_tone": <"fitzpatrick_1"|"fitzpatrick_2"|"fitzpatrick_3"|"fitzpatrick_4"|"fitzpatrick_5"|"fitzpatrick_6">,
   "undertone": <"cool"|"warm"|"neutral">,
   "color_season": <"spring"|"summer"|"autumn"|"winter">,
-  "beard_recommendations": <array of 2-3 strings like "short_stubble","goatee","clean_shaven">,
-  "haircut_recommendations": <array of 2-3 strings like "undercut","side_part","textured_crop">
+  "beard_recommendations": <array of 2-3 specific styles based on THEIR face shape>,
+  "haircut_recommendations": <array of 2-3 specific cuts based on THEIR face shape>
 }`, genderHint)
 
 	type imageURL struct {
@@ -154,8 +164,8 @@ func (s *FaceAnalysisService) analyzeWithVision(ctx context.Context, input FaceA
 				},
 			},
 		},
-		Temperature: 0.1,
-		MaxTokens:   512,
+		Temperature: 0.3,
+		MaxTokens:   600,
 	}
 
 	body, err := json.Marshal(reqBody)
