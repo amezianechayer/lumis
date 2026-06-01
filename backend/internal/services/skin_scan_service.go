@@ -61,22 +61,22 @@ type visionScores struct {
 	DrynessZones           []string `json:"dryness_zones"`
 }
 
-func (s *SkinScanService) Analyze(ctx context.Context, userID uuid.UUID, input SkinScanInput) (*models.SkinScan, error) {
+func (s *SkinScanService) Analyze(ctx context.Context, userID uuid.UUID, input SkinScanInput, user *models.User) (*models.SkinScan, error) {
 	var scores visionScores
 	var err error
 
 	if input.PhotoBase64 != "" && s.groqAPIKey != "" {
 		log.Printf("[SkinScan] photo provided (%d chars), calling Groq Vision...", len(input.PhotoBase64))
-		scores, err = s.analyzeWithVision(ctx, input)
+		scores, err = s.analyzeWithVision(ctx, input, user)
 		if err != nil {
 			log.Printf("[SkinScan] Groq Vision FAILED: %v — falling back to lifestyle scoring", err)
-			scores = s.lifestyleScores(input)
+			scores = s.lifestyleScores(input, user)
 		} else {
 			log.Printf("[SkinScan] Groq Vision OK — overall=%d acne=%d hydration=%d", scores.OverallScore, scores.AcneScore, scores.HydrationScore)
 		}
 	} else {
 		log.Printf("[SkinScan] no photo or no API key — lifestyle scoring only")
-		scores = s.lifestyleScores(input)
+		scores = s.lifestyleScores(input, user)
 	}
 
 	photoURL := "pending"
@@ -117,7 +117,12 @@ func (s *SkinScanService) Analyze(ctx context.Context, userID uuid.UUID, input S
 	return scan, nil
 }
 
-func (s *SkinScanService) analyzeWithVision(ctx context.Context, input SkinScanInput) (visionScores, error) {
+func (s *SkinScanService) analyzeWithVision(ctx context.Context, input SkinScanInput, user *models.User) (visionScores, error) {
+	skinTypeContext := ""
+	if user != nil && user.SkinType != nil {
+		skinTypeContext = fmt.Sprintf("\nDeclared skin type by user (use as prior, but visual evidence takes priority): %s", *user.SkinType)
+	}
+
 	prompt := fmt.Sprintf(`You are a professional dermatologist analyzing a facial skin photo.
 Score calibration reference:
 - 90-100: excellent (e.g. acne_score 95 = 0-1 barely visible spots, texture_score 95 = glass skin)
@@ -132,6 +137,9 @@ CONSISTENCY RULES — you must respect these:
 - If redness_level is "élevé", then overall_score cannot exceed 70
 - If hyperpigmentation_level is "élevé", then uniformity_score must be <= 50
 - If pores_condition is "larges", then texture_score must be <= 65
+- Oily skin type: expect larger pores and oiliness zones, lower texture baseline
+- Dry skin type: expect dryness zones, possibly fine lines, lower hydration baseline
+- Sensitive skin type: expect elevated redness, lower redness_level threshold
 - Do NOT invent problems that are not visible. Score only what you can actually see.
 
 Return ONLY a valid JSON object (no markdown, no explanation):
@@ -151,8 +159,8 @@ Return ONLY a valid JSON object (no markdown, no explanation):
   "oiliness_zones": <array from ["T-zone","joues","front","nez"], empty if not visible>,
   "dryness_zones": <array from ["joues","contour des yeux","front"], empty if not visible>
 }
-Lifestyle context (secondary influence only): sleep=%.1fh, stress=%d/10, water=%.1fL/day.`,
-		input.SleepHours, input.StressLevel, input.WaterIntakeLiters)
+Lifestyle context (secondary influence only): sleep=%.1fh, stress=%d/10, water=%.1fL/day.%s`,
+		input.SleepHours, input.StressLevel, input.WaterIntakeLiters, skinTypeContext)
 
 	type imageURL struct {
 		URL string `json:"url"`
@@ -296,7 +304,7 @@ func clampScores(s visionScores) visionScores {
 
 // lifestyleScores estimates skin metrics from lifestyle data only (no photo).
 // Each metric has its own formula — no metric uses another as proxy.
-func (s *SkinScanService) lifestyleScores(input SkinScanInput) visionScores {
+func (s *SkinScanService) lifestyleScores(input SkinScanInput, user *models.User) visionScores {
 	// ── Sleep impact ──────────────────────────────────────────────────────────
 	// Optimal: 7-9h. Below 6h degrades all metrics significantly.
 	sleepScore := 0
@@ -331,41 +339,81 @@ func (s *SkinScanService) lifestyleScores(input SkinScanInput) visionScores {
 		waterScore = -10
 	}
 
-	// ── Per-metric formulas (each with its own baseline) ─────────────────────
+	// ── Skin type adjustments (from onboarding) ──────────────────────────────
+	// These baselines reflect structural characteristics of each skin type.
+	// Sources: Baumann Skin Type classification, JAMA Dermatology guidelines.
+	skinType := ""
+	if user != nil && user.SkinType != nil {
+		skinType = *user.SkinType
+	}
 
-	// Hydration: driven primarily by water intake, secondarily by sleep
-	hydration := clamp(65+waterScore+sleepScore/2, 20, 100)
+	// Base offsets per skin type for each metric
+	hydrationBase := 65
+	acneBase := 75
+	textureBase := 70
+	uniformityBase := 68
+	rednessBase := 72
+	poresBase := 70
 
-	// Acne: driven primarily by stress and sleep (hormonal & inflammatory)
-	acne := clamp(75+stressScore+sleepScore, 15, 100)
+	switch skinType {
+	case "oily":
+		// Oily skin: sebaceous glands overactive → larger pores, acne-prone, but paradoxically better hydrated surface
+		acneBase -= 8      // more acne-prone structurally
+		textureBase -= 5   // texture affected by oiliness
+		poresBase -= 12    // pores more visible in oily skin (established in dermatology)
+		hydrationBase += 5 // surface appears more hydrated (sebum ≠ hydration but surface moisture)
+	case "dry":
+		// Dry skin: impaired barrier function → dehydration, fine lines, sensitivity
+		hydrationBase -= 12 // structural dehydration
+		textureBase -= 5    // flakiness affects texture
+		rednessBase -= 5    // dryness can trigger mild irritation
+	case "combination":
+		// Combination: T-zone oily, cheeks dry — split behavior
+		acneBase -= 4
+		poresBase -= 6
+		hydrationBase -= 4
+	case "sensitive":
+		// Sensitive skin: reactive, easily irritated, redness-prone
+		rednessBase -= 15   // significantly more redness-prone
+		uniformityBase -= 5 // uneven tone from reactivity
+		acneBase -= 5       // more prone to breakouts from irritation
+	}
 
-	// Texture: driven by sleep (skin repair happens at night) + partial stress
-	texture := clamp(70+sleepScore+stressScore/3, 20, 100)
+	// ── Per-metric formulas ────────────────────────────────────────────────────
 
-	// Uniformity: driven by hydration and sleep, stress contributes via inflammation
-	uniformity := clamp(68+waterScore/2+sleepScore/2+stressScore/4, 20, 100)
+	// Hydration: water intake is the main lifestyle driver, sleep secondary
+	hydration := clamp(hydrationBase+waterScore+sleepScore/2, 20, 100)
 
-	// Redness: driven by stress (vasodilation) and poor sleep (inflammation).
-	// Separate formula — NOT derived from acne score.
-	rednessBase := clamp(72+stressScore/2+sleepScore/2, 0, 100)
-	redness := qualLevel(rednessBase, "faible", "modéré", "élevé")
+	// Acne: stress (cortisol → sebum) and sleep (cellular repair) are primary drivers
+	acne := clamp(acneBase+stressScore+sleepScore, 15, 100)
 
-	// Hyperpigmentation: driven by uniformity score + partial stress.
-	// Stress triggers melanogenesis; poor uniformity correlates with dark spots.
-	hyperpigBase := clamp(uniformity+stressScore/3, 0, 100)
-	hyperpig := qualLevel(hyperpigBase, "faible", "modéré", "élevé")
+	// Texture: skin repair happens during sleep (Stage 3 NREM) + stress degrades barrier
+	texture := clamp(textureBase+sleepScore+stressScore/3, 20, 100)
 
-	// Pores: correlate with oiliness (stress-driven) and skin texture.
-	// Separate formula — NOT a copy of texture.
-	poresBase := clamp(70+stressScore/2+sleepScore/3, 0, 100)
-	pores := qualLevel(poresBase, "fins", "modérés", "larges")
+	// Uniformity: chronic stress triggers melanogenesis; poor sleep delays cell turnover
+	uniformity := clamp(uniformityBase+waterScore/2+sleepScore/2+stressScore/4, 20, 100)
+
+	// Redness: stress causes vasodilation; sleep deprivation increases inflammatory cytokines
+	// Separate formula — NOT derived from acne score
+	rednessVal := clamp(rednessBase+stressScore/2+sleepScore/2, 0, 100)
+	redness := qualLevel(rednessVal, "faible", "modéré", "élevé")
+
+	// Hyperpigmentation: UV exposure is primary (unknown here), so we use uniformity
+	// + stress (cortisol stimulates melanocytes via ACTH pathway)
+	hyperpigVal := clamp(uniformity+stressScore/3, 0, 100)
+	hyperpig := qualLevel(hyperpigVal, "faible", "modéré", "élevé")
+
+	// Pores: driven by sebaceous activity (stress) and skin elasticity (sleep/age)
+	// Separate formula — NOT a copy of texture
+	poresVal := clamp(poresBase+stressScore/2+sleepScore/3, 0, 100)
+	pores := qualLevel(poresVal, "fins", "modérés", "larges")
 
 	// Derived counts
 	acneCount := clamp((100-acne)/10, 0, 15)
 	darkSpots := clamp((100-uniformity)/18, 0, 8)
 	fineLines := hydration < 50 || sleepScore <= -5
 
-	// Zones
+	// Zones — influenced by skin type
 	var acneZones, oilinessZones, drynessZones []string
 	if acne < 85 {
 		acneZones = append(acneZones, "T-zone")
@@ -373,11 +421,17 @@ func (s *SkinScanService) lifestyleScores(input SkinScanInput) visionScores {
 	if acne < 65 {
 		acneZones = append(acneZones, "joues", "menton")
 	}
-	if hydration < 55 {
-		drynessZones = append(drynessZones, "joues", "contour des yeux")
-	}
-	if input.StressLevel >= 7 {
-		oilinessZones = append(oilinessZones, "T-zone", "front")
+	if skinType == "combination" {
+		// Combination skin: T-zone oily, cheeks dry
+		oilinessZones = append(oilinessZones, "T-zone", "nez")
+		drynessZones = append(drynessZones, "joues")
+	} else {
+		if hydration < 55 || skinType == "dry" {
+			drynessZones = append(drynessZones, "joues", "contour des yeux")
+		}
+		if input.StressLevel >= 7 || skinType == "oily" {
+			oilinessZones = append(oilinessZones, "T-zone", "front")
+		}
 	}
 
 	// Weighted overall: acné + hydratation = 60%, texture + uniformité = 40%

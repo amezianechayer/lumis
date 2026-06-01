@@ -139,7 +139,7 @@ class ApiClient {
     return data.user;
   }
 
-  async updateMe(updates: Partial<Pick<User, "full_name" | "username" | "gender" | "goals">>): Promise<User> {
+  async updateMe(updates: Partial<Pick<User, "full_name" | "username" | "gender" | "goals" | "skin_type">>): Promise<User> {
     const { data } = await this.client.patch<{ user: User }>("/me", updates);
     return data.user;
   }

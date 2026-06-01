@@ -57,6 +57,7 @@ func (h *UserHandler) UpdateMe(c *fiber.Ctx) error {
 		Username *string  `json:"username"`
 		Gender   *string  `json:"gender"`
 		Goals    []string `json:"goals"`
+		SkinType *string  `json:"skin_type"`
 	}
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
@@ -73,6 +74,9 @@ func (h *UserHandler) UpdateMe(c *fiber.Ctx) error {
 	}
 	if body.Goals != nil {
 		user.Goals = body.Goals
+	}
+	if body.SkinType != nil {
+		user.SkinType = body.SkinType
 	}
 
 	if err := h.userRepo.Update(c.Context(), user); err != nil {

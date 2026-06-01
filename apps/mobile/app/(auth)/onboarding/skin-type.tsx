@@ -24,10 +24,12 @@ export default function SkinTypeScreen() {
   useLanguageStore();
   const [selected, setSelected] = useState<string | null>(null);
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     if (!selected) return;
     storage.set("skin_type", selected);
     storage.set("onboarding_completed", true);
+    // Persist skin_type to backend so it's used in score calculations
+    api.updateMe({ skin_type: selected }).catch(() => {});
     // Fire-and-forget: generate recommendations in the background
     api.generateRecommendations().catch(() => {});
     router.replace("/(tabs)");

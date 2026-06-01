@@ -20,6 +20,7 @@ type User struct {
 	PremiumUntil     *time.Time     `json:"premium_until,omitempty"`
 	StripeCustomerID *string        `gorm:"size:100" json:"-"`
 	Goals            pq.StringArray `gorm:"type:text[]" json:"goals,omitempty"`
+	SkinType         *string        `gorm:"size:20;check:skin_type IN ('normal','oily','dry','combination','sensitive')" json:"skin_type,omitempty"`
 	EmailVerified    bool           `gorm:"default:false" json:"email_verified"`
 	CreatedAt        time.Time      `json:"created_at"`
 	UpdatedAt        time.Time      `json:"updated_at"`

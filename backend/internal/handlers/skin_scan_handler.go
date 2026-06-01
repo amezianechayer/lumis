@@ -63,7 +63,7 @@ func (h *SkinScanHandler) Analyze(c *fiber.Ctx) error {
 		input.WaterIntakeLiters = 1.5
 	}
 
-	scan, err := h.svc.Analyze(c.Context(), userID, input)
+	scan, err := h.svc.Analyze(c.Context(), userID, input, user)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "skin scan failed"})
 	}

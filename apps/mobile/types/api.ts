@@ -8,6 +8,7 @@ export interface User {
   avatar_url?: string;
   premium_until?: string;
   goals?: string[];
+  skin_type?: "normal" | "oily" | "dry" | "combination" | "sensitive";
   email_verified: boolean;
   created_at: string;
   updated_at: string;
