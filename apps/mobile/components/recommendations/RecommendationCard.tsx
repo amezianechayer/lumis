@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
 import { Recommendation } from "../../types/api";
 import { t } from "../../utils/i18n";
 
@@ -16,109 +17,106 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   advanced: "#f87171",
 };
 
-const TYPE_COLORS: Record<string, { bg: string; text: string }> = {
-  makeup:       { bg: "rgba(244,114,182,0.15)", text: "#f472b6" },
-  grooming:     { bg: "rgba(96,165,250,0.15)",  text: "#60a5fa" },
-  haircut:      { bg: "rgba(167,139,250,0.15)", text: "#a78bfa" },
-  skincare:     { bg: "rgba(74,222,128,0.15)",  text: "#4ade80" },
-  color_season: { bg: "rgba(251,191,36,0.15)",  text: "#fbbf24" },
+// Per-type theme: gradient + accent + icon fallback
+const TYPE_THEME: Record<string, { from: string; to: string; accent: string; label: string }> = {
+  makeup:       { from: "rgba(244,114,182,0.22)", to: "rgba(244,114,182,0.04)", accent: "#f472b6", label: "Maquillage" },
+  grooming:     { from: "rgba(96,165,250,0.22)",  to: "rgba(96,165,250,0.04)",  accent: "#60a5fa", label: "Grooming" },
+  haircut:      { from: "rgba(167,139,250,0.22)", to: "rgba(167,139,250,0.04)", accent: "#a78bfa", label: "Coupe" },
+  skincare:     { from: "rgba(74,222,128,0.22)",  to: "rgba(74,222,128,0.04)",  accent: "#4ade80", label: "Skincare" },
+  color_season: { from: "rgba(251,191,36,0.22)",  to: "rgba(251,191,36,0.04)",  accent: "#fbbf24", label: "Couleurs" },
 };
 
 export function RecommendationCard({ rec, index }: Props) {
   const router = useRouter();
   const diffColor = DIFFICULTY_COLORS[rec.difficulty] ?? "#94a3b8";
-  const typeStyle = TYPE_COLORS[rec.type] ?? { bg: "rgba(255,255,255,0.08)", text: "#94a3b8" };
-  const typeLabel = rec.type.replace("_", " ").toUpperCase();
+  const theme = TYPE_THEME[rec.type] ?? { from: "rgba(255,255,255,0.1)", to: "rgba(255,255,255,0.02)", accent: "#C9A84C", label: rec.type };
+
+  const stepCount = rec.steps?.length ?? 0;
+  const productCount = rec.products?.length ?? 0;
 
   return (
     <Animated.View entering={FadeInDown.delay(index * 70).springify().damping(16)}>
       <TouchableOpacity
-        activeOpacity={0.82}
+        activeOpacity={0.85}
         onPress={() => router.push(`/recs/${rec.id}` as any)}
-        className="mx-4 mb-3 rounded-2xl overflow-hidden border border-white/8"
-        style={{ backgroundColor: "#111111" }}
+        style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 24, overflow: "hidden", borderWidth: 1, borderColor: `${theme.accent}30` }}
       >
-        {/* Top row */}
-        <View className="px-4 pt-4 pb-3 flex-row items-start gap-3">
-          {/* Icon */}
-          <View
-            className="w-11 h-11 rounded-xl items-center justify-center"
-            style={{ backgroundColor: typeStyle.bg }}
-          >
-            <Text style={{ fontSize: 22 }}>{rec.icon_emoji}</Text>
+        <LinearGradient
+          colors={[theme.from, theme.to]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          {/* Top: big icon + type + premium */}
+          <View style={{ flexDirection: "row", alignItems: "center", padding: 16, paddingBottom: 12 }}>
+            <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: `${theme.accent}22`, borderWidth: 1, borderColor: `${theme.accent}40`, alignItems: "center", justifyContent: "center" }}>
+              <Text style={{ fontSize: 30 }}>{rec.icon_emoji}</Text>
+            </View>
+            <View style={{ flex: 1, marginLeft: 14 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                <Text style={{ color: theme.accent, fontSize: 10, fontWeight: "800", letterSpacing: 1, textTransform: "uppercase" }}>
+                  {theme.label}
+                </Text>
+                {rec.is_premium_only && (
+                  <View style={{ backgroundColor: "rgba(201,168,76,0.2)", borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1 }}>
+                    <Text style={{ color: "#C9A84C", fontSize: 9, fontWeight: "700" }}>✨ PREMIUM</Text>
+                  </View>
+                )}
+              </View>
+              <Text numberOfLines={2} style={{ color: "#fff", fontSize: 16, fontWeight: "700", lineHeight: 21 }}>
+                {rec.title}
+              </Text>
+            </View>
           </View>
 
-          {/* Title + badges */}
-          <View className="flex-1">
-            <View className="flex-row items-center gap-2 mb-1 flex-wrap">
-              {rec.is_premium_only && (
-                <View className="bg-lumis-gold/20 border border-lumis-gold/40 rounded-full px-2 py-0.5">
-                  <Text className="text-lumis-gold font-body text-[9px]">✨ Premium</Text>
-                </View>
-              )}
-              <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: typeStyle.bg }}>
-                <Text style={{ color: typeStyle.text, fontSize: 9, fontWeight: "700", letterSpacing: 0.5 }}>
-                  {typeLabel}
+          {/* Summary */}
+          <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
+            <Text numberOfLines={2} style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, lineHeight: 19 }}>
+              {rec.summary}
+            </Text>
+          </View>
+
+          {/* First step preview */}
+          {stepCount > 0 && rec.steps[0] && (
+            <View style={{ marginHorizontal: 16, marginBottom: 12, backgroundColor: "rgba(0,0,0,0.25)", borderRadius: 14, padding: 12, flexDirection: "row", gap: 10, alignItems: "center" }}>
+              <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: `${theme.accent}30`, alignItems: "center", justifyContent: "center" }}>
+                <Text style={{ color: theme.accent, fontSize: 11, fontWeight: "800" }}>1</Text>
+              </View>
+              <Text numberOfLines={1} style={{ color: "rgba(255,255,255,0.75)", fontSize: 12, flex: 1 }}>
+                {rec.steps[0].title}
+              </Text>
+            </View>
+          )}
+
+          {/* Footer: metadata + CTA */}
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.08)" }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+                <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: diffColor }} />
+                <Text style={{ color: diffColor, fontSize: 11, fontWeight: "600" }}>
+                  {t(`recs.difficulty_${rec.difficulty}` as any)}
                 </Text>
               </View>
+              {stepCount > 0 && (
+                <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11 }}>
+                  📋 {stepCount}
+                </Text>
+              )}
+              {productCount > 0 && (
+                <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11 }}>
+                  🛍️ {productCount}
+                </Text>
+              )}
+              {rec.duration_min > 0 && (
+                <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11 }}>
+                  ⏱️ {rec.duration_min}min
+                </Text>
+              )}
             </View>
-            <Text className="text-lumis-white font-body-medium text-sm leading-5" numberOfLines={2}>
-              {rec.title}
-            </Text>
-          </View>
-        </View>
-
-        {/* Summary */}
-        <View className="px-4 pb-2">
-          <Text numberOfLines={2} className="text-lumis-white/55 font-body text-xs leading-5">
-            {rec.summary}
-          </Text>
-        </View>
-
-        {/* First step preview */}
-        {rec.steps && rec.steps.length > 0 && (
-          <View className="mx-4 mb-3 px-3 py-2 rounded-xl" style={{ backgroundColor: "rgba(201,168,76,0.07)", borderWidth: 1, borderColor: "rgba(201,168,76,0.15)" }}>
-            <Text style={{ color: "rgba(201,168,76,0.6)", fontSize: 9, fontWeight: "700", letterSpacing: 0.8, marginBottom: 2 }}>
-              ÉTAPE 1
-            </Text>
-            <Text numberOfLines={1} style={{ color: "rgba(255,255,255,0.7)", fontSize: 12 }}>
-              {rec.steps[0].title}
-            </Text>
-            {rec.steps[0].description ? (
-              <Text numberOfLines={1} style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, marginTop: 1 }}>
-                {rec.steps[0].description}
-              </Text>
-            ) : null}
-          </View>
-        )}
-
-        {/* Footer */}
-        <View
-          className="px-4 py-2.5 flex-row items-center justify-between"
-          style={{ borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.06)" }}
-        >
-          <View className="flex-row items-center gap-3">
-            <View className="flex-row items-center gap-1">
-              <View className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: diffColor }} />
-              <Text style={{ color: diffColor, fontSize: 11 }}>
-                {t(`recs.difficulty_${rec.difficulty}` as any)}
-              </Text>
+            <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: `${theme.accent}25`, alignItems: "center", justifyContent: "center" }}>
+              <Text style={{ color: theme.accent, fontSize: 14, fontWeight: "700" }}>→</Text>
             </View>
-            {(rec.steps?.length ?? 0) > 0 && (
-              <Text className="text-lumis-white/25 font-body text-xs">
-                {rec.steps!.length} étape{rec.steps!.length > 1 ? "s" : ""}
-              </Text>
-            )}
-            {(rec.products?.length ?? 0) > 0 && (
-              <Text style={{ color: "rgba(255,255,255,0.2)", fontSize: 11 }}>
-                🛍️ {rec.products!.length} produit{rec.products!.length > 1 ? "s" : ""}
-              </Text>
-            )}
           </View>
-          <Text className="text-lumis-white/30 font-body text-xs">
-            {rec.duration_min} min →
-          </Text>
-        </View>
+        </LinearGradient>
       </TouchableOpacity>
     </Animated.View>
   );
