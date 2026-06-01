@@ -13,6 +13,7 @@ import {
   FaceProfile,
   Recommendation,
   MakeupGuide,
+  RoutineStatus,
   RecommendationsResponse,
   RefreshResponse,
   ScannedProduct,
@@ -227,6 +228,20 @@ class ApiClient {
   async saveColorQuiz(payload: { undertone: string; skin_tone: string; color_season: string }): Promise<FaceProfile> {
     const { data } = await this.client.post<{ face_profile: FaceProfile }>("/analysis/color-quiz", payload);
     return data.face_profile;
+  }
+
+  // Daily routine
+  async getRoutineStatus(): Promise<RoutineStatus> {
+    const { data } = await this.client.get<RoutineStatus>("/routine/status");
+    return data;
+  }
+  async completeRoutine(period: "morning" | "evening"): Promise<RoutineStatus> {
+    const { data } = await this.client.post<RoutineStatus>("/routine/complete", { period });
+    return data;
+  }
+  async uncompleteRoutine(period: "morning" | "evening"): Promise<RoutineStatus> {
+    const { data } = await this.client.delete<RoutineStatus>("/routine/complete", { data: { period } });
+    return data;
   }
 
   // Coach

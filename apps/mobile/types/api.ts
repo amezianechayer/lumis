@@ -101,6 +101,13 @@ export interface Recommendation {
   created_at: string;
 }
 
+export interface RoutineStatus {
+  morning_done: boolean;
+  evening_done: boolean;
+  streak: number;
+  total_completed: number;
+}
+
 export interface MakeupGuide {
   title: string;
   intro: string;

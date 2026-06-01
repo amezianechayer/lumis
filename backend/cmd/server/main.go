@@ -51,7 +51,7 @@ func main() {
 	logger.Info("database connected")
 
 	// Auto-migrate models (supplements SQL migrations)
-	if err := db.AutoMigrate(&models.User{}, &models.RefreshToken{}, &models.FaceProfile{}, &models.Recommendation{}, &models.SkinScan{}, &models.CoachConversation{}, &models.CoachMessage{}, &models.ScannedProduct{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.RefreshToken{}, &models.FaceProfile{}, &models.Recommendation{}, &models.SkinScan{}, &models.CoachConversation{}, &models.CoachMessage{}, &models.ScannedProduct{}, &models.RoutineLog{}); err != nil {
 		logger.Fatal("automigrate failed", zap.Error(err))
 	}
 
@@ -70,6 +70,7 @@ func main() {
 	skinScanRepo := repository.NewSkinScanRepository(db)
 	coachRepo := repository.NewCoachRepository(db)
 	productRepo := repository.NewScannedProductRepository(db)
+	routineRepo := repository.NewRoutineRepository(db)
 
 	// Services
 	authSvc := services.NewAuthService(userRepo, tokenRepo, cfg)
@@ -91,6 +92,7 @@ func main() {
 	coachHandler := handlers.NewCoachHandler(coachSvc, coachRepo, userRepo, cfg.FreeCoachDailyLimit)
 	productHandler := handlers.NewProductHandler(productSvc)
 	makeupGuideHandler := handlers.NewMakeupGuideHandler(makeupGuideSvc)
+	routineHandler := handlers.NewRoutineHandler(routineRepo)
 	stripeHandler := handlers.NewStripeHandler(stripeSvc, userRepo)
 
 	// Middleware
@@ -181,6 +183,12 @@ func main() {
 
 	// Makeup guide (AI-personalized)
 	protected.Get("/makeup-guide", makeupGuideHandler.Get)
+
+	// Daily routine + streak
+	routine := protected.Group("/routine")
+	routine.Get("/status", routineHandler.Status)
+	routine.Post("/complete", routineHandler.Complete)
+	routine.Delete("/complete", routineHandler.Uncomplete)
 
 	// Stripe / Premium
 	stripeGroup := protected.Group("/stripe")
