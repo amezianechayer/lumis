@@ -320,6 +320,12 @@ export default function ProductScanScreen() {
             >
               <Text className="text-lumis-white font-body-bold text-2xl">←</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push("/products/history")}
+              style={{ position: "absolute", top: 56, right: 24, backgroundColor: "rgba(0,0,0,0.4)", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 }}
+            >
+              <Text className="text-lumis-white font-body text-xs">🕐 Historique</Text>
+            </TouchableOpacity>
             <Text className="text-lumis-white font-display text-xl">Scanner un produit</Text>
           </View>
 
