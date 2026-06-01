@@ -19,7 +19,7 @@ import { captureRef } from "react-native-view-shot";
 import Svg, { Polygon, Polyline, Circle, Ellipse, Path, Defs, RadialGradient, LinearGradient, Stop } from "react-native-svg";
 import MediaPipeWebView, { MediaPipeRef } from "../../components/FaceAnalyzer/MediaPipeWebView";
 
-type MakeupLookType = "lipstick" | "blush" | "eyeshadow" | "foundation";
+type MakeupLookType = "lipstick" | "blush" | "eyeshadow" | "highlighter" | "foundation";
 
 interface MakeupLook {
   type: MakeupLookType;
@@ -58,6 +58,14 @@ const INITIAL_LOOKS: MakeupLook[] = [
     ],
   },
   {
+    type: "highlighter", label: "Highlight", emoji: "✨",
+    color: "#FFF0D0", enabled: false,
+    colors: [
+      { hex: "#FFF0D0", name: "Champagne" }, { hex: "#FFE8C0", name: "Doré" },
+      { hex: "#FFEAEA", name: "Rosé" }, { hex: "#F5F5FF", name: "Glacé" },
+    ],
+  },
+  {
     type: "foundation", label: "Teint", emoji: "🎨",
     color: "#E8C8A0", enabled: false,
     colors: [
@@ -87,23 +95,32 @@ const LEFT_UPPER_LID = [33, 246, 161, 160, 159, 158, 157, 173, 133];
 const RIGHT_UPPER_LID = [362, 398, 384, 385, 386, 387, 388, 466, 263];
 // Inner + outer lip for gloss separation
 const LOWER_LIP_CENTER = 17;
+// Highlighter points: high cheekbones, nose bridge, cupid's bow, brow bone
+const HL_CHEEK_L = 117;
+const HL_CHEEK_R = 346;
+const HL_NOSE_TOP = 197;
+const HL_NOSE_TIP = 4;
+const HL_CUPID = 0;
 
 type Pt = [number, number, number]; // x, y, z (normalized 0-1)
 
 // ─── Makeup overlay rendered on detected landmarks ────────────────────────────
 function MakeupMesh({
-  landmarks, looks, w, h,
+  landmarks, looks, w, h, intensity,
 }: {
   landmarks: Pt[];
   looks: MakeupLook[];
   w: number; h: number;
+  intensity: number; // 0.6 = naturel, 1 = moyen, 1.4 = glam
 }) {
   const px = (i: number) => landmarks[i][0] * w;
   const py = (i: number) => landmarks[i][1] * h;
+  const op = (base: number) => Math.min(1, base * intensity);
 
   const lip = looks.find(l => l.type === "lipstick");
   const blush = looks.find(l => l.type === "blush");
   const eye = looks.find(l => l.type === "eyeshadow");
+  const hl = looks.find(l => l.type === "highlighter");
   const found = looks.find(l => l.type === "foundation");
 
   // Lip polygon points
@@ -131,21 +148,25 @@ function MakeupMesh({
     <Svg width={w} height={h} style={StyleSheet.absoluteFill} pointerEvents="none">
       <Defs>
         <RadialGradient id="blushGrad" cx="50%" cy="50%" r="50%">
-          <Stop offset="0%" stopColor={blush?.color ?? "#F4A0B8"} stopOpacity={0.55} />
-          <Stop offset="60%" stopColor={blush?.color ?? "#F4A0B8"} stopOpacity={0.28} />
+          <Stop offset="0%" stopColor={blush?.color ?? "#F4A0B8"} stopOpacity={op(0.5)} />
+          <Stop offset="60%" stopColor={blush?.color ?? "#F4A0B8"} stopOpacity={op(0.25)} />
           <Stop offset="100%" stopColor={blush?.color ?? "#F4A0B8"} stopOpacity={0} />
         </RadialGradient>
         <RadialGradient id="eyeGradL" cx="50%" cy="60%" r="55%">
-          <Stop offset="0%" stopColor={eye?.color ?? "#C8A882"} stopOpacity={0.7} />
+          <Stop offset="0%" stopColor={eye?.color ?? "#C8A882"} stopOpacity={op(0.65)} />
           <Stop offset="100%" stopColor={eye?.color ?? "#C8A882"} stopOpacity={0.05} />
         </RadialGradient>
         <RadialGradient id="eyeGradR" cx="50%" cy="60%" r="55%">
-          <Stop offset="0%" stopColor={eye?.color ?? "#C8A882"} stopOpacity={0.7} />
+          <Stop offset="0%" stopColor={eye?.color ?? "#C8A882"} stopOpacity={op(0.65)} />
           <Stop offset="100%" stopColor={eye?.color ?? "#C8A882"} stopOpacity={0.05} />
         </RadialGradient>
+        <RadialGradient id="hlGrad" cx="50%" cy="50%" r="50%">
+          <Stop offset="0%" stopColor={hl?.color ?? "#FFF0D0"} stopOpacity={op(0.6)} />
+          <Stop offset="100%" stopColor={hl?.color ?? "#FFF0D0"} stopOpacity={0} />
+        </RadialGradient>
         <LinearGradient id="lipGrad" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0%" stopColor={lip?.color ?? "#C0392B"} stopOpacity={0.82} />
-          <Stop offset="100%" stopColor={lip?.color ?? "#C0392B"} stopOpacity={0.62} />
+          <Stop offset="0%" stopColor={lip?.color ?? "#C0392B"} stopOpacity={op(0.78)} />
+          <Stop offset="100%" stopColor={lip?.color ?? "#C0392B"} stopOpacity={op(0.58)} />
         </LinearGradient>
       </Defs>
 
@@ -181,14 +202,24 @@ function MakeupMesh({
         </>
       )}
 
+      {/* Highlighter — luminous points on cheekbones, nose bridge, cupid's bow */}
+      {hl?.enabled && (
+        <>
+          <Ellipse cx={px(HL_CHEEK_L)} cy={py(HL_CHEEK_L)} rx={faceW * 0.07} ry={faceW * 0.035} fill="url(#hlGrad)" />
+          <Ellipse cx={px(HL_CHEEK_R)} cy={py(HL_CHEEK_R)} rx={faceW * 0.07} ry={faceW * 0.035} fill="url(#hlGrad)" />
+          <Ellipse cx={px(HL_NOSE_TOP)} cy={(py(HL_NOSE_TOP) + py(HL_NOSE_TIP)) / 2} rx={faceW * 0.022} ry={Math.abs(py(HL_NOSE_TIP) - py(HL_NOSE_TOP)) * 0.5} fill="url(#hlGrad)" />
+          <Ellipse cx={px(HL_CUPID)} cy={py(HL_CUPID)} rx={faceW * 0.03} ry={faceW * 0.015} fill="url(#hlGrad)" />
+        </>
+      )}
+
       {/* Lipstick — gradient fill + contour + gloss */}
       {lip?.enabled && (
         <>
           <Polygon points={lipPoints} fill="url(#lipGrad)" />
           {/* Defined lip contour */}
-          <Polygon points={lipPoints} fill="none" stroke={lip.color} strokeOpacity={0.9} strokeWidth={linerW * 0.7} strokeLinejoin="round" />
+          <Polygon points={lipPoints} fill="none" stroke={lip.color} strokeOpacity={op(0.85)} strokeWidth={linerW * 0.7} strokeLinejoin="round" />
           {/* Gloss highlight on lower lip */}
-          <Ellipse cx={glossX} cy={glossY} rx={faceW * 0.05} ry={faceW * 0.018} fill="#FFFFFF" fillOpacity={0.28} />
+          <Ellipse cx={glossX} cy={glossY} rx={faceW * 0.05} ry={faceW * 0.018} fill="#FFFFFF" fillOpacity={op(0.25)} />
         </>
       )}
     </Svg>
@@ -207,6 +238,7 @@ export default function TryOnScreen() {
   const [photoDims, setPhotoDims] = useState<{ w: number; h: number }>({ w: 1, h: 1 });
   const [landmarks, setLandmarks] = useState<Pt[] | null>(null);
   const [mpReady, setMpReady] = useState(false);
+  const [intensity, setIntensity] = useState(1); // 0.6 naturel, 1 moyen, 1.4 glam
 
   const mediaPipeRef = useRef<MediaPipeRef>(null);
   const captureViewRef = useRef<View>(null);
@@ -421,7 +453,7 @@ export default function TryOnScreen() {
             <View ref={captureViewRef} collapsable={false} style={{ width: dispW, height: dispH, alignSelf: "center" }}>
               <Image source={{ uri: photoUri }} style={{ width: dispW, height: dispH }} resizeMode="cover" />
               {landmarks && (
-                <MakeupMesh landmarks={landmarks} looks={looks} w={dispW} h={dispH} />
+                <MakeupMesh landmarks={landmarks} looks={looks} w={dispW} h={dispH} intensity={intensity} />
               )}
             </View>
 
@@ -452,6 +484,21 @@ export default function TryOnScreen() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
+
+              {/* Intensity presets */}
+              <View style={styles.intensityRow}>
+                <Text style={styles.intensityLabel}>Intensité</Text>
+                {([["Naturel", 0.6], ["Moyen", 1], ["Glam", 1.4]] as const).map(([label, val]) => (
+                  <TouchableOpacity
+                    key={label}
+                    onPress={() => setIntensity(val)}
+                    style={[styles.intensityBtn, intensity === val && styles.intensityBtnActive]}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.intensityText, intensity === val && styles.intensityTextActive]}>{label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
 
               {/* Color palette */}
               <View style={styles.paletteRow}>
@@ -515,6 +562,12 @@ const styles = StyleSheet.create({
   chipLabel: { fontSize: 12, color: "rgba(255,255,255,0.5)" },
   chipLabelActive: { color: "#C9A84C" },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#C9A84C" },
+  intensityRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, gap: 8, marginTop: 4, marginBottom: 8 },
+  intensityLabel: { color: "rgba(255,255,255,0.4)", fontSize: 11, marginRight: 4 },
+  intensityBtn: { flex: 1, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", alignItems: "center" },
+  intensityBtnActive: { backgroundColor: "rgba(201,168,76,0.2)", borderColor: "#C9A84C" },
+  intensityText: { color: "rgba(255,255,255,0.5)", fontSize: 12 },
+  intensityTextActive: { color: "#C9A84C", fontWeight: "700" },
   paletteRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, gap: 10, marginBottom: 16, marginTop: 4, flexWrap: "wrap" },
   swatch: { width: 30, height: 30, borderRadius: 15 },
   swatchActive: { borderWidth: 3, borderColor: "#C9A84C", width: 36, height: 36, borderRadius: 18 },
