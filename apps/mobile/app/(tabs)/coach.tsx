@@ -8,9 +8,13 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  Modal,
+  ScrollView,
+  StatusBar,
 } from "react-native";
 import { useEffect, useRef, useState } from "react";
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import Animated, { FadeInDown, FadeInUp, SlideInRight, SlideOutRight } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { api } from "../../services/api";
 import type { CoachConversation, CoachMessage } from "../../types/api";
 import { PremiumGateModal } from "../../components/ui/PremiumGateModal";
@@ -18,13 +22,17 @@ import { PremiumGateModal } from "../../components/ui/PremiumGateModal";
 type LocalMessage = Pick<CoachMessage, "id" | "role" | "content" | "created_at">;
 
 export default function CoachScreen() {
+  const insets = useSafeAreaInsets();
   const [conversation, setConversation] = useState<CoachConversation | null>(null);
   const [messages, setMessages] = useState<LocalMessage[]>([]);
+  const [allConversations, setAllConversations] = useState<CoachConversation[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [premiumGate, setPremiumGate] = useState<{ used: number; limit: number } | null>(null);
   const listRef = useRef<FlatList>(null);
+  const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     initConversation();
@@ -34,6 +42,7 @@ export default function CoachScreen() {
     try {
       setIsLoading(true);
       const convs = await api.listCoachConversations();
+      setAllConversations(convs);
       if (convs.length > 0) {
         const conv = await api.getCoachConversation(convs[0].id);
         setConversation(conv);
@@ -45,6 +54,20 @@ export default function CoachScreen() {
       }
     } catch {
       Alert.alert("Erreur", "Impossible de charger le coach.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function loadConversation(convId: string) {
+    try {
+      setShowHistory(false);
+      setIsLoading(true);
+      const conv = await api.getCoachConversation(convId);
+      setConversation(conv);
+      setMessages(conv.messages ?? []);
+    } catch {
+      Alert.alert("Erreur", "Impossible de charger la conversation.");
     } finally {
       setIsLoading(false);
     }
@@ -92,6 +115,9 @@ export default function CoachScreen() {
       const conv = await api.createCoachConversation();
       setConversation(conv);
       setMessages([]);
+      // Refresh history list
+      const convs = await api.listCoachConversations();
+      setAllConversations(convs);
     } catch {
       Alert.alert("Erreur", "Impossible de créer une nouvelle conversation.");
     }
@@ -116,28 +142,98 @@ export default function CoachScreen() {
       limit={premiumGate?.limit}
     />
     <KeyboardAvoidingView
-      className="flex-1 bg-lumis-black"
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={90}
+      style={{ flex: 1, backgroundColor: "#0A0A0A" }}
+      behavior="padding"
+      keyboardVerticalOffset={Platform.select({
+        ios: 90,
+        android: (StatusBar.currentHeight ?? 24) + 56 + insets.bottom,
+      })}
     >
+      {/* History modal */}
+      <Modal
+        visible={showHistory}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowHistory(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.6)" }}>
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => setShowHistory(false)} />
+          <View style={{
+            backgroundColor: "#111", borderTopLeftRadius: 24, borderTopRightRadius: 24,
+            maxHeight: "70%", paddingBottom: insets.bottom + 16,
+          }}>
+            <View style={{ padding: 20, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.08)", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 17 }}>Historique des conversations</Text>
+              <TouchableOpacity onPress={() => setShowHistory(false)}>
+                <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 22 }}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }}>
+              {allConversations.length === 0 ? (
+                <Text style={{ color: "rgba(255,255,255,0.4)", textAlign: "center", marginTop: 20 }}>Aucune conversation</Text>
+              ) : (
+                allConversations.map((conv) => {
+                  const isActive = conv.id === conversation?.id;
+                  const date = new Date(conv.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+                  return (
+                    <TouchableOpacity
+                      key={conv.id}
+                      onPress={() => loadConversation(conv.id)}
+                      style={{
+                        backgroundColor: isActive ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)",
+                        borderWidth: 1,
+                        borderColor: isActive ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.08)",
+                        borderRadius: 16, padding: 14,
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                        <Text style={{ color: isActive ? "#C9A84C" : "#fff", fontWeight: "600", fontSize: 14 }}>
+                          {isActive ? "✨ Conversation active" : `Conversation`}
+                        </Text>
+                        <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 11 }}>{date}</Text>
+                      </View>
+                      {conv.messages && conv.messages.length > 0 && (
+                        <Text numberOfLines={1} style={{ color: "rgba(255,255,255,0.4)", fontSize: 12, marginTop: 4 }}>
+                          {conv.messages[0].content}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       {/* Header */}
       <Animated.View
         entering={FadeInDown.delay(50)}
-        className="px-6 pt-14 pb-4 border-b border-white/10 flex-row items-center justify-between"
+        style={{ paddingHorizontal: 24, paddingTop: insets.top + 8, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.08)", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}
       >
         <View>
-          <Text className="text-lumis-gold font-display text-xl">✨ Lumis Coach</Text>
-          <Text className="text-lumis-white/40 font-body text-xs mt-0.5">
-            Propulsé par Llama 3.3 70B
-          </Text>
+          <Text style={{ color: "#C9A84C", fontFamily: "PlayfairDisplay-Regular", fontSize: 20 }}>✨ Lumis Coach</Text>
+          <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, marginTop: 2 }}>Llama 3.3 70B</Text>
         </View>
-        <TouchableOpacity
-          onPress={handleNewChat}
-          className="bg-white/5 border border-white/10 rounded-xl px-3 py-2"
-          activeOpacity={0.7}
-        >
-          <Text className="text-lumis-white/60 font-body text-xs">+ Nouveau</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          {allConversations.length > 1 && (
+            <TouchableOpacity
+              onPress={() => setShowHistory(true)}
+              style={{ backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 }}
+              activeOpacity={0.7}
+            >
+              <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>🕐 Historique</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            onPress={handleNewChat}
+            style={{ backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 }}
+            activeOpacity={0.7}
+          >
+            <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>+ Nouveau</Text>
+          </TouchableOpacity>
+        </View>
       </Animated.View>
 
       {/* Messages */}
@@ -171,8 +267,12 @@ export default function CoachScreen() {
           ref={listRef}
           data={messages}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 16, gap: 12 }}
-          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8, gap: 12 }}
+          onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+          onLayout={() => listRef.current?.scrollToEnd({ animated: false })}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          maintainVisibleContentPosition={{ minIndexForVisible: 0, autoscrollToTopThreshold: 10 }}
           renderItem={({ item, index }) => (
             <Animated.View entering={FadeInUp.delay(index < 10 ? 0 : 50)}>
               <MessageBubble message={item} />
@@ -199,16 +299,25 @@ export default function CoachScreen() {
         className="px-4 py-3 border-t border-white/10 flex-row items-end gap-3"
       >
         <TextInput
+          ref={inputRef}
           value={input}
           onChangeText={setInput}
           placeholder="Pose une question beauté..."
           placeholderTextColor="rgba(255,255,255,0.3)"
           multiline
           maxLength={500}
-          className="flex-1 bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-lumis-white font-body text-sm"
-          style={{ maxHeight: 120 }}
-          onSubmitEditing={handleSend}
+          style={{
+            flex: 1, backgroundColor: "rgba(255,255,255,0.05)",
+            borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
+            borderRadius: 20, paddingHorizontal: 16, paddingVertical: 12,
+            color: "#fff", fontSize: 14, maxHeight: 120, minHeight: 46,
+          }}
+          onFocus={() => {
+            setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 300);
+          }}
           returnKeyType="send"
+          blurOnSubmit={false}
+          onSubmitEditing={handleSend}
         />
         <TouchableOpacity
           onPress={handleSend}
