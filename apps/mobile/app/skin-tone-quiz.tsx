@@ -6,6 +6,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import Animated, { FadeIn, FadeInDown, FadeInRight } from "react-native-reanimated";
 import { QUIZ, QuizOption, computeQuizResult, QuizResult } from "../utils/colorQuiz";
 import { api } from "../services/api";
+import { useThemeColors } from "../stores/theme.store";
+
+const TERRACOTTA = "#C9826B";
 
 const SEASON_PALETTES: Record<string, string[]> = {
   spring: ["#FF9E80", "#FFD180", "#FFF1A8", "#A8E6A0", "#FFB3C6"],
@@ -16,6 +19,7 @@ const SEASON_PALETTES: Record<string, string[]> = {
 
 export default function SkinToneQuizScreen() {
   const router = useRouter();
+  const t = useThemeColors();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, QuizOption>>({});
@@ -63,21 +67,21 @@ export default function SkinToneQuizScreen() {
     const palette = SEASON_PALETTES[result.colorSeason] ?? [];
     const utColor = result.undertone === "warm" ? "#E8A35C" : result.undertone === "cool" ? "#7BA0D0" : "#B0A0C0";
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4" }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
         <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 48 }}>
           <Animated.View entering={FadeIn} style={{ alignItems: "center", marginTop: 12, marginBottom: 24 }}>
             <Text style={{ fontSize: 48, marginBottom: 8 }}>🎨</Text>
-            <Text style={{ color: "#fff", fontSize: 24, fontWeight: "700", textAlign: "center" }}>Ton résultat</Text>
-            <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 13, marginTop: 4 }}>
+            <Text style={{ color: t.text, fontSize: 24, fontWeight: "700", textAlign: "center" }}>Ton résultat</Text>
+            <Text style={{ color: t.textMuted, fontSize: 13, marginTop: 4 }}>
               Fiabilité {result.confidence}%
             </Text>
           </Animated.View>
 
           {/* Undertone */}
           <Animated.View entering={FadeInDown.delay(80)} style={{ backgroundColor: `${utColor}18`, borderWidth: 0.5, borderColor: `${utColor}50`, borderRadius: 20, padding: 20, marginBottom: 14 }}>
-            <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Sous-ton</Text>
+            <Text style={{ color: t.textMuted, fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Sous-ton</Text>
             <Text style={{ color: utColor, fontSize: 26, fontWeight: "800" }}>{result.undertoneLabel}</Text>
-            <Text style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, lineHeight: 19, marginTop: 6 }}>
+            <Text style={{ color: t.textMuted, fontSize: 13, lineHeight: 19, marginTop: 6 }}>
               {result.undertone === "warm"
                 ? "Reflets dorés/pêche. L'or, les tons terre, corail et olive te subliment."
                 : result.undertone === "cool"
@@ -88,19 +92,19 @@ export default function SkinToneQuizScreen() {
 
           {/* Skin tone + season */}
           <Animated.View entering={FadeInDown.delay(140)} style={{ flexDirection: "row", gap: 12, marginBottom: 14 }}>
-            <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.6)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.2)", borderRadius: 18, padding: 16 }}>
-              <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Carnation</Text>
-              <Text style={{ color: "#fff", fontSize: 16, fontWeight: "700" }}>Fitzpatrick {result.skinTone.replace("fitzpatrick_", "")}</Text>
+            <View style={{ flex: 1, backgroundColor: t.bgCard, borderWidth: 0.5, borderColor: t.border, borderRadius: 18, padding: 16 }}>
+              <Text style={{ color: t.textMuted, fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Carnation</Text>
+              <Text style={{ color: t.text, fontSize: 16, fontWeight: "700" }}>Fitzpatrick {result.skinTone.replace("fitzpatrick_", "")}</Text>
             </View>
-            <View style={{ flex: 1, backgroundColor: "rgba(201,168,76,0.1)", borderWidth: 0.5, borderColor: "rgba(201,168,76,0.3)", borderRadius: 18, padding: 16 }}>
-              <Text style={{ color: "rgba(201,168,76,0.6)", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Saison</Text>
-              <Text style={{ color: "#C9826B", fontSize: 16, fontWeight: "700" }}>{result.seasonLabel}</Text>
+            <View style={{ flex: 1, backgroundColor: t.primaryMuted, borderWidth: 0.5, borderColor: t.border, borderRadius: 18, padding: 16 }}>
+              <Text style={{ color: t.textMuted, fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Saison</Text>
+              <Text style={{ color: TERRACOTTA, fontSize: 16, fontWeight: "700" }}>{result.seasonLabel}</Text>
             </View>
           </Animated.View>
 
           {/* Palette */}
-          <Animated.View entering={FadeInDown.delay(200)} style={{ backgroundColor: "rgba(255,255,255,0.6)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.2)", borderRadius: 18, padding: 16, marginBottom: 24 }}>
-            <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Tes couleurs à porter</Text>
+          <Animated.View entering={FadeInDown.delay(200)} style={{ backgroundColor: t.bgCard, borderWidth: 0.5, borderColor: t.border, borderRadius: 18, padding: 16, marginBottom: 24 }}>
+            <Text style={{ color: t.textMuted, fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Tes couleurs à porter</Text>
             <View style={{ flexDirection: "row", gap: 8 }}>
               {palette.map((c) => (
                 <View key={c} style={{ flex: 1, height: 44, borderRadius: 12, backgroundColor: c }} />
@@ -109,11 +113,11 @@ export default function SkinToneQuizScreen() {
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(260)} style={{ gap: 10 }}>
-            <TouchableOpacity onPress={handleSave} disabled={saving} style={{ backgroundColor: "#C9826B", borderRadius: 16, paddingVertical: 16, alignItems: "center" }}>
-              {saving ? <ActivityIndicator color="#EDE4D4" /> : <Text style={{ color: "#EDE4D4", fontWeight: "700", fontSize: 16 }}>✓ Enregistrer dans mon profil</Text>}
+            <TouchableOpacity onPress={handleSave} disabled={saving} style={{ backgroundColor: TERRACOTTA, borderRadius: 16, paddingVertical: 16, alignItems: "center" }}>
+              {saving ? <ActivityIndicator color="#fff" /> : <Text style={{ color: "#fff", fontWeight: "700", fontSize: 16 }}>✓ Enregistrer dans mon profil</Text>}
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => { setStep(0); setAnswers({}); setResult(null); }} style={{ borderWidth: 0.5, borderColor: "rgba(201,168,76,0.4)", borderRadius: 16, paddingVertical: 14, alignItems: "center" }}>
-              <Text style={{ color: "#C9826B", fontWeight: "600", fontSize: 14 }}>🔄 Refaire le test</Text>
+            <TouchableOpacity onPress={() => { setStep(0); setAnswers({}); setResult(null); }} style={{ borderWidth: 0.5, borderColor: t.border, borderRadius: 16, paddingVertical: 14, alignItems: "center" }}>
+              <Text style={{ color: TERRACOTTA, fontWeight: "600", fontSize: 14 }}>🔄 Refaire le test</Text>
             </TouchableOpacity>
           </Animated.View>
         </ScrollView>
@@ -124,25 +128,25 @@ export default function SkinToneQuizScreen() {
   // ── QUESTION ──
   const q = QUIZ[step];
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.bg }}>
       {/* Header + progress */}
       <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 16 }}>
           <TouchableOpacity onPress={handleBack} style={{ padding: 4 }}>
-            <Text style={{ color: "#C9826B", fontSize: 22 }}>←</Text>
+            <Text style={{ color: TERRACOTTA, fontSize: 22 }}>←</Text>
           </TouchableOpacity>
-          <View style={{ flex: 1, height: 6, backgroundColor: "rgba(201,130,107,0.12)", borderRadius: 3, overflow: "hidden" }}>
-            <View style={{ width: `${progress * 100}%`, height: "100%", backgroundColor: "#C9826B", borderRadius: 3 }} />
+          <View style={{ flex: 1, height: 6, backgroundColor: t.borderLight, borderRadius: 3, overflow: "hidden" }}>
+            <View style={{ width: `${progress * 100}%`, height: "100%", backgroundColor: TERRACOTTA, borderRadius: 3 }} />
           </View>
-          <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>{step + 1}/{QUIZ.length}</Text>
+          <Text style={{ color: t.textMuted, fontSize: 12 }}>{step + 1}/{QUIZ.length}</Text>
         </View>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 24 }}>
         <Animated.View key={q.id} entering={FadeInRight.duration(300)}>
-          <Text style={{ color: "#fff", fontSize: 22, fontWeight: "700", lineHeight: 29, marginBottom: 8 }}>{q.question}</Text>
+          <Text style={{ color: t.text, fontSize: 22, fontWeight: "700", lineHeight: 29, marginBottom: 8 }}>{q.question}</Text>
           {q.hint ? (
-            <Text style={{ color: "rgba(255,255,255,0.45)", fontSize: 13, lineHeight: 19, marginBottom: 24 }}>💡 {q.hint}</Text>
+            <Text style={{ color: t.textMuted, fontSize: 13, lineHeight: 19, marginBottom: 24 }}>💡 {q.hint}</Text>
           ) : <View style={{ height: 16 }} />}
 
           <View style={{ gap: 12 }}>
@@ -155,13 +159,13 @@ export default function SkinToneQuizScreen() {
                   activeOpacity={0.85}
                   style={{
                     flexDirection: "row", alignItems: "center", gap: 14,
-                    backgroundColor: selected ? "rgba(201,168,76,0.15)" : "rgba(255,255,255,0.6)",
-                    borderWidth: 0.5, borderColor: selected ? "#C9826B" : "rgba(201,130,107,0.2)",
+                    backgroundColor: selected ? t.primaryMuted : t.bgCard,
+                    borderWidth: 0.5, borderColor: selected ? TERRACOTTA : t.border,
                     borderRadius: 16, padding: 16,
                   }}
                 >
                   <Text style={{ fontSize: 26 }}>{opt.emoji}</Text>
-                  <Text style={{ color: "#fff", fontSize: 15, fontWeight: "500", flex: 1 }}>{opt.label}</Text>
+                  <Text style={{ color: t.text, fontSize: 15, fontWeight: "500", flex: 1 }}>{opt.label}</Text>
                 </TouchableOpacity>
               );
             })}
