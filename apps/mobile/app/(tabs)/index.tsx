@@ -1,8 +1,8 @@
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from "react-native";
 import Animated, {
-  FadeInDown, FadeInUp,
+  FadeInDown,
   useSharedValue, useAnimatedStyle,
-  withRepeat, withSequence, withTiming, withSpring,
+  withRepeat, withSequence, withTiming,
   Easing,
 } from "react-native-reanimated";
 import { useEffect } from "react";
@@ -15,13 +15,16 @@ import { Skeleton, SkeletonCard } from "../../components/ui/Skeleton";
 import { WeatherTipCard } from "../../components/ui/WeatherTipCard";
 import { api } from "../../services/api";
 
-function PulseScoreRing({ score, color }: { score: number; color: string }) {
+const CREAM = "#E8D5C0";
+const TERRACOTTA = "#C9826B";
+
+function PulseScoreRing({ score, color, size = 84 }: { score: number; color: string; size?: number }) {
   const pulse = useSharedValue(1);
   useEffect(() => {
     pulse.value = withRepeat(
       withSequence(
-        withTiming(1.07, { duration: 1400, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1, { duration: 1400, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1.06, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
       ),
       -1,
       true,
@@ -30,13 +33,13 @@ function PulseScoreRing({ score, color }: { score: number; color: string }) {
   const ringStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulse.value }] }));
   return (
     <Animated.View style={[{
-      width: 72, height: 72, borderRadius: 36,
+      width: size, height: size, borderRadius: size / 2,
       borderWidth: 3, borderColor: color,
       backgroundColor: `${color}18`,
       alignItems: "center", justifyContent: "center",
     }, ringStyle]}>
-      <Text style={{ color, fontWeight: "700", fontSize: 22 }}>{score}</Text>
-      <Text style={{ color: `${color}90`, fontSize: 10 }}>/100</Text>
+      <Text style={{ color, fontWeight: "700", fontSize: size * 0.3 }}>{score}</Text>
+      <Text style={{ color: `${color}90`, fontSize: size * 0.13 }}>/100</Text>
     </Animated.View>
   );
 }
@@ -46,6 +49,7 @@ export default function HomeScreen() {
   const { user, isLoading: authLoading } = useAuthStore();
   const queryClient = useQueryClient();
   const firstName = user?.full_name?.split(" ")[0] ?? "toi";
+  const isMale = user?.gender === "male";
 
   const { data: skinScan, isLoading: skinLoading } = useQuery({
     queryKey: ["skin-scan", "latest"],
@@ -59,11 +63,18 @@ export default function HomeScreen() {
     staleTime: 1000 * 60 * 10,
   });
 
+  const { data: routineStatus } = useQuery({
+    queryKey: ["routine-status"],
+    queryFn: () => api.getRoutineStatus(),
+    staleTime: 1000 * 60,
+  });
+
   const isLoading = authLoading || skinLoading || faceLoading;
 
   const onRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["skin-scan", "latest"] });
     queryClient.invalidateQueries({ queryKey: ["face-profile", "latest"] });
+    queryClient.invalidateQueries({ queryKey: ["routine-status"] });
   };
 
   if (isLoading) {
@@ -78,293 +89,145 @@ export default function HomeScreen() {
   }
 
   const skinScore = skinScan?.overall_score ?? null;
-  const scoreColor = skinScore === null ? "#C9826B" : skinScore >= 75 ? "#4ade80" : skinScore >= 50 ? "#C9826B" : "#f87171";
+  const scoreColor = skinScore === null ? TERRACOTTA : skinScore >= 75 ? "#5DCAA5" : skinScore >= 50 ? TERRACOTTA : "#F09595";
+  const streak = routineStatus?.streak ?? 0;
+
+  const today = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
   return (
     <ScrollView
       className="flex-1 bg-lumis-black"
-      contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 60, paddingBottom: 32 }}
+      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 56, paddingBottom: 32 }}
       showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={false} onRefresh={onRefresh} tintColor="#C9826B" />}
+      refreshControl={<RefreshControl refreshing={false} onRefresh={onRefresh} tintColor={TERRACOTTA} />}
     >
-      {/* Header */}
-      <Animated.View entering={FadeInDown.delay(50)}>
-        <Text className="text-lumis-white/60 font-body text-base">
-          {t("home.greeting", { name: firstName })}
-        </Text>
-        <Text className="text-lumis-white font-display text-3xl mt-1">
-          {t("home.dashboard_title")}
+      {/* ── Header ── */}
+      <Animated.View entering={FadeInDown.delay(40)}>
+        <Text style={{ color: "rgba(232,213,192,0.4)", fontSize: 12, textTransform: "capitalize" }}>{today}</Text>
+        <Text style={{ color: CREAM, fontSize: 26, fontWeight: "300", letterSpacing: 0.2, marginTop: 2 }}>
+          Bonjour <Text style={{ fontWeight: "600", color: TERRACOTTA }}>{firstName}</Text>
         </Text>
       </Animated.View>
 
-      {/* Weather tip of the day */}
-      <Animated.View entering={FadeInDown.delay(100)} className="mt-6">
-        <WeatherTipCard />
-      </Animated.View>
-
-      {/* Skin Score — cliquable pour voir le détail */}
-      <Animated.View entering={FadeInDown.delay(150)} className="mt-6">
+      {/* ── Hero score ── */}
+      <Animated.View entering={FadeInDown.delay(100)} className="mt-5">
         <TouchableOpacity
-          activeOpacity={0.85}
+          activeOpacity={0.9}
           onPress={() => router.navigate("/(tabs)/scan")}
-          className="bg-lumis-gold/10 border border-lumis-gold/30 rounded-3xl p-6"
+          style={{ backgroundColor: "rgba(201,130,107,0.1)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.3)", borderRadius: 24, padding: 22 }}
         >
-        <View className="flex-row items-center justify-between mb-3">
-          <Text className="text-lumis-white/60 font-body text-xs uppercase tracking-widest">
-            {t("home.skin_score_label")}
-          </Text>
-          {skinScore !== null && (
-            <Text style={{ color: "#C9826B", fontSize: 12 }}>Voir détails →</Text>
-          )}
-        </View>
-
-        {skinScore !== null ? (
-          <>
-            <View className="flex-row items-center gap-4">
-              {/* Score ring — animated pulse */}
-              <PulseScoreRing score={skinScore} color={scoreColor} />
-
-              {/* Sub-scores */}
-              <View className="flex-1 gap-1.5">
-                <MiniBar label="Hydratation" score={skinScan?.hydration_score ?? 0} />
-                <MiniBar label="Texture" score={skinScan?.texture_score ?? 0} />
-                <MiniBar label="Uniformité" score={skinScan?.uniformity_score ?? 0} />
+          {skinScore !== null ? (
+            <>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 18 }}>
+                <PulseScoreRing score={skinScore} color={scoreColor} />
+                <View style={{ flex: 1, gap: 7 }}>
+                  <Text style={{ color: "rgba(232,213,192,0.45)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1.2 }}>Score de peau</Text>
+                  <MiniBar label="Hydratation" score={skinScan?.hydration_score ?? 0} />
+                  <MiniBar label="Texture" score={skinScan?.texture_score ?? 0} />
+                  <MiniBar label="Uniformité" score={skinScan?.uniformity_score ?? 0} />
+                </View>
+              </View>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 14 }}>
+                <Text style={{ color: "rgba(232,213,192,0.35)", fontSize: 11 }}>
+                  {skinScan ? `Dernier scan · ${new Date(skinScan.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}` : ""}
+                </Text>
+                <Text style={{ color: TERRACOTTA, fontSize: 12, fontWeight: "600" }}>Détails →</Text>
+              </View>
+            </>
+          ) : (
+            <View style={{ alignItems: "center", paddingVertical: 8 }}>
+              <Text style={{ fontSize: 40, marginBottom: 8 }}>📸</Text>
+              <Text style={{ color: CREAM, fontSize: 16, fontWeight: "600", marginBottom: 4 }}>Fais ton premier scan</Text>
+              <Text style={{ color: "rgba(232,213,192,0.45)", fontSize: 13, textAlign: "center", marginBottom: 12 }}>
+                Découvre ton score de peau et tes recommandations
+              </Text>
+              <View style={{ backgroundColor: TERRACOTTA, borderRadius: 12, paddingHorizontal: 22, paddingVertical: 10 }}>
+                <Text style={{ color: "#0D0D0F", fontWeight: "700", fontSize: 13 }}>Commencer →</Text>
               </View>
             </View>
-
-            {skinScan && (
-              <Text className="text-lumis-white/40 font-body text-xs mt-3">
-                Dernière analyse · {new Date(skinScan.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
-              </Text>
-            )}
-          </>
-        ) : (
-          <>
-            <Text className="text-lumis-gold font-display text-5xl">—</Text>
-            <Text className="text-lumis-white/50 font-body text-sm mt-2">
-              {t("home.skin_score_empty")}
-            </Text>
-            <Text className="text-lumis-gold font-body-medium text-sm mt-3">
-              Commencer mon premier scan →
-            </Text>
-          </>
-        )}
+          )}
         </TouchableOpacity>
       </Animated.View>
 
-      {/* Face profile card */}
+      {/* ── Conseil du jour (météo) ── */}
+      <Animated.View entering={FadeInDown.delay(160)} className="mt-3">
+        <WeatherTipCard />
+      </Animated.View>
+
+      {/* ── Profil facial (compact) ── */}
       {faceProfile && (
-        <Animated.View
-          entering={FadeInDown.delay(220)}
-          className="mt-4 bg-white/5 border border-white/10 rounded-3xl p-5"
-        >
-          <Text className="text-lumis-white/40 font-body text-xs uppercase tracking-widest mb-3">
-            Profil facial
-          </Text>
-          <View className="flex-row gap-3">
-            <ProfileChip label="Visage" value={faceProfile.face_shape} />
-            <ProfileChip label="Undertone" value={faceProfile.undertone} />
-            <ProfileChip label="Saison" value={faceProfile.color_season} gold />
-          </View>
+        <Animated.View entering={FadeInDown.delay(220)} className="mt-3">
           <TouchableOpacity
             onPress={() => router.push("/analysis/face")}
-            className="mt-3 flex-row items-center gap-1"
-            activeOpacity={0.7}
+            activeOpacity={0.85}
+            style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(232,213,192,0.08)", borderRadius: 20, padding: 16 }}
           >
-            <Text className="text-lumis-white/40 font-body text-xs">
-              Voir mon profil complet →
-            </Text>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+              <Text style={{ color: "rgba(232,213,192,0.4)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1 }}>Profil facial</Text>
+              <Text style={{ color: TERRACOTTA, fontSize: 11 }}>Voir →</Text>
+            </View>
+            <View style={{ flexDirection: "row", gap: 8 }}>
+              <ProfileChip label="Visage" value={faceProfile.face_shape} />
+              <ProfileChip label="Undertone" value={faceProfile.undertone} />
+              <ProfileChip label="Saison" value={faceProfile.color_season} gold />
+            </View>
           </TouchableOpacity>
         </Animated.View>
       )}
 
-      {/* Quick actions */}
-      <Animated.View entering={FadeInDown.delay(faceProfile ? 300 : 250)} className="mt-6">
-        <Text className="text-lumis-white/40 font-body text-xs uppercase tracking-widest mb-4">
-          {t("home.quick_access")}
-        </Text>
-        <View className="flex-row gap-3">
-          <QuickCard icon="🧴" label={t("home.recommendations")} onPress={() => router.navigate("/(tabs)/recs")} />
-          <QuickCard icon="✨" label={t("home.ai_coach")} onPress={() => router.navigate("/(tabs)/coach")} />
-          <QuickCard icon="📊" label={t("home.history")} onPress={() => router.navigate("/(tabs)/scan")} />
+      {/* ── Mon espace : grille bento ── */}
+      <Animated.View entering={FadeInDown.delay(280)} className="mt-6">
+        <Text style={{ color: "rgba(232,213,192,0.4)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 12 }}>Mon espace</Text>
+
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+          <ToolTile
+            icon="🔥" label="Routine" sub={streak > 0 ? `${streak} j de série` : "Matin & soir"} tint="#fbbf24"
+            onPress={() => router.push("/routine" as any)}
+          />
+          <ToolTile
+            icon={isMale ? "💪" : "✨"} label={isMale ? "Jawline" : "Glow Up"} sub="Exercices guidés" tint="#5DCAA5"
+            onPress={() => router.push("/exercises" as any)}
+          />
+          {isMale ? (
+            <ToolTile icon="💈" label="Coupes & Barbes" sub="Styles pour toi" tint="#60a5fa"
+              onPress={() => router.push("/men-styles" as any)} />
+          ) : (
+            <ToolTile icon="💄" label="Try-On" sub="Maquillage AR" tint="#f472b6"
+              onPress={() => router.push("/tryon" as any)} />
+          )}
+          {!isMale && (
+            <ToolTile icon="🌙" label="Cycle & Peau" sub="Phase hormonale" tint="#a78bfa"
+              onPress={() => router.push("/cycle" as any)} />
+          )}
+          <ToolTile icon="🔬" label="Analyse IA" sub="Diagnose Gemini" tint={TERRACOTTA}
+            onPress={() => router.push("/skin-analysis" as any)} />
+          <ToolTile icon="🧴" label="Scan produit" sub="Compatibilité" tint={TERRACOTTA}
+            onPress={() => router.push("/products/scan" as any)} />
         </View>
       </Animated.View>
 
-      {/* Outils */}
-      <Animated.View entering={FadeInDown.delay(faceProfile ? 360 : 310)} className="mt-6 gap-3">
-        <Text className="text-lumis-white/40 font-body text-xs uppercase tracking-widest">
-          Outils
-        </Text>
-
-        {/* Daily routine */}
-        <TouchableOpacity
-          onPress={() => router.push("/routine" as any)}
-          className="flex-row items-center bg-white/5 border border-white/10 rounded-2xl p-4 overflow-hidden"
-          activeOpacity={0.8}
-        >
-          <View className="w-11 h-11 rounded-xl bg-amber-500/20 items-center justify-center mr-4">
-            <Text className="text-2xl">🔥</Text>
-          </View>
-          <View className="flex-1">
-            <Text className="text-lumis-white font-body-medium text-sm mb-0.5">Ma routine quotidienne</Text>
-            <Text className="text-lumis-white/40 font-body text-xs">Matin & soir · garde ta série</Text>
-          </View>
-          <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 18 }}>→</Text>
-        </TouchableOpacity>
-
-        {/* Facial exercises / Glow up */}
-        <TouchableOpacity
-          onPress={() => router.push("/exercises" as any)}
-          className="flex-row items-center bg-white/5 border border-white/10 rounded-2xl p-4 overflow-hidden"
-          activeOpacity={0.8}
-        >
-          <View className="w-11 h-11 rounded-xl items-center justify-center mr-4" style={{ backgroundColor: "rgba(93,202,165,0.18)" }}>
-            <Text className="text-2xl">{user?.gender === "male" ? "💪" : "✨"}</Text>
-          </View>
-          <View className="flex-1">
-            <View className="flex-row items-center gap-2 mb-0.5">
-              <Text className="text-lumis-white font-body-medium text-sm">
-                {user?.gender === "male" ? "Jawline & Glow Up" : "Glow Up & Jawline"}
-              </Text>
-              <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: "rgba(93,202,165,0.2)" }}>
-                <Text style={{ color: "#5DCAA5", fontSize: 9, fontWeight: "700" }}>EXERCICES</Text>
-              </View>
-            </View>
-            <Text className="text-lumis-white/40 font-body text-xs">Routines guidées · 5 min/jour</Text>
-          </View>
-          <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 18 }}>→</Text>
-        </TouchableOpacity>
-
-        {/* Cycle (female only) */}
-        {user?.gender === "female" && (
-          <TouchableOpacity
-            onPress={() => router.push("/cycle" as any)}
-            className="flex-row items-center bg-white/5 border border-white/10 rounded-2xl p-4 overflow-hidden"
-            activeOpacity={0.8}
-          >
-            <View className="w-11 h-11 rounded-xl bg-purple-500/20 items-center justify-center mr-4">
-              <Text className="text-2xl">🌙</Text>
-            </View>
-            <View className="flex-1">
-              <Text className="text-lumis-white font-body-medium text-sm mb-0.5">Cycle & Peau</Text>
-              <Text className="text-lumis-white/40 font-body text-xs">Conseils adaptés à ta phase hormonale</Text>
-            </View>
-            <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 18 }}>→</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Try-On — femme: maquillage / homme: coupes & barbes */}
-        {user?.gender === "male" ? (
-          <TouchableOpacity
-            onPress={() => router.push("/men-styles" as any)}
-            className="flex-row items-center bg-white/5 border border-white/10 rounded-2xl p-4 overflow-hidden"
-            activeOpacity={0.8}
-          >
-            <View className="w-11 h-11 rounded-xl bg-blue-500/20 items-center justify-center mr-4">
-              <Text className="text-2xl">💈</Text>
-            </View>
-            <View className="flex-1">
-              <View className="flex-row items-center gap-2 mb-0.5">
-                <Text className="text-lumis-white font-body-medium text-sm">Coupes & Barbes</Text>
-                <View className="bg-blue-500/20 rounded-full px-2 py-0.5">
-                  <Text style={{ color: "#60a5fa", fontSize: 9, fontWeight: "700" }}>STYLES</Text>
-                </View>
-              </View>
-              <Text className="text-lumis-white/40 font-body text-xs">
-                Styles adaptés à ta forme de visage
-              </Text>
-            </View>
-            <Text className="text-lumis-white/30 text-lg">→</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            onPress={() => router.push("/tryon" as any)}
-            className="flex-row items-center bg-white/5 border border-white/10 rounded-2xl p-4 overflow-hidden"
-            activeOpacity={0.8}
-          >
-            <View className="w-11 h-11 rounded-xl bg-pink-500/20 items-center justify-center mr-4">
-              <Text className="text-2xl">💄</Text>
-            </View>
-            <View className="flex-1">
-              <View className="flex-row items-center gap-2 mb-0.5">
-                <Text className="text-lumis-white font-body-medium text-sm">Virtual Try-On</Text>
-                <View className="bg-pink-500/20 rounded-full px-2 py-0.5">
-                  <Text style={{ color: "#f472b6", fontSize: 9, fontWeight: "700" }}>NOUVEAU</Text>
-                </View>
-              </View>
-              <Text className="text-lumis-white/40 font-body text-xs">
-                Essaie rouge à lèvres, blush et ombre en AR
-              </Text>
-            </View>
-            <Text className="text-lumis-white/30 text-lg">→</Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Analyse peau Gemini */}
-        <TouchableOpacity
-          onPress={() => router.push("/skin-analysis" as any)}
-          className="flex-row items-center bg-white/5 border border-white/10 rounded-2xl p-4"
-          activeOpacity={0.8}
-        >
-          <View className="w-11 h-11 rounded-xl bg-lumis-gold/15 items-center justify-center mr-4">
-            <Text className="text-2xl">🔬</Text>
-          </View>
-          <View className="flex-1">
-            <View className="flex-row items-center gap-2 mb-0.5">
-              <Text className="text-lumis-white font-body-medium text-sm">Analyse IA avancée</Text>
-              <View className="bg-lumis-gold/20 rounded-full px-2 py-0.5">
-                <Text style={{ color: "#C9826B", fontSize: 9, fontWeight: "700" }}>GEMINI</Text>
-              </View>
-            </View>
-            <Text className="text-lumis-white/40 font-body text-xs">
-              Diagnose complète de ta peau avec Gemini 2.0
-            </Text>
-          </View>
-          <Text className="text-lumis-white/30 text-lg">→</Text>
-        </TouchableOpacity>
-
-        {/* Scanner produit */}
-        <TouchableOpacity
-          onPress={() => router.push("/products/scan" as any)}
-          className="flex-row items-center bg-white/5 border border-white/10 rounded-2xl p-4"
-          activeOpacity={0.8}
-        >
-          <View className="w-11 h-11 rounded-xl bg-lumis-gold/15 items-center justify-center mr-4">
-            <Text className="text-2xl">🧴</Text>
-          </View>
-          <View className="flex-1">
-            <Text className="text-lumis-white font-body-medium text-sm mb-0.5">Scanner un produit</Text>
-            <Text className="text-lumis-white/40 font-body text-xs">
-              Vérifie la compatibilité avec ta peau
-            </Text>
-          </View>
-          <Text className="text-lumis-white/30 text-lg">→</Text>
-        </TouchableOpacity>
-      </Animated.View>
-
-      {/* Premium CTA */}
+      {/* ── Premium CTA ── */}
       {!user?.premium_until && (
         <Animated.View
-          entering={FadeInDown.delay(420)}
-          className="mt-6 border border-lumis-gold/30 rounded-3xl p-5 bg-lumis-gold/5"
+          entering={FadeInDown.delay(360)}
+          className="mt-5"
+          style={{ borderWidth: 0.5, borderColor: "rgba(201,130,107,0.3)", borderRadius: 24, padding: 20, backgroundColor: "rgba(201,130,107,0.06)" }}
         >
-          <Text className="text-lumis-gold font-body-bold text-xs uppercase tracking-widest mb-1">
+          <Text style={{ color: TERRACOTTA, fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>
             {t("home.premium_badge")}
           </Text>
-          <Text className="text-lumis-white font-display text-xl mb-1">
+          <Text style={{ color: CREAM, fontSize: 19, fontWeight: "300", marginBottom: 2 }}>
             {t("home.premium_title")}
           </Text>
-          <Text className="text-lumis-white/50 font-body text-sm mb-4">
+          <Text style={{ color: "rgba(232,213,192,0.5)", fontSize: 13, marginBottom: 14 }}>
             {t("home.premium_subtitle")}
           </Text>
           <TouchableOpacity
             onPress={() => router.push("/(tabs)/premium" as any)}
-            className="bg-lumis-gold rounded-xl py-3 items-center"
+            style={{ backgroundColor: TERRACOTTA, borderRadius: 12, paddingVertical: 13, alignItems: "center" }}
             activeOpacity={0.85}
           >
-            <Text className="text-lumis-black font-body-bold text-sm">
-              {t("home.premium_cta")}
-            </Text>
+            <Text style={{ color: "#0D0D0F", fontWeight: "700", fontSize: 14 }}>{t("home.premium_cta")}</Text>
           </TouchableOpacity>
         </Animated.View>
       )}
@@ -373,15 +236,15 @@ export default function HomeScreen() {
 }
 
 function MiniBar({ label, score }: { label: string; score: number }) {
-  const color = score >= 75 ? "#4ade80" : score >= 50 ? "#C9826B" : "#f87171";
+  const color = score >= 75 ? "#5DCAA5" : score >= 50 ? TERRACOTTA : "#F09595";
   return (
     <View>
       <View className="flex-row justify-between mb-0.5">
-        <Text className="text-lumis-white/50 font-body text-[10px]">{label}</Text>
+        <Text style={{ color: "rgba(232,213,192,0.5)", fontSize: 10 }}>{label}</Text>
         <Text style={{ color, fontSize: 10, fontWeight: "600" }}>{score}</Text>
       </View>
-      <View className="h-1 bg-white/8 rounded-full overflow-hidden">
-        <View className="h-full rounded-full" style={{ width: `${score}%`, backgroundColor: color }} />
+      <View style={{ height: 4, backgroundColor: "rgba(232,213,192,0.1)", borderRadius: 2, overflow: "hidden" }}>
+        <View style={{ height: "100%", width: `${score}%`, backgroundColor: color, borderRadius: 2 }} />
       </View>
     </View>
   );
@@ -389,30 +252,38 @@ function MiniBar({ label, score }: { label: string; score: number }) {
 
 function ProfileChip({ label, value, gold = false }: { label: string; value: string; gold?: boolean }) {
   return (
-    <View
-      className={`flex-1 rounded-xl p-2.5 items-center border ${
-        gold ? "bg-lumis-gold/10 border-lumis-gold/30" : "bg-white/5 border-white/10"
-      }`}
-    >
-      <Text className={`font-body text-[9px] uppercase tracking-widest mb-0.5 ${gold ? "text-lumis-gold/60" : "text-lumis-white/40"}`}>
+    <View style={{
+      flex: 1, borderRadius: 12, padding: 10, alignItems: "center", borderWidth: 0.5,
+      backgroundColor: gold ? "rgba(201,130,107,0.1)" : "rgba(255,255,255,0.04)",
+      borderColor: gold ? "rgba(201,130,107,0.3)" : "rgba(232,213,192,0.08)",
+    }}>
+      <Text style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 1, marginBottom: 2, color: gold ? "rgba(201,130,107,0.6)" : "rgba(232,213,192,0.4)" }}>
         {label}
       </Text>
-      <Text className={`font-body-medium text-xs capitalize ${gold ? "text-lumis-gold" : "text-lumis-white/80"}`}>
+      <Text style={{ fontSize: 12, fontWeight: "500", textTransform: "capitalize", color: gold ? TERRACOTTA : "rgba(232,213,192,0.8)" }}>
         {value}
       </Text>
     </View>
   );
 }
 
-function QuickCard({ icon, label, onPress }: { icon: string; label: string; onPress: () => void }) {
+function ToolTile({ icon, label, sub, tint, onPress }: { icon: string; label: string; sub: string; tint: string; onPress: () => void }) {
   return (
     <TouchableOpacity
       onPress={onPress}
-      className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 items-center gap-2"
-      activeOpacity={0.8}
+      activeOpacity={0.85}
+      style={{
+        width: "47.5%", flexGrow: 1,
+        backgroundColor: "rgba(255,255,255,0.04)",
+        borderWidth: 0.5, borderColor: "rgba(232,213,192,0.08)",
+        borderRadius: 18, padding: 16,
+      }}
     >
-      <Text className="text-2xl">{icon}</Text>
-      <Text className="text-lumis-white/60 font-body text-[10px] text-center">{label}</Text>
+      <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: `${tint}22`, alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
+        <Text style={{ fontSize: 22 }}>{icon}</Text>
+      </View>
+      <Text style={{ color: CREAM, fontSize: 14, fontWeight: "600" }}>{label}</Text>
+      <Text style={{ color: "rgba(232,213,192,0.4)", fontSize: 11, marginTop: 1 }}>{sub}</Text>
     </TouchableOpacity>
   );
 }
