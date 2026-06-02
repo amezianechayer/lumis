@@ -30,6 +30,40 @@ import { api } from "../../services/api";
 import { SkinScan } from "../../types/api";
 import { PremiumGateModal } from "../../components/ui/PremiumGateModal";
 import { SkinProgressChart } from "../../components/ui/SkinProgressChart";
+import { useAuthStore } from "../../stores/auth.store";
+
+// ─── Premium-only derived analysis ──────────────────────────────────────────
+function estimateSkinAge(scan: SkinScan): number {
+  let age = 28;
+  age += Math.round((100 - scan.hydration_score) / 8);
+  age += Math.round((100 - scan.texture_score) / 8);
+  age += Math.round((100 - scan.uniformity_score) / 12);
+  if (scan.fine_lines_detected) age += 5;
+  age -= Math.round((scan.overall_score - 50) / 10);
+  return Math.max(18, Math.min(70, age));
+}
+
+function zoneAnalysis(scan: SkinScan): { zone: string; state: string; color: string }[] {
+  const has = (arr: string[] | undefined, ...keys: string[]) =>
+    (arr ?? []).some((z) => keys.some((k) => z.toLowerCase().includes(k)));
+  const out: { zone: string; state: string; color: string }[] = [];
+  out.push(has(scan.oiliness_zones, "front", "t-zone")
+    ? { zone: "Front", state: "Tendance grasse / brillance", color: "#fbbf24" }
+    : { zone: "Front", state: "Équilibré", color: "#5DCAA5" });
+  if (has(scan.dryness_zones, "joue")) out.push({ zone: "Joues", state: "Sécheresse à hydrater", color: "#60a5fa" });
+  else if (has(scan.acne_zones, "joue")) out.push({ zone: "Joues", state: "Imperfections présentes", color: "#f87171" });
+  else out.push({ zone: "Joues", state: "Bon état", color: "#5DCAA5" });
+  out.push(has(scan.acne_zones, "menton")
+    ? { zone: "Menton", state: "Acné hormonale possible", color: "#f87171" }
+    : { zone: "Menton", state: "Net", color: "#5DCAA5" });
+  out.push(scan.pores_condition === "larges"
+    ? { zone: "Nez / Zone T", state: "Pores dilatés", color: "#fbbf24" }
+    : { zone: "Nez / Zone T", state: "Pores fins", color: "#5DCAA5" });
+  out.push(scan.fine_lines_detected
+    ? { zone: "Contour des yeux", state: "Ridules détectées", color: "#fbbf24" }
+    : { zone: "Contour des yeux", state: "Lisse", color: "#5DCAA5" });
+  return out;
+}
 
 // ─── Score ring ───────────────────────────────────────────────────────────────
 function ScoreRing({ score, size = 80 }: { score: number; size?: number }) {
@@ -129,6 +163,11 @@ function Stepper({
 
 // ─── Result screen ────────────────────────────────────────────────────────────
 function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void }) {
+  const { user } = useAuthStore();
+  const isPremium = !!user?.premium_until && new Date(user.premium_until) > new Date();
+  const skinAge = estimateSkinAge(scan);
+  const zones = zoneAnalysis(scan);
+  const potential = Math.min(95, scan.overall_score + 15);
   const date = new Date(scan.created_at).toLocaleDateString("fr-FR", {
     day: "numeric", month: "long", year: "numeric",
   });
@@ -213,7 +252,66 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
         )}
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(320)} className="bg-white/5 border border-white/10 rounded-3xl p-5 mb-6">
+      {/* ─── ANALYSE PREMIUM ─── */}
+      <Animated.View entering={FadeInDown.delay(300)} className="mb-4">
+        <View className="flex-row items-center gap-2 mb-3">
+          <Text className="text-lumis-gold font-body text-xs uppercase tracking-widest">💎 Analyse approfondie</Text>
+          {!isPremium && (
+            <View style={{ backgroundColor: "rgba(201,130,107,0.2)", borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1 }}>
+              <Text style={{ color: "#C9826B", fontSize: 9, fontWeight: "700" }}>PREMIUM</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={{ position: "relative" }}>
+          {/* Premium content */}
+          <View style={{ opacity: isPremium ? 1 : 0.25 }} pointerEvents={isPremium ? "auto" : "none"}>
+            {/* Skin age + potential */}
+            <View className="flex-row gap-3 mb-3">
+              <View className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 items-center">
+                <Text className="text-lumis-white/40 font-body text-[10px] uppercase tracking-widest mb-1">Âge cutané estimé</Text>
+                <Text style={{ color: "#C9826B", fontSize: 28, fontWeight: "700" }}>{skinAge}<Text style={{ fontSize: 13, color: "rgba(232,213,192,0.4)" }}> ans</Text></Text>
+              </View>
+              <View className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 items-center">
+                <Text className="text-lumis-white/40 font-body text-[10px] uppercase tracking-widest mb-1">Potentiel (8 sem.)</Text>
+                <Text style={{ color: "#5DCAA5", fontSize: 28, fontWeight: "700" }}>{potential}<Text style={{ fontSize: 13, color: "rgba(232,213,192,0.4)" }}>/100</Text></Text>
+              </View>
+            </View>
+
+            {/* Zone-by-zone */}
+            <View className="bg-white/5 border border-white/10 rounded-2xl p-4">
+              <Text className="text-lumis-white/40 font-body text-[10px] uppercase tracking-widest mb-3">Analyse zone par zone</Text>
+              <View style={{ gap: 10 }}>
+                {zones.map((z, i) => (
+                  <View key={i} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                    <Text style={{ color: "rgba(232,213,192,0.7)", fontSize: 13 }}>{z.zone}</Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                      <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: z.color }} />
+                      <Text style={{ color: z.color, fontSize: 12, fontWeight: "500" }}>{z.state}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+
+          {/* Lock overlay for free users */}
+          {!isPremium && (
+            <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center" }}>
+              <View style={{ backgroundColor: "rgba(13,13,15,0.85)", borderRadius: 16, paddingHorizontal: 20, paddingVertical: 16, alignItems: "center", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.4)" }}>
+                <Text style={{ fontSize: 28, marginBottom: 6 }}>🔒</Text>
+                <Text style={{ color: "#E8D5C0", fontSize: 14, fontWeight: "700", marginBottom: 2 }}>Analyse approfondie</Text>
+                <Text style={{ color: "rgba(232,213,192,0.5)", fontSize: 12, textAlign: "center", marginBottom: 12 }}>Âge cutané, analyse par zone et potentiel</Text>
+                <TouchableOpacity onPress={() => router.push("/(tabs)/premium" as any)} style={{ backgroundColor: "#C9826B", borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10 }}>
+                  <Text style={{ color: "#0D0D0F", fontWeight: "700", fontSize: 13 }}>Débloquer avec Premium</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </View>
+      </Animated.View>
+
+      <Animated.View entering={FadeInDown.delay(340)} className="bg-white/5 border border-white/10 rounded-3xl p-5 mb-6">
         <Text className="text-lumis-white/40 font-body text-xs uppercase tracking-widest mb-3">Données saisies</Text>
         <View className="flex-row gap-3">
           <LifestyleTile icon="🌙" label="Sommeil" value={`${scan.sleep_hours}h`} />
