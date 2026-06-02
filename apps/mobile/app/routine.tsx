@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -6,7 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Svg, { Circle } from "react-native-svg";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { api } from "../services/api";
-import { RoutineStatus } from "../types/api";
+import { RoutineStatus, RoutineDay } from "../types/api";
 import { useThemeColors } from "../stores/theme.store";
 
 const TERRACOTTA = "#C9826B";
@@ -73,6 +73,23 @@ function RoutineSection({
   done: boolean; onToggle: () => void; busy: boolean; accent: string;
 }) {
   const c = useThemeColors();
+  const [checked, setChecked] = useState<boolean[]>(() => steps.map(() => false));
+
+  // Reflect backend completion state
+  useEffect(() => {
+    setChecked(steps.map(() => done));
+  }, [done, steps.length]);
+
+  const doneCount = done ? steps.length : checked.filter(Boolean).length;
+
+  const toggleStep = (i: number) => {
+    if (done || busy) return;
+    const next = checked.slice();
+    next[i] = !next[i];
+    setChecked(next);
+    if (next.every(Boolean)) onToggle(); // all steps checked → complete period
+  };
+
   return (
     <Animated.View entering={FadeInDown.delay(80)} style={{
       backgroundColor: c.bgCard, borderWidth: 0.5,
@@ -82,19 +99,43 @@ function RoutineSection({
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 14 }}>
         <Text style={{ fontSize: 22, marginRight: 8 }}>{emoji}</Text>
         <Text style={{ color: c.text, fontSize: 17, fontWeight: "700", flex: 1 }}>{title}</Text>
-        {done && <Text style={{ color: accent, fontSize: 13, fontWeight: "700" }}>✓ Fait</Text>}
+        <Text style={{ color: done ? accent : c.textMuted, fontSize: 12, fontWeight: "700" }}>
+          {done ? "✓ Fait" : `${doneCount}/${steps.length}`}
+        </Text>
       </View>
 
-      <View style={{ gap: 10, marginBottom: 16 }}>
-        {steps.map((s, i) => (
-          <View key={i} style={{ flexDirection: "row", gap: 10, alignItems: "flex-start", opacity: done ? 0.6 : 1 }}>
-            <Text style={{ fontSize: 16 }}>{s.icon}</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: c.text, fontSize: 13, fontWeight: "600" }}>{s.title}</Text>
-              <Text style={{ color: c.textMuted, fontSize: 12, lineHeight: 17 }}>{s.desc}</Text>
-            </View>
-          </View>
-        ))}
+      {/* Step progress bar */}
+      <View style={{ height: 5, backgroundColor: c.borderLight, borderRadius: 3, overflow: "hidden", marginBottom: 14 }}>
+        <View style={{ height: "100%", width: `${(doneCount / steps.length) * 100}%`, backgroundColor: accent, borderRadius: 3 }} />
+      </View>
+
+      <View style={{ gap: 6, marginBottom: 16 }}>
+        {steps.map((s, i) => {
+          const on = done || checked[i];
+          return (
+            <TouchableOpacity
+              key={i}
+              onPress={() => toggleStep(i)}
+              activeOpacity={done ? 1 : 0.7}
+              style={{ flexDirection: "row", gap: 10, alignItems: "flex-start", paddingVertical: 4 }}
+            >
+              {/* Checkbox */}
+              <View style={{
+                width: 22, height: 22, borderRadius: 7, marginTop: 1,
+                alignItems: "center", justifyContent: "center",
+                backgroundColor: on ? accent : "transparent",
+                borderWidth: on ? 0 : 1.5, borderColor: c.border,
+              }}>
+                {on && <Text style={{ color: "#fff", fontSize: 13, fontWeight: "800" }}>✓</Text>}
+              </View>
+              <Text style={{ fontSize: 16 }}>{s.icon}</Text>
+              <View style={{ flex: 1, opacity: on ? 0.55 : 1 }}>
+                <Text style={{ color: c.text, fontSize: 13, fontWeight: "600", textDecorationLine: on ? "line-through" : "none" }}>{s.title}</Text>
+                <Text style={{ color: c.textMuted, fontSize: 12, lineHeight: 17 }}>{s.desc}</Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       <TouchableOpacity
@@ -111,10 +152,60 @@ function RoutineSection({
           <ActivityIndicator color={done ? c.text : "#fff"} size="small" />
         ) : (
           <Text style={{ color: done ? c.textMuted : "#fff", fontWeight: "700", fontSize: 14 }}>
-            {done ? "Annuler" : "Marquer comme fait ✓"}
+            {done ? "Annuler" : "Tout marquer comme fait ✓"}
           </Text>
         )}
       </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+// 7-day completion strip
+function WeekStrip() {
+  const c = useThemeColors();
+  const { data: week } = useQuery({
+    queryKey: ["routine-week"],
+    queryFn: () => api.getRoutineWeek(),
+  });
+  if (!week || week.length === 0) return null;
+
+  const DOW = ["D", "L", "M", "M", "J", "V", "S"];
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  return (
+    <Animated.View entering={FadeInDown.delay(60)} style={{
+      backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight,
+      borderRadius: 20, padding: 16, marginBottom: 16,
+    }}>
+      <Text style={{ color: c.textMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>
+        Cette semaine
+      </Text>
+      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+        {week.map((d: RoutineDay) => {
+          const day = new Date(d.date + "T00:00:00");
+          const isToday = d.date === todayStr;
+          const both = d.morning && d.evening;
+          const any = d.morning || d.evening;
+          return (
+            <View key={d.date} style={{ alignItems: "center", gap: 6 }}>
+              <Text style={{ color: isToday ? "#C9826B" : c.textFaint, fontSize: 11, fontWeight: isToday ? "700" : "400" }}>
+                {DOW[day.getDay()]}
+              </Text>
+              <View style={{
+                width: 30, height: 30, borderRadius: 10,
+                alignItems: "center", justifyContent: "center",
+                backgroundColor: both ? "#5DCAA5" : any ? "rgba(93,202,165,0.3)" : c.borderLight,
+                borderWidth: isToday ? 1.5 : 0, borderColor: "#C9826B",
+              }}>
+                <Text style={{ fontSize: 11, color: both ? "#fff" : c.textMuted, fontWeight: "700" }}>
+                  {both ? "✓" : any ? "·" : ""}
+                </Text>
+              </View>
+              <Text style={{ color: c.textFaint, fontSize: 9 }}>{day.getDate()}</Text>
+            </View>
+          );
+        })}
+      </View>
     </Animated.View>
   );
 }
@@ -135,6 +226,7 @@ export default function RoutineScreen() {
       done ? api.uncompleteRoutine(period) : api.completeRoutine(period),
     onSuccess: (data: RoutineStatus) => {
       queryClient.setQueryData(["routine-status"], data);
+      queryClient.invalidateQueries({ queryKey: ["routine-week"] });
     },
   });
 
@@ -191,6 +283,8 @@ export default function RoutineScreen() {
               <View style={{ height: "100%", width: `${Math.min(100, (streak / target) * 100)}%`, backgroundColor: TERRACOTTA, borderRadius: 4 }} />
             </View>
           </Animated.View>
+
+          <WeekStrip />
 
           <RoutineSection
             title="Routine du matin" emoji="🌅" steps={MORNING_STEPS}

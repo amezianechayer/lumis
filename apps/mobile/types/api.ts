@@ -108,6 +108,12 @@ export interface RoutineStatus {
   total_completed: number;
 }
 
+export interface RoutineDay {
+  date: string;      // YYYY-MM-DD
+  morning: boolean;
+  evening: boolean;
+}
+
 export interface CyclePhase {
   phase: string;
   phase_fr: string;

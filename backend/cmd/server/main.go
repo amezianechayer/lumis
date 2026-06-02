@@ -191,6 +191,7 @@ func main() {
 	// Daily routine + streak
 	routine := protected.Group("/routine")
 	routine.Get("/status", routineHandler.Status)
+	routine.Get("/week", routineHandler.Week)
 	routine.Post("/complete", routineHandler.Complete)
 	routine.Delete("/complete", routineHandler.Uncomplete)
 

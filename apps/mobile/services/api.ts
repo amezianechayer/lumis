@@ -14,6 +14,7 @@ import {
   Recommendation,
   MakeupGuide,
   RoutineStatus,
+  RoutineDay,
   CycleStatus,
   RecommendationsResponse,
   RefreshResponse,
@@ -235,6 +236,10 @@ class ApiClient {
   async getRoutineStatus(): Promise<RoutineStatus> {
     const { data } = await this.client.get<RoutineStatus>("/routine/status");
     return data;
+  }
+  async getRoutineWeek(): Promise<RoutineDay[]> {
+    const { data } = await this.client.get<{ days: RoutineDay[] }>("/routine/week");
+    return data.days ?? [];
   }
   async completeRoutine(period: "morning" | "evening"): Promise<RoutineStatus> {
     const { data } = await this.client.post<RoutineStatus>("/routine/complete", { period });

@@ -30,6 +30,7 @@ import { api } from "../../services/api";
 import { SkinScan } from "../../types/api";
 import { PremiumGateModal } from "../../components/ui/PremiumGateModal";
 import { SkinProgressChart } from "../../components/ui/SkinProgressChart";
+import { WeeklySkinCard } from "../../components/ui/WeeklySkinCard";
 import { useAuthStore } from "../../stores/auth.store";
 import { useThemeColors } from "../../stores/theme.store";
 
@@ -705,6 +706,13 @@ export default function ScanScreen() {
             </View>
           ) : history.length > 0 ? (
             <View className="gap-3">
+              {/* Weekly tracker */}
+              <WeeklySkinCard
+                scans={history}
+                onScan={() => setView("photo")}
+                onCompare={() => router.push("/scan/compare" as any)}
+              />
+
               {/* Graphique d'évolution */}
               <Animated.View entering={FadeInDown.delay(0)}
                 style={{ backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight, borderRadius: 20, padding: 20, marginBottom: 4 }}>

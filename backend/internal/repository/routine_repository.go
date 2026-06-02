@@ -54,6 +54,15 @@ func (r *RoutineRepository) DistinctDates(ctx context.Context, userID uuid.UUID)
 	return dates, err
 }
 
+// FindLogsSince returns all routine logs on/after the given date (YYYY-MM-DD).
+func (r *RoutineRepository) FindLogsSince(ctx context.Context, userID uuid.UUID, since string) ([]models.RoutineLog, error) {
+	var logs []models.RoutineLog
+	err := r.db.WithContext(ctx).
+		Where("user_id = ? AND log_date >= ?", userID, since).
+		Find(&logs).Error
+	return logs, err
+}
+
 // TotalCount returns the total number of completed routine periods.
 func (r *RoutineRepository) TotalCount(ctx context.Context, userID uuid.UUID) (int64, error) {
 	var count int64

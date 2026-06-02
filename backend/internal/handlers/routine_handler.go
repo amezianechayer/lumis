@@ -67,6 +67,15 @@ func (h *RoutineHandler) Status(c *fiber.Ctx) error {
 	return h.respond(c)
 }
 
+// GET /api/v1/routine/week
+func (h *RoutineHandler) Week(c *fiber.Ctx) error {
+	userID, err := parseUserID(c)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
+	}
+	return c.JSON(fiber.Map{"days": h.svc.Week(c.Context(), userID)})
+}
+
 func (h *RoutineHandler) respond(c *fiber.Ctx) error {
 	uid, _ := parseUserID(c)
 	sum := h.svc.Summary(c.Context(), uid, todayStr())
