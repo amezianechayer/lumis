@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { api } from "../services/api";
-import { FaceMakeupDiagram } from "../components/ui/FaceMakeupDiagram";
 import { getMakeupGuide, FaceShape } from "../utils/makeupTips";
 
 // Haircut & beard catalogue by face shape (men)
@@ -115,11 +114,11 @@ export default function MenStylesScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
-        {/* Face shape hero with diagram */}
+        {/* Face shape hero */}
         <Animated.View entering={FadeInDown} style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.18)", borderRadius: 20, padding: 20, marginBottom: 16, alignItems: "center" }}>
-          <Text style={{ color: "rgba(232,213,192,0.45)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>Ta forme de visage</Text>
-          <Text style={{ color: "#C9826B", fontSize: 22, fontWeight: "700", marginBottom: 12 }}>{shapeLabel}</Text>
-          <FaceMakeupDiagram guide={guide} faceShape={shape} isMale skinTone={profile.skin_tone} />
+          <Text style={{ color: "rgba(232,213,192,0.45)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Ta forme de visage</Text>
+          <Text style={{ color: "#C9826B", fontSize: 26, fontWeight: "700", marginBottom: 6 }}>{shapeLabel}</Text>
+          <Text style={{ color: "rgba(232,213,192,0.55)", fontSize: 13, lineHeight: 19, textAlign: "center" }}>{guide.goal}</Text>
         </Animated.View>
 
         {/* Haircuts */}
