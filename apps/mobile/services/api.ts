@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosInstance } from "axios";
 import * as SecureStore from "expo-secure-store";
+import type { AiInciResult } from "./gemini";
 import {
   ApiError,
   AuthResponse,
@@ -312,6 +313,12 @@ class ApiClient {
   async scanProduct(barcode: string): Promise<ScannedProduct> {
     const { data } = await this.client.post<ScannedProductResponse>("/products/scan", { barcode });
     return data.product;
+  }
+
+  // INCI analysis via Groq (server-side fallback when Gemini fails)
+  async analyzeInciAI(payload: { ingredients?: string; image_base64?: string }): Promise<AiInciResult> {
+    const { data } = await this.client.post<{ result: AiInciResult }>("/products/inci-ai", payload);
+    return data.result;
   }
 
   async getProductHistory(): Promise<ScannedProduct[]> {

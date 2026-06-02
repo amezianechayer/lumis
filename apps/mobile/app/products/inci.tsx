@@ -10,6 +10,7 @@ import { useAuthStore } from "../../stores/auth.store";
 import { InciAnalysis } from "../../components/products/InciAnalysis";
 import { AiInciResult } from "../../components/products/AiInciResult";
 import { analyzeInciWithGemini, AiInciResult as AiResult } from "../../services/gemini";
+import { api } from "../../services/api";
 
 const TERRACOTTA = "#C9826B";
 
@@ -51,10 +52,16 @@ export default function InciScannerScreen() {
         [{ resize: { width: 1100 } }],
         { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG, base64: true }
       );
-      const result = await analyzeInciWithGemini({ imageBase64: manip.base64 ?? undefined, skin });
-      setAi(result);
+      const b64 = manip.base64 ?? undefined;
+      try {
+        // Primary: Gemini vision
+        setAi(await analyzeInciWithGemini({ imageBase64: b64, skin }));
+      } catch {
+        // Fallback: Groq vision via backend
+        setAi(await api.analyzeInciAI({ image_base64: b64 }));
+      }
     } catch (e: any) {
-      setError(e?.message ?? "Analyse impossible.");
+      setError("Analyse impossible. Réessaie avec une photo plus nette, ou colle la liste ci-dessous.");
     } finally {
       setLoading(false);
     }
@@ -66,12 +73,17 @@ export default function InciScannerScreen() {
     setPhotoUri(null);
     setLoading(true);
     try {
-      const result = await analyzeInciWithGemini({ text, skin });
-      setAi(result);
-    } catch (e: any) {
-      // Fallback to instant local analysis if AI unavailable
-      setLocalText(text);
-      setError("IA indisponible — analyse locale affichée.");
+      // Primary: Gemini
+      setAi(await analyzeInciWithGemini({ text, skin }));
+    } catch {
+      try {
+        // Fallback 1: Groq via backend
+        setAi(await api.analyzeInciAI({ ingredients: text }));
+      } catch {
+        // Fallback 2: instant local database (never blocks)
+        setLocalText(text);
+        setError("IA indisponible — analyse locale affichée.");
+      }
     } finally {
       setLoading(false);
     }

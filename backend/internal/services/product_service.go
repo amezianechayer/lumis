@@ -353,6 +353,135 @@ func (s *ProductService) GetHistory(ctx context.Context, userID uuid.UUID) ([]mo
 	return s.repo.FindHistoryByUser(ctx, userID, 30)
 }
 
+// ─── INCI analysis via Groq (fallback for Gemini) ─────────────────────────────
+// (groqVisionModel is declared in skin_scan_service.go)
+
+type InciAIIngredient struct {
+	Name        string `json:"name"`
+	Fonction    string `json:"fonction"`
+	Rating      string `json:"rating"`
+	Comedogenic int    `json:"comedogenic"`
+	Concern     string `json:"concern"`
+}
+
+type InciAIResult struct {
+	ProductGuess string             `json:"productGuess"`
+	Ingredients  []InciAIIngredient `json:"ingredients"`
+	Alerts       []string           `json:"alerts"`
+	Verdict      string             `json:"verdict"`
+	Score        int                `json:"score"`
+	Summary      string             `json:"summary"`
+}
+
+func (s *ProductService) buildInciSkinProfile(ctx context.Context, userID uuid.UUID) string {
+	parts := []string{}
+	if user, _ := s.userRepo.FindByID(ctx, userID); user != nil {
+		if user.SkinType != nil {
+			parts = append(parts, "type de peau: "+*user.SkinType)
+		}
+		if age := user.Age(); age > 0 {
+			parts = append(parts, fmt.Sprintf("âge: %d ans", age))
+		}
+	}
+	if scan, _ := s.skinRepo.FindLatestByUser(ctx, userID); scan != nil && scan.AcneScore < 60 {
+		parts = append(parts, "peau à tendance acnéique")
+	}
+	if len(parts) == 0 {
+		return "profil non précisé"
+	}
+	return strings.Join(parts, ", ")
+}
+
+func inciAIPrompt(profile string, fromImage bool) string {
+	intro := "Analyse la liste d'ingrédients (INCI) fournie."
+	if fromImage {
+		intro = "Lis la liste d'ingrédients (INCI) visible sur cette photo d'emballage de produit."
+	}
+	return "Tu es un expert cosmétologue spécialiste de l'analyse INCI. " + intro + "\n" +
+		"Profil de l'utilisateur : " + profile + ".\n" +
+		"Pour CHAQUE ingrédient : fonction en français, comédogénicité 0-5, rating (\"good\"|\"ok\"|\"caution\"), et \"concern\" (pourquoi problématique POUR CE PROFIL en une phrase, sinon \"\").\n" +
+		"Puis \"alerts\" (alertes personnalisées pour cette peau), \"verdict\" (\"excellent\"|\"good\"|\"neutral\"|\"avoid\"), \"score\" 0-100, \"summary\" (2 phrases max). Aucun diagnostic médical.\n" +
+		"Réponds UNIQUEMENT en JSON brut (sans markdown) : {\"productGuess\":\"\",\"ingredients\":[{\"name\":\"\",\"fonction\":\"\",\"rating\":\"good\",\"comedogenic\":0,\"concern\":\"\"}],\"alerts\":[],\"verdict\":\"neutral\",\"score\":0,\"summary\":\"\"}"
+}
+
+// AnalyzeInci uses Groq (text or vision) to analyze an INCI list. Used as the
+// app-side fallback when Gemini fails, so the feature is never blocked.
+func (s *ProductService) AnalyzeInci(ctx context.Context, userID uuid.UUID, text, imageB64 string) (*InciAIResult, error) {
+	if s.groqAPIKey == "" {
+		return nil, fmt.Errorf("groq unavailable")
+	}
+	profile := s.buildInciSkinProfile(ctx, userID)
+	fromImage := imageB64 != ""
+	prompt := inciAIPrompt(profile, fromImage)
+
+	type msg struct {
+		Role    string      `json:"role"`
+		Content interface{} `json:"content"`
+	}
+	type reqBody struct {
+		Model       string  `json:"model"`
+		Messages    []msg   `json:"messages"`
+		Temperature float64 `json:"temperature"`
+		MaxTokens   int     `json:"max_tokens"`
+	}
+
+	var body reqBody
+	if fromImage {
+		content := []map[string]interface{}{
+			{"type": "text", "text": prompt},
+			{"type": "image_url", "image_url": map[string]string{"url": "data:image/jpeg;base64," + imageB64}},
+		}
+		body = reqBody{Model: groqVisionModel, Messages: []msg{{Role: "user", Content: content}}, Temperature: 0.3, MaxTokens: 2000}
+	} else {
+		body = reqBody{Model: groqModel, Messages: []msg{{Role: "user", Content: prompt + "\n\nListe INCI :\n" + text}}, Temperature: 0.3, MaxTokens: 2000}
+	}
+
+	b, _ := json.Marshal(body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, groqAPIURL, bytes.NewReader(b))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+s.groqAPIKey)
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	respBytes, _ := io.ReadAll(resp.Body)
+
+	var gr groqResponse
+	if err := json.Unmarshal(respBytes, &gr); err != nil {
+		return nil, fmt.Errorf("parse groq: %w", err)
+	}
+	if gr.Error != nil {
+		return nil, fmt.Errorf("groq error: %s", gr.Error.Message)
+	}
+	if len(gr.Choices) == 0 {
+		return nil, fmt.Errorf("no choices")
+	}
+
+	raw := extractJSON(gr.Choices[0].Message.Content)
+	var result InciAIResult
+	if err := json.Unmarshal([]byte(raw), &result); err != nil {
+		return nil, fmt.Errorf("parse inci json: %w", err)
+	}
+	if result.Score < 0 {
+		result.Score = 0
+	}
+	if result.Score > 100 {
+		result.Score = 100
+	}
+	if result.Ingredients == nil {
+		result.Ingredients = []InciAIIngredient{}
+	}
+	if result.Alerts == nil {
+		result.Alerts = []string{}
+	}
+	return &result, nil
+}
+
 // identifyWithGroqAndSave uses Groq to identify a product from its barcode when both OBF/OFF miss.
 // It generates a "best guess" based on barcode prefix (GS1 country + brand heuristics).
 func (s *ProductService) identifyWithGroqAndSave(ctx context.Context, userID uuid.UUID, barcode string) (*models.ScannedProduct, error) {

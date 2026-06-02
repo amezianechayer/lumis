@@ -35,6 +35,29 @@ func (h *ProductHandler) Scan(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"product": product})
 }
 
+// POST /api/v1/products/inci-ai  { ingredients?, image_base64? }
+func (h *ProductHandler) AnalyzeInci(c *fiber.Ctx) error {
+	userID, err := parseUserID(c)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
+	}
+	var body struct {
+		Ingredients string `json:"ingredients"`
+		ImageBase64 string `json:"image_base64"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
+	}
+	if body.Ingredients == "" && body.ImageBase64 == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "ingredients or image required"})
+	}
+	result, err := h.svc.AnalyzeInci(c.Context(), userID, body.Ingredients, body.ImageBase64)
+	if err != nil {
+		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "analysis failed"})
+	}
+	return c.JSON(fiber.Map{"result": result})
+}
+
 // GET /api/v1/products/history
 func (h *ProductHandler) GetHistory(c *fiber.Ctx) error {
 	userID, err := parseUserID(c)

@@ -177,6 +177,7 @@ func main() {
 	// Products (barcode scan)
 	products := protected.Group("/products")
 	products.Post("/scan", productHandler.Scan)
+	products.Post("/inci-ai", productHandler.AnalyzeInci)
 	products.Get("/history", productHandler.GetHistory)
 
 	// Recommendations
