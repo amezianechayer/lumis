@@ -7,6 +7,7 @@ import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useAuthStore } from "../stores/auth.store";
 import { getProgramsForGender, ExerciseProgram, Exercise } from "../utils/exercises";
 import { useThemeColors } from "../stores/theme.store";
+import { ExerciseAnimation } from "../components/ui/ExerciseAnimation";
 
 const TERRACOTTA = "#C9826B";
 
@@ -84,8 +85,8 @@ function Player({ program, onExit }: { program: ExerciseProgram; onExit: () => v
   }
 
   // Circular progress
-  const size = 220;
-  const stroke = 8;
+  const size = 168;
+  const stroke = 7;
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
   const progress = total > 0 ? (total - timeLeft) / total : 0;
@@ -111,7 +112,7 @@ function Player({ program, onExit }: { program: ExerciseProgram; onExit: () => v
         <Text style={{ color: c.textMuted, fontSize: 12, marginBottom: 4 }}>
           Exercice {idx + 1}/{program.exercises.length}
         </Text>
-        <Text style={{ fontSize: 44, marginVertical: 12 }}>{ex.emoji}</Text>
+        <ExerciseAnimation emoji={ex.emoji} motion={ex.motion} size={128} />
         <Text style={{ color: c.text, fontSize: 22, fontWeight: "700", textAlign: "center", marginBottom: 4 }}>{ex.name}</Text>
         {ex.reps ? (
           <Text style={{ color: TERRACOTTA, fontSize: 13, marginBottom: 8 }}>{ex.reps} répétitions</Text>
