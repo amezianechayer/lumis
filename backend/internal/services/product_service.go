@@ -482,6 +482,51 @@ func (s *ProductService) AnalyzeInci(ctx context.Context, userID uuid.UUID, text
 	return &result, nil
 }
 
+// SaveInciAnalysis persists an INCI analysis as a scanned product so it appears
+// in history and feeds the coach (holistic, reliable view). Source-agnostic
+// (works for Gemini results from the app and Groq results from the backend).
+func (s *ProductService) SaveInciAnalysis(ctx context.Context, userID uuid.UUID, r *InciAIResult, ingredients string) (*models.ScannedProduct, error) {
+	name := strings.TrimSpace(r.ProductGuess)
+	if name == "" {
+		name = "Analyse INCI"
+	}
+	// Build ingredients text from the analysis if not provided
+	if strings.TrimSpace(ingredients) == "" {
+		names := make([]string, 0, len(r.Ingredients))
+		for _, ing := range r.Ingredients {
+			names = append(names, ing.Name)
+		}
+		ingredients = strings.Join(names, ", ")
+	}
+	// Pros = a few good-rated ingredients; Cons = personalized alerts
+	pros := []string{}
+	for _, ing := range r.Ingredients {
+		if ing.Rating == "good" && len(pros) < 3 {
+			pros = append(pros, ing.Name+" — "+ing.Fonction)
+		}
+	}
+	verdict := r.Verdict
+	if verdict == "" {
+		verdict = "neutral"
+	}
+	p := &models.ScannedProduct{
+		UserID:             userID,
+		Barcode:            "inci",
+		ProductName:        name,
+		Category:           "INCI",
+		Ingredients:        ingredients,
+		CompatibilityScore: r.Score,
+		Verdict:            verdict,
+		Pros:               pq.StringArray(pros),
+		Cons:               pq.StringArray(r.Alerts),
+		Tip:                r.Summary,
+	}
+	if err := s.repo.Create(ctx, p); err != nil {
+		return nil, err
+	}
+	return p, nil
+}
+
 // identifyWithGroqAndSave uses Groq to identify a product from its barcode when both OBF/OFF miss.
 // It generates a "best guess" based on barcode prefix (GS1 country + brand heuristics).
 func (s *ProductService) identifyWithGroqAndSave(ctx context.Context, userID uuid.UUID, barcode string) (*models.ScannedProduct, error) {

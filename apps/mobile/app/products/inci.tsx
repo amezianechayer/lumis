@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingVi
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import { useQueryClient } from "@tanstack/react-query";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import { useThemeColors } from "../../stores/theme.store";
@@ -18,6 +19,7 @@ export default function InciScannerScreen() {
   const router = useRouter();
   const c = useThemeColors();
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
   const [text, setText] = useState("");
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -29,6 +31,13 @@ export default function InciScannerScreen() {
   const skin = { skinType: user?.skin_type, acneProne: user?.skin_type === "oily", age };
 
   const reset = () => { setAi(null); setLocalText(""); setError(null); };
+
+  // Persist the analysis so it lands in product history + feeds the coach
+  const persist = (result: AiResult, ingredients?: string) => {
+    api.saveInciAnalysis(result, ingredients)
+      .then(() => queryClient.invalidateQueries({ queryKey: ["product-history"] }))
+      .catch(() => {});
+  };
 
   async function runPhoto(source: "camera" | "gallery") {
     try {
@@ -53,13 +62,16 @@ export default function InciScannerScreen() {
         { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG, base64: true }
       );
       const b64 = manip.base64 ?? undefined;
+      let result: AiResult;
       try {
         // Primary: Gemini vision
-        setAi(await analyzeInciWithGemini({ imageBase64: b64, skin }));
+        result = await analyzeInciWithGemini({ imageBase64: b64, skin });
       } catch {
         // Fallback: Groq vision via backend
-        setAi(await api.analyzeInciAI({ image_base64: b64 }));
+        result = await api.analyzeInciAI({ image_base64: b64 });
       }
+      setAi(result);
+      persist(result);
     } catch (e: any) {
       setError("Analyse impossible. Réessaie avec une photo plus nette, ou colle la liste ci-dessous.");
     } finally {
@@ -73,17 +85,20 @@ export default function InciScannerScreen() {
     setPhotoUri(null);
     setLoading(true);
     try {
-      // Primary: Gemini
-      setAi(await analyzeInciWithGemini({ text, skin }));
-    } catch {
+      let result: AiResult;
       try {
-        // Fallback 1: Groq via backend
-        setAi(await api.analyzeInciAI({ ingredients: text }));
+        // Primary: Gemini
+        result = await analyzeInciWithGemini({ text, skin });
       } catch {
-        // Fallback 2: instant local database (never blocks)
-        setLocalText(text);
-        setError("IA indisponible — analyse locale affichée.");
+        // Fallback 1: Groq via backend
+        result = await api.analyzeInciAI({ ingredients: text });
       }
+      setAi(result);
+      persist(result, text);
+    } catch {
+      // Fallback 2: instant local database (never blocks)
+      setLocalText(text);
+      setError("IA indisponible — analyse locale affichée.");
     } finally {
       setLoading(false);
     }

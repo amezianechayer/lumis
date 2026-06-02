@@ -321,6 +321,12 @@ class ApiClient {
     return data.result;
   }
 
+  // Persist an INCI analysis (from Gemini or Groq) so it shows in history + feeds the coach
+  async saveInciAnalysis(result: AiInciResult, ingredients?: string): Promise<ScannedProduct> {
+    const { data } = await this.client.post<{ product: ScannedProduct }>("/products/inci-save", { result, ingredients });
+    return data.product;
+  }
+
   async getProductHistory(): Promise<ScannedProduct[]> {
     const { data } = await this.client.get<ScannedProductsHistoryResponse>("/products/history");
     return data.products ?? [];

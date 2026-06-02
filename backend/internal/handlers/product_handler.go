@@ -58,6 +58,26 @@ func (h *ProductHandler) AnalyzeInci(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"result": result})
 }
 
+// POST /api/v1/products/inci-save  { result, ingredients? }
+func (h *ProductHandler) SaveInci(c *fiber.Ctx) error {
+	userID, err := parseUserID(c)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
+	}
+	var body struct {
+		Result      services.InciAIResult `json:"result"`
+		Ingredients string                `json:"ingredients"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
+	}
+	product, err := h.svc.SaveInciAnalysis(c.Context(), userID, &body.Result, body.Ingredients)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "save failed"})
+	}
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"product": product})
+}
+
 // GET /api/v1/products/history
 func (h *ProductHandler) GetHistory(c *fiber.Ctx) error {
 	userID, err := parseUserID(c)

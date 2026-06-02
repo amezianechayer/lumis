@@ -178,6 +178,7 @@ func main() {
 	products := protected.Group("/products")
 	products.Post("/scan", productHandler.Scan)
 	products.Post("/inci-ai", productHandler.AnalyzeInci)
+	products.Post("/inci-save", productHandler.SaveInci)
 	products.Get("/history", productHandler.GetHistory)
 
 	// Recommendations

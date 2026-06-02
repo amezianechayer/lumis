@@ -154,6 +154,9 @@ func (s *CoachService) buildSystemPrompt(ctx context.Context, user *models.User,
 				}
 				fmt.Fprintf(&sb, "- %s (%s) — %s, score compatibilité : %d/100, verdict : %s\n",
 					p.ProductName, p.Brand, p.Category, p.CompatibilityScore, p.Verdict)
+				if len(p.Cons) > 0 {
+					fmt.Fprintf(&sb, "  Points d'attention (ingrédients) : %s\n", strings.Join(p.Cons, " ; "))
+				}
 				if p.Tip != "" {
 					fmt.Fprintf(&sb, "  Conseil : %s\n", p.Tip)
 				}
