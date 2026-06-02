@@ -8,12 +8,12 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
-  Image,
 } from "react-native";
 import { router } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { PrimaryButton } from "../../components/ui/PrimaryButton";
 import { LanguagePicker } from "../../components/ui/LanguagePicker";
+import { LumisLogo } from "../../components/ui/LumisLogo";
 import { t } from "../../utils/i18n";
 import { useLanguageStore } from "../../stores/language.store";
 import { useAuthStore } from "../../stores/auth.store";
@@ -60,17 +60,7 @@ export default function LoginScreen() {
 
           {/* Logo */}
           <Animated.View entering={FadeInDown.delay(50)} className="items-center py-8">
-            <Image
-              source={require("../../assets/lumis-icon-512.png")}
-              style={{ width: 88, height: 88, marginBottom: 16 }}
-              resizeMode="contain"
-            />
-            <Text style={{ color: "#E8D5C0", fontSize: 30, fontWeight: "300", letterSpacing: 8 }}>
-              LUMIS
-            </Text>
-            <Text style={{ color: "#C9826B", fontSize: 11, letterSpacing: 3, marginTop: 6 }}>
-              {(t("auth.login.subtitle") as string)?.toUpperCase?.() ?? "BEAUTÉ & SKINCARE IA"}
-            </Text>
+            <LumisLogo size={90} showWordmark />
           </Animated.View>
 
           {/* Title */}

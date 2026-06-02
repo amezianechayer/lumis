@@ -5,6 +5,7 @@ import Animated, {
   FadeIn,
 } from "react-native-reanimated";
 import { PrimaryButton } from "../../../components/ui/PrimaryButton";
+import { LumisLogo } from "../../../components/ui/LumisLogo";
 import { t } from "../../../utils/i18n";
 import { useLanguageStore } from "../../../stores/language.store";
 
@@ -38,13 +39,8 @@ export default function OnboardingWelcome() {
       <View className="flex-1 px-6 pt-8 pb-10 justify-between">
         {/* Logo + title */}
         <Animated.View entering={FadeInDown.delay(0).duration(600)} className="items-center">
-          <View className="w-20 h-20 rounded-3xl bg-lumis-gold/20 border border-lumis-gold/40 items-center justify-center mb-5">
-            <Text className="text-4xl">✨</Text>
-          </View>
-          <Text className="text-lumis-gold font-display text-5xl text-center mb-2">
-            Lumis
-          </Text>
-          <Text className="text-lumis-white/60 font-body text-base text-center leading-6">
+          <LumisLogo size={96} showWordmark />
+          <Text className="text-lumis-white/60 font-body text-base text-center leading-6 mt-4">
             {t("onboarding.welcome.subtitle")}
           </Text>
         </Animated.View>
