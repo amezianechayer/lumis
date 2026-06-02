@@ -36,7 +36,7 @@ export default function SkinTypeScreen() {
   };
 
   return (
-    <OnboardingLayout step={4}>
+    <OnboardingLayout step={5}>
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 16 }}
         showsVerticalScrollIndicator={false}

@@ -16,6 +16,7 @@ import { LanguagePicker } from "../../components/ui/LanguagePicker";
 import { t } from "../../utils/i18n";
 import { useLanguageStore } from "../../stores/language.store";
 import { useAuthStore } from "../../stores/auth.store";
+import { useThemeColors } from "../../stores/theme.store";
 
 export default function RegisterScreen() {
   useLanguageStore();
@@ -172,18 +173,21 @@ function InputField({
   autoCapitalize?: "none" | "sentences";
   autoComplete?: "email" | "password" | "new-password" | "name";
 }) {
+  const c = useThemeColors();
   return (
     <View>
       <Text className="text-lumis-white/70 font-body-medium text-sm mb-1.5">{label}</Text>
       <TextInput
         className="bg-card border border-line rounded-xl px-4 py-3.5 text-lumis-white font-body text-base"
         placeholder={placeholder}
-        placeholderTextColor="#ffffff30"
+        placeholderTextColor={c.textFaint}
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize ?? "sentences"}
         autoCorrect={false}
         secureTextEntry={secureTextEntry}
-        autoComplete={autoComplete}
+        autoComplete={secureTextEntry ? "off" : autoComplete}
+        importantForAutofill={secureTextEntry ? "no" : "auto"}
+        textContentType={secureTextEntry ? "none" : undefined}
         value={value}
         onChangeText={onChangeText}
       />

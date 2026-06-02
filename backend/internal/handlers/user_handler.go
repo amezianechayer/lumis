@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/lumis/backend/internal/middleware"
@@ -53,11 +55,12 @@ func (h *UserHandler) UpdateMe(c *fiber.Ctx) error {
 	}
 
 	var body struct {
-		FullName *string  `json:"full_name"`
-		Username *string  `json:"username"`
-		Gender   *string  `json:"gender"`
-		Goals    []string `json:"goals"`
-		SkinType *string  `json:"skin_type"`
+		FullName    *string    `json:"full_name"`
+		Username    *string    `json:"username"`
+		Gender      *string    `json:"gender"`
+		Goals       []string   `json:"goals"`
+		SkinType    *string    `json:"skin_type"`
+		DateOfBirth *time.Time `json:"date_of_birth"`
 	}
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
@@ -77,6 +80,9 @@ func (h *UserHandler) UpdateMe(c *fiber.Ctx) error {
 	}
 	if body.SkinType != nil {
 		user.SkinType = body.SkinType
+	}
+	if body.DateOfBirth != nil {
+		user.DateOfBirth = body.DateOfBirth
 	}
 
 	if err := h.userRepo.Update(c.Context(), user); err != nil {

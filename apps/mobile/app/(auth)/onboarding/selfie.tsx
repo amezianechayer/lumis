@@ -102,7 +102,7 @@ export default function SelfieScreen() {
     <>
       {/* ── Idle / Error ── */}
       {(phase === "idle" || phase === "error") && (
-        <OnboardingLayout step={3}>
+        <OnboardingLayout step={4}>
           <Animated.View entering={FadeIn.duration(400)} className="flex-1 px-6">
             <View className="mt-2 mb-6">
               <Text className="text-lumis-white font-display text-3xl mb-2">

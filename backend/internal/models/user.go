@@ -37,3 +37,20 @@ func (u *User) BeforeCreate(tx *gorm.DB) error {
 func (u *User) IsPremium() bool {
 	return u.PremiumUntil != nil && u.PremiumUntil.After(time.Now())
 }
+
+// Age returns the user's age in years from DateOfBirth, or 0 if unknown.
+func (u *User) Age() int {
+	if u.DateOfBirth == nil {
+		return 0
+	}
+	now := time.Now()
+	age := now.Year() - u.DateOfBirth.Year()
+	if now.Month() < u.DateOfBirth.Month() ||
+		(now.Month() == u.DateOfBirth.Month() && now.Day() < u.DateOfBirth.Day()) {
+		age--
+	}
+	if age < 0 || age > 130 {
+		return 0
+	}
+	return age
+}

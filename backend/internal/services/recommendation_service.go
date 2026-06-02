@@ -245,15 +245,20 @@ func (s *RecommendationService) generateAllWithGroq(
 
 	// User profile
 	gender := "non spécifié"
+	age := 0
 	if user != nil {
 		if user.Gender != nil {
 			gender = *user.Gender
 		}
+		age = user.Age()
 		if len(user.Goals) > 0 {
 			fmt.Fprintf(&sb, "## Objectifs utilisateur\n%s\n\n", strings.Join(user.Goals, ", "))
 		}
 	}
 	fmt.Fprintf(&sb, "## Genre : %s\n\n", gender)
+	if age > 0 {
+		fmt.Fprintf(&sb, "## Âge : %d ans\nAdapte IMPÉRATIVEMENT les recommandations à cet âge : 18-25 prévention + équilibre, 25-35 premiers signes + éclat, 35-45 anti-âge ciblé (rétinol, peptides), 45+ fermeté + nutrition. Cite l'âge dans le raisonnement.\n\n", age)
+	}
 
 	// Latest skin scan
 	if skinScan != nil {

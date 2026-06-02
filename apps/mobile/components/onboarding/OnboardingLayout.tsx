@@ -10,7 +10,7 @@ interface Props {
   showBack?: boolean;
 }
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 
 export function OnboardingLayout({ step, total = TOTAL_STEPS, children, showBack = true }: Props) {
   return (

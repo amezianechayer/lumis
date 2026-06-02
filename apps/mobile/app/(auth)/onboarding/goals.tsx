@@ -52,7 +52,7 @@ export default function GoalsScreen() {
       : t("common.continue");
 
   return (
-    <OnboardingLayout step={2}>
+    <OnboardingLayout step={3}>
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 16 }}
         showsVerticalScrollIndicator={false}

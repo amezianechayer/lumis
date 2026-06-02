@@ -92,6 +92,9 @@ func (s *CoachService) buildSystemPrompt(ctx context.Context, user *models.User,
 		if user.Gender != nil {
 			fmt.Fprintf(&sb, "- Genre : %s\n", *user.Gender)
 		}
+		if age := user.Age(); age > 0 {
+			fmt.Fprintf(&sb, "- Âge : %d ans (adapte tes conseils à cet âge : prévention 18-25, premiers signes 25-35, anti-âge 35+)\n", age)
+		}
 		if len(user.Goals) > 0 {
 			fmt.Fprintf(&sb, "- Objectifs : %s\n", strings.Join(user.Goals, ", "))
 		}

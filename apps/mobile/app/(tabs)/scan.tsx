@@ -172,6 +172,11 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
   const skinAge = estimateSkinAge(scan);
   const zones = zoneAnalysis(scan);
   const potential = Math.min(95, scan.overall_score + 15);
+  // Real age (from onboarding DOB) vs estimated skin age
+  const realAge = user?.date_of_birth
+    ? Math.max(0, new Date().getFullYear() - new Date(user.date_of_birth).getFullYear())
+    : 0;
+  const ageDelta = realAge > 0 ? skinAge - realAge : null; // <0 = younger-looking skin
   const date = new Date(scan.created_at).toLocaleDateString("fr-FR", {
     day: "numeric", month: "long", year: "numeric",
   });
@@ -281,6 +286,19 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
                 <Text style={{ color: "#5DCAA5", fontSize: 28, fontWeight: "700" }}>{potential}<Text style={{ fontSize: 13, color: c.textMuted }}>/100</Text></Text>
               </View>
             </View>
+
+            {/* Real age vs skin age comparison */}
+            {ageDelta !== null && (
+              <View style={{ backgroundColor: ageDelta <= 0 ? "rgba(93,202,165,0.12)" : "rgba(240,149,149,0.12)", borderRadius: 14, padding: 12, marginBottom: 12 }}>
+                <Text style={{ color: ageDelta <= 0 ? "#5DCAA5" : "#F09595", fontSize: 13, fontWeight: "600", textAlign: "center" }}>
+                  {ageDelta < 0
+                    ? `✨ Ta peau paraît ${Math.abs(ageDelta)} an${Math.abs(ageDelta) > 1 ? "s" : ""} plus jeune que ton âge (${realAge} ans)`
+                    : ageDelta === 0
+                    ? `Ton âge cutané correspond à ton âge réel (${realAge} ans)`
+                    : `Ta peau paraît ${ageDelta} an${ageDelta > 1 ? "s" : ""} plus âgée que ton âge (${realAge} ans) — on peut améliorer ça`}
+                </Text>
+              </View>
+            )}
 
             {/* Zone-by-zone */}
             <View className="bg-card border border-line rounded-2xl p-4">

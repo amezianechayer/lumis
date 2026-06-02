@@ -36,7 +36,7 @@ export default function GenderScreen() {
     } finally {
       setLoading(false);
     }
-    router.push("/(auth)/onboarding/goals");
+    router.push("/(auth)/onboarding/age" as any);
   };
 
   return (

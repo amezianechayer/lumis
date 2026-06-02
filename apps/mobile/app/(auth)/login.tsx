@@ -157,7 +157,11 @@ function InputField({
         autoCapitalize={autoCapitalize ?? "sentences"}
         autoCorrect={false}
         secureTextEntry={secureTextEntry}
-        autoComplete={autoComplete}
+        // Disable the OS autofill / "suggest strong password" overlay that renders
+        // as an extra empty field under the password input on Android.
+        autoComplete={secureTextEntry ? "off" : autoComplete}
+        importantForAutofill={secureTextEntry ? "no" : "auto"}
+        textContentType={secureTextEntry ? "none" : undefined}
         value={value}
         onChangeText={onChangeText}
       />
