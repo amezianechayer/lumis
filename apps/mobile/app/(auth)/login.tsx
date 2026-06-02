@@ -17,6 +17,7 @@ import { LumisLogo } from "../../components/ui/LumisLogo";
 import { t } from "../../utils/i18n";
 import { useLanguageStore } from "../../stores/language.store";
 import { useAuthStore } from "../../stores/auth.store";
+import { useThemeColors } from "../../stores/theme.store";
 
 export default function LoginScreen() {
   useLanguageStore();
@@ -144,13 +145,14 @@ function InputField({
   autoCapitalize?: "none" | "sentences";
   autoComplete?: "email" | "password" | "name";
 }) {
+  const c = useThemeColors();
   return (
     <View>
       <Text className="text-lumis-white/70 font-body-medium text-sm mb-1.5">{label}</Text>
       <TextInput
         className="bg-card border border-line rounded-xl px-4 py-3.5 text-lumis-white font-body text-base"
         placeholder={placeholder}
-        placeholderTextColor="#ffffff30"
+        placeholderTextColor={c.textFaint}
         keyboardType={keyboardType}
         autoCapitalize={autoCapitalize ?? "sentences"}
         autoCorrect={false}

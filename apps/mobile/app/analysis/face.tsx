@@ -246,8 +246,8 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
           <FeatureTile label="Carnation" value={profile.skin_tone.replace("fitzpatrick_", "Fitz. ")} />
         </Animated.View>
 
-        {/* Beard recs */}
-        {profile.beard_recommendations && profile.beard_recommendations.length > 0 && (
+        {/* Beard recs — men only */}
+        {isMale && profile.beard_recommendations && profile.beard_recommendations.length > 0 && (
           <Animated.View
             entering={FadeInDown.delay(300)}
             className="bg-lumis-slate/15 border border-lumis-slate/30 rounded-2xl p-4 mb-4"

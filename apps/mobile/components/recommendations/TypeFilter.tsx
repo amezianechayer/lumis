@@ -21,17 +21,24 @@ const FILTER_EMOJIS: Record<RecType, string> = {
 interface Props {
   active: RecType;
   onChange: (type: RecType) => void;
+  gender?: string;
 }
 
-export function TypeFilter({ active, onChange }: Props) {
+export function TypeFilter({ active, onChange, gender }: Props) {
   const c = useThemeColors();
+  // Hide gender-irrelevant chips: no makeup for men, no beard grooming for women
+  const filters = FILTERS.filter((f) => {
+    if (gender === "male" && f === "makeup") return false;
+    if (gender === "female" && f === "grooming") return false;
+    return true;
+  });
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8, gap: 8 }}
     >
-      {FILTERS.map((f) => {
+      {filters.map((f) => {
         const isActive = f === active;
         return (
           <TouchableOpacity

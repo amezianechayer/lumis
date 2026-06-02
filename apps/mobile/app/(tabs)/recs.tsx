@@ -15,10 +15,13 @@ import { Recommendation } from "../../types/api";
 import { RecommendationCard } from "../../components/recommendations/RecommendationCard";
 import { TypeFilter, RecType } from "../../components/recommendations/TypeFilter";
 import { t } from "../../utils/i18n";
+import { useAuthStore } from "../../stores/auth.store";
 
 export default function RecsScreen() {
   const [filter, setFilter] = useState<RecType>("all");
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const gender = user?.gender;
 
   const {
     data: recs,
@@ -38,7 +41,13 @@ export default function RecsScreen() {
     },
   });
 
-  const filtered: Recommendation[] = recs ?? [];
+  // Gender safety net: never show makeup to men nor beard grooming to women,
+  // even if older cached recs were generated before the gender was set.
+  const filtered: Recommendation[] = (recs ?? []).filter((r) => {
+    if (gender === "male" && r.type === "makeup") return false;
+    if (gender === "female" && r.type === "grooming") return false;
+    return true;
+  });
 
   const renderEmpty = () => {
     if (isLoading) return null;
@@ -96,7 +105,7 @@ export default function RecsScreen() {
       </View>
 
       {/* Type filter */}
-      <TypeFilter active={filter} onChange={setFilter} />
+      <TypeFilter active={filter} onChange={setFilter} gender={gender} />
 
       {/* Content */}
       {isLoading ? (
