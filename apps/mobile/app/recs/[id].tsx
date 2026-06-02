@@ -8,6 +8,9 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { api } from "../../services/api";
 import { RecProduct, RecStep } from "../../types/api";
 import { t } from "../../utils/i18n";
+import { useThemeColors } from "../../stores/theme.store";
+
+const TERRACOTTA = "#C9826B";
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   easy: "#4ade80",
@@ -35,6 +38,7 @@ function parseArr<T>(field: unknown): T[] {
 export default function RecDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const c = useThemeColors();
 
   const { data: rec, isLoading, isError } = useQuery({
     queryKey: ["recommendation", id],
@@ -44,18 +48,18 @@ export default function RecDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4", alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator color="#C9826B" size="large" />
+      <SafeAreaView style={{ flex: 1, backgroundColor: c.bg, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator color={TERRACOTTA} size="large" />
       </SafeAreaView>
     );
   }
 
   if (isError || !rec) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4", alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: c.bg, alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
         <Text style={{ color: "#f87171", fontSize: 16, marginBottom: 16 }}>{t("common.error")}</Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={{ color: "#C9826B", fontWeight: "600" }}>{t("common.back")}</Text>
+          <Text style={{ color: TERRACOTTA, fontWeight: "600" }}>{t("common.back")}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -67,7 +71,7 @@ export default function RecDetailScreen() {
   const products: RecProduct[] = parseArr<RecProduct>(rec.products);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
       {/* Top bar */}
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 4, paddingBottom: 10 }}>
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.75} style={{ padding: 6 }}>
@@ -88,16 +92,16 @@ export default function RecDetailScreen() {
                   <Text style={{ fontSize: 32 }}>{rec.icon_emoji}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: "#fff", fontSize: 19, fontWeight: "700", lineHeight: 24 }}>{rec.title}</Text>
+                  <Text style={{ color: c.text, fontSize: 19, fontWeight: "700", lineHeight: 24 }}>{rec.title}</Text>
                   {rec.is_premium_only && (
-                    <View style={{ alignSelf: "flex-start", marginTop: 6, backgroundColor: "rgba(201,168,76,0.2)", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 }}>
-                      <Text style={{ color: "#C9826B", fontSize: 10, fontWeight: "700" }}>✨ PREMIUM</Text>
+                    <View style={{ alignSelf: "flex-start", marginTop: 6, backgroundColor: c.primaryMuted, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 }}>
+                      <Text style={{ color: TERRACOTTA, fontSize: 10, fontWeight: "700" }}>✨ PREMIUM</Text>
                     </View>
                   )}
                 </View>
               </View>
 
-              <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 14, lineHeight: 21 }}>{rec.summary}</Text>
+              <Text style={{ color: c.textMuted, fontSize: 14, lineHeight: 21 }}>{rec.summary}</Text>
 
               {/* Meta row */}
               <View style={{ flexDirection: "row", gap: 16, marginTop: 14 }}>
@@ -106,10 +110,10 @@ export default function RecDetailScreen() {
                   <Text style={{ color: diffColor, fontSize: 12, fontWeight: "600" }}>{t(`recs.difficulty_${rec.difficulty}` as any)}</Text>
                 </View>
                 {rec.duration_min > 0 && (
-                  <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 12 }}>⏱️ {rec.duration_min} min</Text>
+                  <Text style={{ color: c.textMuted, fontSize: 12 }}>⏱️ {rec.duration_min} min</Text>
                 )}
                 {steps.length > 0 && (
-                  <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 12 }}>📋 {steps.length} étapes</Text>
+                  <Text style={{ color: c.textMuted, fontSize: 12 }}>📋 {steps.length} étapes</Text>
                 )}
               </View>
 
@@ -130,27 +134,27 @@ export default function RecDetailScreen() {
         {/* Steps */}
         {steps.length > 0 && (
           <Animated.View entering={FadeInDown.delay(100).springify()} style={{ marginHorizontal: 16, marginBottom: 16 }}>
-            <Text style={{ color: "#fff", fontSize: 16, fontWeight: "700", marginBottom: 14 }}>
+            <Text style={{ color: c.text, fontSize: 16, fontWeight: "700", marginBottom: 14 }}>
               {t("recs.steps_title")}
             </Text>
             {steps.map((step, i) => (
               <View key={i} style={{ flexDirection: "row", gap: 12, marginBottom: 14 }}>
                 <View style={{ alignItems: "center" }}>
                   <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: theme.accent, alignItems: "center", justifyContent: "center" }}>
-                    <Text style={{ color: "#EDE4D4", fontWeight: "800", fontSize: 13 }}>{step.order || i + 1}</Text>
+                    <Text style={{ color: "#fff", fontWeight: "800", fontSize: 13 }}>{step.order || i + 1}</Text>
                   </View>
                   {i < steps.length - 1 && (
                     <View style={{ width: 2, flex: 1, backgroundColor: `${theme.accent}25`, marginTop: 4 }} />
                   )}
                 </View>
-                <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)", borderRadius: 16, padding: 14, marginBottom: 2 }}>
+                <View style={{ flex: 1, backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight, borderRadius: 16, padding: 14, marginBottom: 2 }}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                    <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14, flex: 1 }}>{step.title}</Text>
+                    <Text style={{ color: c.text, fontWeight: "600", fontSize: 14, flex: 1 }}>{step.title}</Text>
                     {step.duration_min ? (
-                      <Text style={{ color: "rgba(255,255,255,0.35)", fontSize: 11 }}>{step.duration_min} min</Text>
+                      <Text style={{ color: c.textFaint, fontSize: 11 }}>{step.duration_min} min</Text>
                     ) : null}
                   </View>
-                  <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, lineHeight: 19 }}>{step.description}</Text>
+                  <Text style={{ color: c.textMuted, fontSize: 13, lineHeight: 19 }}>{step.description}</Text>
                   {step.tip ? (
                     <View style={{ marginTop: 8, backgroundColor: `${theme.accent}12`, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 8 }}>
                       <Text style={{ color: theme.accent, fontSize: 12, lineHeight: 17 }}>💡 {step.tip}</Text>
@@ -165,21 +169,21 @@ export default function RecDetailScreen() {
         {/* Products */}
         {products.length > 0 && (
           <Animated.View entering={FadeInDown.delay(200).springify()} style={{ marginHorizontal: 16 }}>
-            <Text style={{ color: "#fff", fontSize: 16, fontWeight: "700", marginBottom: 14 }}>
+            <Text style={{ color: c.text, fontSize: 16, fontWeight: "700", marginBottom: 14 }}>
               {t("recs.products_title")}
             </Text>
             {products.map((p, i) => (
-              <View key={i} style={{ marginBottom: 10, borderRadius: 16, padding: 14, flexDirection: "row", gap: 12, backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: p.premium ? "rgba(201,168,76,0.3)" : "rgba(201,130,107,0.12)" }}>
-                <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: p.premium ? "rgba(201,168,76,0.2)" : `${theme.accent}18`, alignItems: "center", justifyContent: "center" }}>
+              <View key={i} style={{ marginBottom: 10, borderRadius: 16, padding: 14, flexDirection: "row", gap: 12, backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: p.premium ? c.border : c.borderLight }}>
+                <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: p.premium ? c.primaryMuted : `${theme.accent}18`, alignItems: "center", justifyContent: "center" }}>
                   <Text style={{ fontSize: 18 }}>{p.premium ? "💎" : "🛍️"}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                    <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14, flex: 1 }}>{p.name}</Text>
-                    {p.premium && <Text style={{ color: "#C9826B", fontSize: 9, fontWeight: "700" }}>PREMIUM</Text>}
+                    <Text style={{ color: c.text, fontWeight: "600", fontSize: 14, flex: 1 }}>{p.name}</Text>
+                    {p.premium && <Text style={{ color: TERRACOTTA, fontSize: 9, fontWeight: "700" }}>PREMIUM</Text>}
                   </View>
-                  <Text style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, marginTop: 1, marginBottom: 5 }}>{p.category}</Text>
-                  <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, lineHeight: 18 }}>{p.why}</Text>
+                  <Text style={{ color: c.textFaint, fontSize: 11, marginTop: 1, marginBottom: 5 }}>{p.category}</Text>
+                  <Text style={{ color: c.textMuted, fontSize: 13, lineHeight: 18 }}>{p.why}</Text>
                 </View>
               </View>
             ))}
@@ -190,7 +194,7 @@ export default function RecDetailScreen() {
         {steps.length === 0 && products.length === 0 && (
           <View style={{ alignItems: "center", padding: 32 }}>
             <Text style={{ fontSize: 36, marginBottom: 10 }}>📝</Text>
-            <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 14, textAlign: "center" }}>
+            <Text style={{ color: c.textMuted, fontSize: 14, textAlign: "center" }}>
               Régénère tes recommandations pour obtenir un guide détaillé étape par étape.
             </Text>
           </View>

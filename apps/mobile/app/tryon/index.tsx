@@ -366,7 +366,7 @@ export default function TryOnScreen() {
 
       {/* ── INTRO PHASE ── */}
       {phase === "intro" && (
-        <View style={{ flex: 1, backgroundColor: "#EDE4D4" }}>
+        <View style={{ flex: 1, backgroundColor: "#0D0D0F" }}>
           <View style={styles.topBar}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
               <Text style={{ color: "#fff", fontSize: 18 }}>←</Text>
@@ -538,7 +538,7 @@ export default function TryOnScreen() {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, backgroundColor: "#EDE4D4", alignItems: "center", justifyContent: "center", padding: 32 },
+  center: { flex: 1, backgroundColor: "#0D0D0F", alignItems: "center", justifyContent: "center", padding: 32 },
   title: { color: "#fff", fontSize: 22, fontWeight: "700", textAlign: "center", marginBottom: 20 },
   btn: { backgroundColor: "#C9826B", borderRadius: 16, paddingHorizontal: 28, paddingVertical: 14 },
   btnText: { color: "#000", fontWeight: "700", fontSize: 15 },
