@@ -3,6 +3,7 @@ import Svg, {
   Path, Ellipse, Circle, Defs, RadialGradient, LinearGradient, Stop, G,
 } from "react-native-svg";
 import { MakeupGuide, FaceShape } from "../../utils/makeupTips";
+import { useThemeColors } from "../../stores/theme.store";
 
 // Face silhouette paths per shape (viewBox 100x132)
 const FACE_PATHS: Record<FaceShape, string> = {
@@ -185,10 +186,11 @@ export function FaceMakeupDiagram({ guide, faceShape, isMale, skinTone }: Props)
 }
 
 function LegendDot({ color, label }: { color: string; label: string }) {
+  const c = useThemeColors();
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
-      <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: color, borderWidth: color === "#FFFBEF" ? 1 : 0, borderColor: "rgba(255,255,255,0.3)" }} />
-      <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>{label}</Text>
+      <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: color, borderWidth: color === "#FFFBEF" ? 1 : 0, borderColor: c.border }} />
+      <Text style={{ color: c.textMuted, fontSize: 11 }}>{label}</Text>
     </View>
   );
 }

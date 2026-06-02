@@ -1,6 +1,9 @@
 import React from "react";
 import { ScrollView, TouchableOpacity, Text, View } from "react-native";
 import { t } from "../../utils/i18n";
+import { useThemeColors } from "../../stores/theme.store";
+
+const TERRACOTTA = "#C9826B";
 
 export type RecType = "all" | "makeup" | "grooming" | "haircut" | "skincare" | "color_season";
 
@@ -21,6 +24,7 @@ interface Props {
 }
 
 export function TypeFilter({ active, onChange }: Props) {
+  const c = useThemeColors();
   return (
     <ScrollView
       horizontal
@@ -36,15 +40,15 @@ export function TypeFilter({ active, onChange }: Props) {
             activeOpacity={0.75}
             className="flex-row items-center px-3 py-2 rounded-full"
             style={{
-              backgroundColor: isActive ? "#C9826B" : "rgba(255,255,255,0.6)",
+              backgroundColor: isActive ? TERRACOTTA : c.bgCard,
               borderWidth: 0.5,
-              borderColor: isActive ? "#C9826B" : "rgba(201,130,107,0.2)",
+              borderColor: isActive ? TERRACOTTA : c.border,
             }}
           >
             <Text style={{ fontSize: 13, marginRight: 4 }}>{FILTER_EMOJIS[f]}</Text>
             <Text
               style={{
-                color: isActive ? "#EDE4D4" : "#94a3b8",
+                color: isActive ? "#fff" : c.textMuted,
                 fontSize: 13,
                 fontWeight: isActive ? "700" : "400",
               }}
