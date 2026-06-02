@@ -230,28 +230,52 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
 
-        {/* Try-On AR */}
-        <TouchableOpacity
-          onPress={() => router.push("/tryon" as any)}
-          className="flex-row items-center bg-white/5 border border-white/10 rounded-2xl p-4 overflow-hidden"
-          activeOpacity={0.8}
-        >
-          <View className="w-11 h-11 rounded-xl bg-pink-500/20 items-center justify-center mr-4">
-            <Text className="text-2xl">💄</Text>
-          </View>
-          <View className="flex-1">
-            <View className="flex-row items-center gap-2 mb-0.5">
-              <Text className="text-lumis-white font-body-medium text-sm">Virtual Try-On</Text>
-              <View className="bg-pink-500/20 rounded-full px-2 py-0.5">
-                <Text style={{ color: "#f472b6", fontSize: 9, fontWeight: "700" }}>NOUVEAU</Text>
-              </View>
+        {/* Try-On — femme: maquillage / homme: coupes & barbes */}
+        {user?.gender === "male" ? (
+          <TouchableOpacity
+            onPress={() => router.push("/men-styles" as any)}
+            className="flex-row items-center bg-white/5 border border-white/10 rounded-2xl p-4 overflow-hidden"
+            activeOpacity={0.8}
+          >
+            <View className="w-11 h-11 rounded-xl bg-blue-500/20 items-center justify-center mr-4">
+              <Text className="text-2xl">💈</Text>
             </View>
-            <Text className="text-lumis-white/40 font-body text-xs">
-              Essaie rouge à lèvres, blush et ombre en AR
-            </Text>
-          </View>
-          <Text className="text-lumis-white/30 text-lg">→</Text>
-        </TouchableOpacity>
+            <View className="flex-1">
+              <View className="flex-row items-center gap-2 mb-0.5">
+                <Text className="text-lumis-white font-body-medium text-sm">Coupes & Barbes</Text>
+                <View className="bg-blue-500/20 rounded-full px-2 py-0.5">
+                  <Text style={{ color: "#60a5fa", fontSize: 9, fontWeight: "700" }}>STYLES</Text>
+                </View>
+              </View>
+              <Text className="text-lumis-white/40 font-body text-xs">
+                Styles adaptés à ta forme de visage
+              </Text>
+            </View>
+            <Text className="text-lumis-white/30 text-lg">→</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            onPress={() => router.push("/tryon" as any)}
+            className="flex-row items-center bg-white/5 border border-white/10 rounded-2xl p-4 overflow-hidden"
+            activeOpacity={0.8}
+          >
+            <View className="w-11 h-11 rounded-xl bg-pink-500/20 items-center justify-center mr-4">
+              <Text className="text-2xl">💄</Text>
+            </View>
+            <View className="flex-1">
+              <View className="flex-row items-center gap-2 mb-0.5">
+                <Text className="text-lumis-white font-body-medium text-sm">Virtual Try-On</Text>
+                <View className="bg-pink-500/20 rounded-full px-2 py-0.5">
+                  <Text style={{ color: "#f472b6", fontSize: 9, fontWeight: "700" }}>NOUVEAU</Text>
+                </View>
+              </View>
+              <Text className="text-lumis-white/40 font-body text-xs">
+                Essaie rouge à lèvres, blush et ombre en AR
+              </Text>
+            </View>
+            <Text className="text-lumis-white/30 text-lg">→</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Analyse peau Gemini */}
         <TouchableOpacity
