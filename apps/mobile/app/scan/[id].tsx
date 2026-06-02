@@ -10,6 +10,9 @@ import { useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "../../services/api";
 import { SkinScan } from "../../types/api";
+import { useThemeColors } from "../../stores/theme.store";
+
+const TERRACOTTA = "#C9826B";
 
 function scoreColor(s: number) {
   return s >= 75 ? "#4ade80" : s >= 50 ? "#C9826B" : "#f87171";
@@ -34,6 +37,7 @@ function ScoreRow({ label, score, type, icon, delay = 0 }: {
   type: "acne" | "hydration" | "texture" | "uniformity";
   delay?: number;
 }) {
+  const c = useThemeColors();
   const color = scoreColor(score);
   const qual = scoreLabel(score, type);
   const width = useSharedValue(0);
@@ -52,13 +56,13 @@ function ScoreRow({ label, score, type, icon, delay = 0 }: {
   return (
     <Animated.View entering={FadeInDown.delay(delay).springify()} style={{ marginBottom: 16 }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
-        <Text style={{ color: "rgba(255,255,255,0.65)", fontSize: 14 }}>{icon} {label}</Text>
+        <Text style={{ color: c.text, fontSize: 14 }}>{icon} {label}</Text>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <Text style={{ color, fontSize: 11 }}>{qual}</Text>
           <Text style={{ color, fontWeight: "700", fontSize: 14 }}>{score}/100</Text>
         </View>
       </View>
-      <View style={{ height: 8, backgroundColor: "rgba(201,130,107,0.12)", borderRadius: 4, overflow: "hidden" }}>
+      <View style={{ height: 8, backgroundColor: c.borderLight, borderRadius: 4, overflow: "hidden" }}>
         <Animated.View style={[{ height: "100%", backgroundColor: color, borderRadius: 4 }, barStyle]} />
       </View>
     </Animated.View>
@@ -66,10 +70,11 @@ function ScoreRow({ label, score, type, icon, delay = 0 }: {
 }
 
 function TagList({ label, items, color }: { label: string; items: string[]; color: string }) {
+  const c = useThemeColors();
   if (!items || items.length === 0) return null;
   return (
     <View style={{ marginBottom: 12 }}>
-      <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>{label}</Text>
+      <Text style={{ color: c.textMuted, fontSize: 11, marginBottom: 6, textTransform: "uppercase", letterSpacing: 1 }}>{label}</Text>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
         {items.map((item, i) => (
           <View key={i} style={{ backgroundColor: `${color}20`, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 0.5, borderColor: `${color}40` }}>
@@ -82,6 +87,7 @@ function TagList({ label, items, color }: { label: string; items: string[]; colo
 }
 
 function OverallScoreCard({ overall, oc }: { overall: number; oc: string }) {
+  const c = useThemeColors();
   const pulse = useSharedValue(1);
   const countVal = useSharedValue(0);
 
@@ -119,7 +125,7 @@ function OverallScoreCard({ overall, oc }: { overall: number; oc: string }) {
       <Animated.Text entering={FadeIn.delay(400)} style={{ color: oc, fontWeight: "700", fontSize: 18 }}>
         {overall >= 80 ? "Excellente santé" : overall >= 65 ? "Bonne santé" : overall >= 50 ? "À améliorer" : "Besoins importants"}
       </Animated.Text>
-      <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 12, marginTop: 4 }}>Score global de peau</Text>
+      <Text style={{ color: c.textMuted, fontSize: 12, marginTop: 4 }}>Score global de peau</Text>
     </Animated.View>
   );
 }
@@ -127,6 +133,7 @@ function OverallScoreCard({ overall, oc }: { overall: number; oc: string }) {
 export default function ScanDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const c = useThemeColors();
 
   const { data: scan, isLoading, isError } = useQuery<SkinScan>({
     queryKey: ["scan-detail", id],
@@ -141,18 +148,18 @@ export default function ScanDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4", alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator color="#C9826B" size="large" />
+      <SafeAreaView style={{ flex: 1, backgroundColor: c.bg, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator color={TERRACOTTA} size="large" />
       </SafeAreaView>
     );
   }
 
   if (isError || !scan) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4", alignItems: "center", justifyContent: "center", padding: 32 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: c.bg, alignItems: "center", justifyContent: "center", padding: 32 }}>
         <Text style={{ color: "#ef4444", fontSize: 16, marginBottom: 16 }}>Scan introuvable</Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={{ color: "#C9826B", fontWeight: "600" }}>← Retour</Text>
+          <Text style={{ color: TERRACOTTA, fontWeight: "600" }}>← Retour</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -165,15 +172,15 @@ export default function ScanDetailScreen() {
   const oc = scoreColor(overall);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
       {/* Header */}
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 }}>
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} style={{ marginRight: 12, padding: 4 }}>
-          <Text style={{ color: "#C9826B", fontSize: 22 }}>←</Text>
+          <Text style={{ color: TERRACOTTA, fontSize: 22 }}>←</Text>
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: "#fff", fontWeight: "700", fontSize: 18 }}>Détail du scan</Text>
-          <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>{date}</Text>
+          <Text style={{ color: c.text, fontWeight: "700", fontSize: 18 }}>Détail du scan</Text>
+          <Text style={{ color: c.textMuted, fontSize: 12 }}>{date}</Text>
         </View>
       </View>
 
@@ -183,10 +190,10 @@ export default function ScanDetailScreen() {
 
         {/* Sub-scores */}
         <Animated.View entering={FadeInDown.delay(80)} style={{
-          backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)",
+          backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight,
           borderRadius: 20, padding: 20, marginBottom: 16,
         }}>
-          <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 16 }}>Métriques détaillées</Text>
+          <Text style={{ color: c.textMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 16 }}>Métriques détaillées</Text>
           <ScoreRow label="Acné" score={scan.acne_score} icon="🔴" type="acne" delay={0} />
           <ScoreRow label="Hydratation" score={scan.hydration_score} icon="💧" type="hydration" delay={80} />
           <ScoreRow label="Texture" score={scan.texture_score} icon="✨" type="texture" delay={160} />
@@ -195,36 +202,36 @@ export default function ScanDetailScreen() {
 
         {/* Qualitative indicators */}
         <Animated.View entering={FadeInDown.delay(140)} style={{
-          backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)",
+          backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight,
           borderRadius: 20, padding: 20, marginBottom: 16,
         }}>
-          <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 16 }}>Indicateurs qualitatifs</Text>
+          <Text style={{ color: c.textMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 16 }}>Indicateurs qualitatifs</Text>
           <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
             {[
               { label: "Rougeur", val: scan.redness_level },
               { label: "Pores", val: scan.pores_condition },
               { label: "Hyperpigmentation", val: scan.hyperpigmentation_level },
             ].map(({ label, val }) => (
-              <View key={label} style={{ backgroundColor: "rgba(255,255,255,0.55)", borderRadius: 12, padding: 12, flex: 1, minWidth: 90 }}>
-                <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, marginBottom: 4 }}>{label}</Text>
-                <Text style={{ color: "#fff", fontWeight: "600", fontSize: 13, textTransform: "capitalize" }}>{val || "—"}</Text>
+              <View key={label} style={{ backgroundColor: c.primaryMuted, borderRadius: 12, padding: 12, flex: 1, minWidth: 90 }}>
+                <Text style={{ color: c.textMuted, fontSize: 10, marginBottom: 4 }}>{label}</Text>
+                <Text style={{ color: c.text, fontWeight: "600", fontSize: 13, textTransform: "capitalize" }}>{val || "—"}</Text>
               </View>
             ))}
           </View>
           {scan.fine_lines_detected && (
             <View style={{ marginTop: 12, flexDirection: "row", alignItems: "center", gap: 8 }}>
               <Text style={{ fontSize: 14 }}>〰️</Text>
-              <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 13 }}>Fines lignes détectées</Text>
+              <Text style={{ color: c.textMuted, fontSize: 13 }}>Fines lignes détectées</Text>
             </View>
           )}
         </Animated.View>
 
         {/* Zones */}
         <Animated.View entering={FadeInDown.delay(200)} style={{
-          backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)",
+          backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight,
           borderRadius: 20, padding: 20, marginBottom: 16,
         }}>
-          <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 16 }}>Zones concernées</Text>
+          <Text style={{ color: c.textMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 16 }}>Zones concernées</Text>
           <TagList label="Acné" items={scan.acne_zones ?? []} color="#f87171" />
           <TagList label="Sécheresse" items={scan.dryness_zones ?? []} color="#60a5fa" />
           <TagList label="Brillance" items={scan.oiliness_zones ?? []} color="#C9826B" />
@@ -232,25 +239,25 @@ export default function ScanDetailScreen() {
 
         {/* Lifestyle */}
         <Animated.View entering={FadeInDown.delay(260)} style={{
-          backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)",
+          backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight,
           borderRadius: 20, padding: 20,
         }}>
-          <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 16 }}>Lifestyle au moment du scan</Text>
+          <Text style={{ color: c.textMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 16 }}>Lifestyle au moment du scan</Text>
           <View style={{ flexDirection: "row", gap: 12 }}>
-            <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.55)", borderRadius: 12, padding: 12, alignItems: "center" }}>
+            <View style={{ flex: 1, backgroundColor: c.primaryMuted, borderRadius: 12, padding: 12, alignItems: "center" }}>
               <Text style={{ fontSize: 20 }}>😴</Text>
-              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 18, marginTop: 4 }}>{scan.sleep_hours}h</Text>
-              <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11 }}>Sommeil</Text>
+              <Text style={{ color: c.text, fontWeight: "700", fontSize: 18, marginTop: 4 }}>{scan.sleep_hours}h</Text>
+              <Text style={{ color: c.textMuted, fontSize: 11 }}>Sommeil</Text>
             </View>
-            <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.55)", borderRadius: 12, padding: 12, alignItems: "center" }}>
+            <View style={{ flex: 1, backgroundColor: c.primaryMuted, borderRadius: 12, padding: 12, alignItems: "center" }}>
               <Text style={{ fontSize: 20 }}>💧</Text>
-              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 18, marginTop: 4 }}>{scan.water_intake_liters}L</Text>
-              <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11 }}>Eau</Text>
+              <Text style={{ color: c.text, fontWeight: "700", fontSize: 18, marginTop: 4 }}>{scan.water_intake_liters}L</Text>
+              <Text style={{ color: c.textMuted, fontSize: 11 }}>Eau</Text>
             </View>
-            <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.55)", borderRadius: 12, padding: 12, alignItems: "center" }}>
+            <View style={{ flex: 1, backgroundColor: c.primaryMuted, borderRadius: 12, padding: 12, alignItems: "center" }}>
               <Text style={{ fontSize: 20 }}>🌡️</Text>
-              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 18, marginTop: 4 }}>{scan.stress_level}/10</Text>
-              <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11 }}>Stress</Text>
+              <Text style={{ color: c.text, fontWeight: "700", fontSize: 18, marginTop: 4 }}>{scan.stress_level}/10</Text>
+              <Text style={{ color: c.textMuted, fontSize: 11 }}>Stress</Text>
             </View>
           </View>
         </Animated.View>
