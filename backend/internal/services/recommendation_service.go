@@ -25,6 +25,7 @@ type RecommendationService struct {
 	profileRepo  *repository.FaceProfileRepository
 	userRepo     *repository.UserRepository
 	skinScanRepo *repository.SkinScanRepository
+	productRepo  *repository.ScannedProductRepository
 	cycleSvc     *CycleService
 	groqAPIKey   string
 	httpClient   *http.Client
@@ -36,6 +37,7 @@ func NewRecommendationService(
 	profileRepo *repository.FaceProfileRepository,
 	userRepo *repository.UserRepository,
 	skinScanRepo *repository.SkinScanRepository,
+	productRepo *repository.ScannedProductRepository,
 	cycleSvc *CycleService,
 	groqAPIKey string,
 	rdb *redis.Client,
@@ -45,6 +47,7 @@ func NewRecommendationService(
 		profileRepo:  profileRepo,
 		userRepo:     userRepo,
 		skinScanRepo: skinScanRepo,
+		productRepo:  productRepo,
 		cycleSvc:     cycleSvc,
 		groqAPIKey:   groqAPIKey,
 		httpClient:   &http.Client{Timeout: 60 * time.Second},
@@ -99,11 +102,17 @@ func (s *RecommendationService) Generate(ctx context.Context, userID uuid.UUID) 
 		scanHistory, _ = s.skinScanRepo.FindHistoryByUser(ctx, userID, 10)
 	}
 
+	// Products the user already owns (scanned / INCI analyzed)
+	var products []models.ScannedProduct
+	if s.productRepo != nil {
+		products, _ = s.productRepo.FindHistoryByUser(ctx, userID, 8)
+	}
+
 	var recs []models.Recommendation
 	var err error
 
 	if s.groqAPIKey != "" {
-		recs, err = s.generateAllWithGroq(ctx, userID, profile, latestScan, scanHistory, user)
+		recs, err = s.generateAllWithGroq(ctx, userID, profile, latestScan, scanHistory, products, user)
 		if err != nil {
 			log.Printf("[RecService] Groq generation failed, using fallback: %v", err)
 			recs = buildFallbackRecs(userID, profile, user, latestScan)
@@ -237,6 +246,7 @@ func (s *RecommendationService) generateAllWithGroq(
 	profile *models.FaceProfile,
 	skinScan *models.SkinScan,
 	scanHistory []models.SkinScan,
+	products []models.ScannedProduct,
 	user *models.User,
 ) ([]models.Recommendation, error) {
 	var sb strings.Builder
@@ -320,6 +330,30 @@ func (s *RecommendationService) generateAllWithGroq(
 		fmt.Fprintf(&sb, "- Forme des yeux : %s\n", profile.EyeShape)
 		fmt.Fprintf(&sb, "- Mâchoire : %s\n", profile.JawType)
 		sb.WriteString("\n")
+	}
+
+	// Products the user already owns (scanned / INCI analyzed)
+	if len(products) > 0 {
+		sb.WriteString("## Produits que l'utilisateur possède déjà (scannés)\n")
+		for _, p := range products {
+			if p.NotFound {
+				continue
+			}
+			name := p.ProductName
+			if name == "" {
+				name = "Produit"
+			}
+			fmt.Fprintf(&sb, "- %s", name)
+			if p.Brand != "" {
+				fmt.Fprintf(&sb, " (%s)", p.Brand)
+			}
+			fmt.Fprintf(&sb, " — score %d/100, verdict %s", p.CompatibilityScore, p.Verdict)
+			if len(p.Cons) > 0 {
+				fmt.Fprintf(&sb, ", points d'attention : %s", strings.Join(p.Cons, " ; "))
+			}
+			sb.WriteString("\n")
+		}
+		sb.WriteString("→ Tiens compte de ces produits : conseille de GARDER les bons (score élevé), de REMPLACER ceux à éviter (score bas / ingrédients problématiques) en citant l'alternative, et NE propose PAS de produit redondant avec ce qu'il possède déjà.\n\n")
 	}
 
 	// Required recommendation types depend on gender

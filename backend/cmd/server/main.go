@@ -80,7 +80,7 @@ func main() {
 	faceAnalysisSvc := services.NewFaceAnalysisService(faceProfileRepo, cfg.GroqAPIKey)
 	cycleSvc := services.NewCycleService(cycleRepo)
 	routineSvc := services.NewRoutineService(routineRepo)
-	recSvc := services.NewRecommendationService(recRepo, faceProfileRepo, userRepo, skinScanRepo, cycleSvc, cfg.GroqAPIKey, rdb)
+	recSvc := services.NewRecommendationService(recRepo, faceProfileRepo, userRepo, skinScanRepo, productRepo, cycleSvc, cfg.GroqAPIKey, rdb)
 	skinScanSvc := services.NewSkinScanService(skinScanRepo, cfg.GroqAPIKey, storageSvc)
 	coachSvc := services.NewCoachService(coachRepo, userRepo, skinScanRepo, faceProfileRepo, productRepo, cycleSvc, routineSvc, cfg.GroqAPIKey)
 	productSvc := services.NewProductService(productRepo, skinScanRepo, userRepo, cfg.GroqAPIKey)
