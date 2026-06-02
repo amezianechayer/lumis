@@ -31,6 +31,9 @@ import { SkinScan } from "../../types/api";
 import { PremiumGateModal } from "../../components/ui/PremiumGateModal";
 import { SkinProgressChart } from "../../components/ui/SkinProgressChart";
 import { useAuthStore } from "../../stores/auth.store";
+import { useThemeColors } from "../../stores/theme.store";
+
+const TERRACOTTA = "#C9826B";
 
 // ─── Premium-only derived analysis ──────────────────────────────────────────
 function estimateSkinAge(scan: SkinScan): number {
@@ -163,6 +166,7 @@ function Stepper({
 
 // ─── Result screen ────────────────────────────────────────────────────────────
 function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void }) {
+  const c = useThemeColors();
   const { user } = useAuthStore();
   const isPremium = !!user?.premium_until && new Date(user.premium_until) > new Date();
   const skinAge = estimateSkinAge(scan);
@@ -257,8 +261,8 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
         <View className="flex-row items-center gap-2 mb-3">
           <Text className="text-lumis-gold font-body text-xs uppercase tracking-widest">💎 Analyse approfondie</Text>
           {!isPremium && (
-            <View style={{ backgroundColor: "rgba(201,130,107,0.2)", borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1 }}>
-              <Text style={{ color: "#C9826B", fontSize: 9, fontWeight: "700" }}>PREMIUM</Text>
+            <View style={{ backgroundColor: c.primaryMuted, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1 }}>
+              <Text style={{ color: TERRACOTTA, fontSize: 9, fontWeight: "700" }}>PREMIUM</Text>
             </View>
           )}
         </View>
@@ -270,11 +274,11 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
             <View className="flex-row gap-3 mb-3">
               <View className="flex-1 bg-card border border-line rounded-2xl p-4 items-center">
                 <Text className="text-lumis-white/40 font-body text-[10px] uppercase tracking-widest mb-1">Âge cutané estimé</Text>
-                <Text style={{ color: "#C9826B", fontSize: 28, fontWeight: "700" }}>{skinAge}<Text style={{ fontSize: 13, color: "rgba(44,24,16,0.45)" }}> ans</Text></Text>
+                <Text style={{ color: TERRACOTTA, fontSize: 28, fontWeight: "700" }}>{skinAge}<Text style={{ fontSize: 13, color: c.textMuted }}> ans</Text></Text>
               </View>
               <View className="flex-1 bg-card border border-line rounded-2xl p-4 items-center">
                 <Text className="text-lumis-white/40 font-body text-[10px] uppercase tracking-widest mb-1">Potentiel (8 sem.)</Text>
-                <Text style={{ color: "#5DCAA5", fontSize: 28, fontWeight: "700" }}>{potential}<Text style={{ fontSize: 13, color: "rgba(44,24,16,0.45)" }}>/100</Text></Text>
+                <Text style={{ color: "#5DCAA5", fontSize: 28, fontWeight: "700" }}>{potential}<Text style={{ fontSize: 13, color: c.textMuted }}>/100</Text></Text>
               </View>
             </View>
 
@@ -284,7 +288,7 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
               <View style={{ gap: 10 }}>
                 {zones.map((z, i) => (
                   <View key={i} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                    <Text style={{ color: "rgba(44,24,16,0.7)", fontSize: 13 }}>{z.zone}</Text>
+                    <Text style={{ color: c.text, fontSize: 13 }}>{z.zone}</Text>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                       <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: z.color }} />
                       <Text style={{ color: z.color, fontSize: 12, fontWeight: "500" }}>{z.state}</Text>
@@ -298,12 +302,12 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
           {/* Lock overlay for free users */}
           {!isPremium && (
             <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center" }}>
-              <View style={{ backgroundColor: "rgba(13,13,15,0.85)", borderRadius: 16, paddingHorizontal: 20, paddingVertical: 16, alignItems: "center", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.4)" }}>
+              <View style={{ backgroundColor: c.bg, borderRadius: 16, paddingHorizontal: 20, paddingVertical: 16, alignItems: "center", borderWidth: 0.5, borderColor: c.border }}>
                 <Text style={{ fontSize: 28, marginBottom: 6 }}>🔒</Text>
-                <Text style={{ color: "#2C1810", fontSize: 14, fontWeight: "700", marginBottom: 2 }}>Analyse approfondie</Text>
-                <Text style={{ color: "rgba(44,24,16,0.5)", fontSize: 12, textAlign: "center", marginBottom: 12 }}>Âge cutané, analyse par zone et potentiel</Text>
-                <TouchableOpacity onPress={() => router.push("/(tabs)/premium" as any)} style={{ backgroundColor: "#C9826B", borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10 }}>
-                  <Text style={{ color: "#EDE4D4", fontWeight: "700", fontSize: 13 }}>Débloquer avec Premium</Text>
+                <Text style={{ color: c.text, fontSize: 14, fontWeight: "700", marginBottom: 2 }}>Analyse approfondie</Text>
+                <Text style={{ color: c.textMuted, fontSize: 12, textAlign: "center", marginBottom: 12 }}>Âge cutané, analyse par zone et potentiel</Text>
+                <TouchableOpacity onPress={() => router.push("/(tabs)/premium" as any)} style={{ backgroundColor: TERRACOTTA, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10 }}>
+                  <Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>Débloquer avec Premium</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -513,6 +517,7 @@ function ScanningLoader({ photoUri }: { photoUri: string | null }) {
 }
 
 function HistoryCard({ scan, onPress }: { scan: SkinScan; onPress: () => void }) {
+  const c = useThemeColors();
   const color = scan.overall_score >= 75 ? "#4ade80" : scan.overall_score >= 50 ? "#C9826B" : "#f87171";
   const date = new Date(scan.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
   return (
@@ -531,7 +536,7 @@ function HistoryCard({ scan, onPress }: { scan: SkinScan; onPress: () => void })
           Acné {scan.acne_score} · Hydra {scan.hydration_score} · Texture {scan.texture_score}
         </Text>
       </View>
-      <Text style={{ color: "rgba(255,255,255,0.25)", fontSize: 18 }}>›</Text>
+      <Text style={{ color: c.textFaint, fontSize: 18 }}>›</Text>
     </TouchableOpacity>
   );
 }
@@ -541,6 +546,7 @@ type ScreenView = "photo" | "form" | "result" | "history";
 
 export default function ScanScreen() {
   const queryClient = useQueryClient();
+  const c = useThemeColors();
   const [view, setView] = useState<ScreenView>("photo");
   const [photoBase64, setPhotoBase64] = useState<string | null>(null);
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -683,8 +689,8 @@ export default function ScanScreen() {
             <View className="gap-3">
               {/* Graphique d'évolution */}
               <Animated.View entering={FadeInDown.delay(0)}
-                style={{ backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)", borderRadius: 20, padding: 20, marginBottom: 4 }}>
-                <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>
+                style={{ backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight, borderRadius: 20, padding: 20, marginBottom: 4 }}>
+                <Text style={{ color: c.textMuted, fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>
                   📈 Évolution de ta peau
                 </Text>
                 <SkinProgressChart scans={history} />
