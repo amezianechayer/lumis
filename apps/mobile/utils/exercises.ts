@@ -49,7 +49,22 @@ const GLOWUP: ExerciseProgram = {
   ],
 };
 
-const PROGRAMS: ExerciseProgram[] = [JAWLINE, GLOWUP];
+const FACELIFT: ExerciseProgram = {
+  id: "facelift",
+  title: "Lifting & Ovale",
+  emoji: "🌸",
+  description: "Raffermit l'ovale du visage, tonifie les pommettes et le cou en douceur.",
+  durationLabel: "~6 min",
+  exercises: [
+    { name: "Massage liftant", emoji: "💆", instruction: "Du menton vers les oreilles, remonte avec les doigts en mouvements fermes pour lifter l'ovale.", durationSec: 60, tip: "Toujours de bas en haut." },
+    { name: "Tonus des pommettes", emoji: "😊", instruction: "Souris en gardant les lèvres fermées, pousse les pommettes vers le haut, maintiens.", durationSec: 5, reps: 12 },
+    { name: "Cou de cygne", emoji: "🦢", instruction: "Tête légèrement en arrière, étire le cou, presse la langue au palais. Tonifie le cou et l'ovale.", durationSec: 15, reps: 3, tip: "Anti-relâchement du cou." },
+    { name: "Lissage mâchoire", emoji: "✋", instruction: "Glisse les doigts le long de la mâchoire du menton vers les oreilles pour affiner.", durationSec: 45, reps: 1 },
+    { name: "Relâchement", emoji: "🧘", instruction: "Ferme les yeux, relâche tout le visage, respire profondément.", durationSec: 30 },
+  ],
+};
+
+const PROGRAMS: ExerciseProgram[] = [JAWLINE, GLOWUP, FACELIFT];
 
 export function getPrograms(): ExerciseProgram[] {
   return PROGRAMS;
@@ -59,8 +74,8 @@ export function getProgram(id: string): ExerciseProgram | undefined {
   return PROGRAMS.find((p) => p.id === id);
 }
 
-// Order programs by gender emphasis (men → jawline first, women → glow up first)
+// Gender-appropriate programs: men → jawline + glow up, women → glow up + face lift
 export function getProgramsForGender(gender?: string): ExerciseProgram[] {
   if (gender === "male") return [JAWLINE, GLOWUP];
-  return [GLOWUP, JAWLINE];
+  return [GLOWUP, FACELIFT];
 }

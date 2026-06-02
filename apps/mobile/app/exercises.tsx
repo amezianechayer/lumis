@@ -160,16 +160,69 @@ function Player({ program, onExit }: { program: ExerciseProgram; onExit: () => v
   );
 }
 
+// ─── Program detail (exercise list before starting) ─────────────────────────
+function ProgramDetail({ program, onStart, onBack }: { program: ExerciseProgram; onStart: () => void; onBack: () => void }) {
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F" }}>
+      <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 6, paddingBottom: 8 }}>
+        <TouchableOpacity onPress={onBack} style={{ padding: 6, marginRight: 6 }}>
+          <Text style={{ color: TERRACOTTA, fontSize: 22 }}>←</Text>
+        </TouchableOpacity>
+        <Text style={{ color: CREAM, fontWeight: "700", fontSize: 18 }}>{program.title}</Text>
+      </View>
+
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
+        <Animated.View entering={FadeIn} style={{ alignItems: "center", marginBottom: 16 }}>
+          <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: "rgba(201,130,107,0.15)", alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
+            <Text style={{ fontSize: 32 }}>{program.emoji}</Text>
+          </View>
+          <Text style={{ color: "rgba(232,213,192,0.55)", fontSize: 13, lineHeight: 19, textAlign: "center" }}>{program.description}</Text>
+          <Text style={{ color: "rgba(232,213,192,0.4)", fontSize: 12, marginTop: 8 }}>
+            {program.exercises.length} exercices · {program.durationLabel}
+          </Text>
+        </Animated.View>
+
+        <Text style={{ color: "rgba(232,213,192,0.4)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Les exercices</Text>
+        {program.exercises.map((ex, i) => (
+          <Animated.View key={i} entering={FadeInDown.delay(i * 50)} style={{ flexDirection: "row", gap: 12, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(232,213,192,0.08)", borderRadius: 16, padding: 14, marginBottom: 10 }}>
+            <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "rgba(201,130,107,0.15)", alignItems: "center", justifyContent: "center" }}>
+              <Text style={{ fontSize: 18 }}>{ex.emoji}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                <Text style={{ color: CREAM, fontWeight: "600", fontSize: 14 }}>{i + 1}. {ex.name}</Text>
+                <Text style={{ color: TERRACOTTA, fontSize: 11 }}>{ex.reps ? `${ex.reps} reps` : `${ex.durationSec}s`}</Text>
+              </View>
+              <Text style={{ color: "rgba(232,213,192,0.5)", fontSize: 12, lineHeight: 17, marginTop: 3 }}>{ex.instruction}</Text>
+            </View>
+          </Animated.View>
+        ))}
+      </ScrollView>
+
+      {/* Sticky start button */}
+      <View style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: 16, paddingBottom: 28, backgroundColor: "#0D0D0F", borderTopWidth: 0.5, borderTopColor: "rgba(232,213,192,0.08)" }}>
+        <TouchableOpacity onPress={onStart} activeOpacity={0.85} style={{ backgroundColor: TERRACOTTA, borderRadius: 14, paddingVertical: 16, alignItems: "center" }}>
+          <Text style={{ color: "#0D0D0F", fontWeight: "700", fontSize: 15 }}>▶  Démarrer la séance guidée</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
+
 // ─── Program selection ──────────────────────────────────────────────────────
 export default function ExercisesScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
+  const [preview, setPreview] = useState<ExerciseProgram | null>(null);
   const [active, setActive] = useState<ExerciseProgram | null>(null);
 
   const programs = getProgramsForGender(user?.gender);
 
   if (active) {
-    return <Player program={active} onExit={() => setActive(null)} />;
+    return <Player program={active} onExit={() => { setActive(null); setPreview(null); }} />;
+  }
+  if (preview) {
+    return <ProgramDetail program={preview} onStart={() => setActive(preview)} onBack={() => setPreview(null)} />;
   }
 
   return (
@@ -191,7 +244,7 @@ export default function ExercisesScreen() {
         {programs.map((p, i) => (
           <Animated.View key={p.id} entering={FadeInDown.delay(i * 80)}>
             <TouchableOpacity
-              onPress={() => setActive(p)}
+              onPress={() => setPreview(p)}
               activeOpacity={0.85}
               style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.18)", borderRadius: 20, padding: 20, marginBottom: 14 }}
             >
@@ -208,7 +261,7 @@ export default function ExercisesScreen() {
               </View>
               <Text style={{ color: "rgba(232,213,192,0.55)", fontSize: 13, lineHeight: 19, marginBottom: 12 }}>{p.description}</Text>
               <View style={{ backgroundColor: TERRACOTTA, borderRadius: 12, paddingVertical: 12, alignItems: "center" }}>
-                <Text style={{ color: "#0D0D0F", fontWeight: "700", fontSize: 14 }}>▶  Commencer</Text>
+                <Text style={{ color: "#0D0D0F", fontWeight: "700", fontSize: 14 }}>Voir les exercices →</Text>
               </View>
             </TouchableOpacity>
           </Animated.View>
