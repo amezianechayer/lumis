@@ -212,6 +212,29 @@ export default function HomeScreen() {
           <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 18 }}>→</Text>
         </TouchableOpacity>
 
+        {/* Facial exercises / Glow up */}
+        <TouchableOpacity
+          onPress={() => router.push("/exercises" as any)}
+          className="flex-row items-center bg-white/5 border border-white/10 rounded-2xl p-4 overflow-hidden"
+          activeOpacity={0.8}
+        >
+          <View className="w-11 h-11 rounded-xl items-center justify-center mr-4" style={{ backgroundColor: "rgba(93,202,165,0.18)" }}>
+            <Text className="text-2xl">{user?.gender === "male" ? "💪" : "✨"}</Text>
+          </View>
+          <View className="flex-1">
+            <View className="flex-row items-center gap-2 mb-0.5">
+              <Text className="text-lumis-white font-body-medium text-sm">
+                {user?.gender === "male" ? "Jawline & Glow Up" : "Glow Up & Jawline"}
+              </Text>
+              <View className="rounded-full px-2 py-0.5" style={{ backgroundColor: "rgba(93,202,165,0.2)" }}>
+                <Text style={{ color: "#5DCAA5", fontSize: 9, fontWeight: "700" }}>EXERCICES</Text>
+              </View>
+            </View>
+            <Text className="text-lumis-white/40 font-body text-xs">Routines guidées · 5 min/jour</Text>
+          </View>
+          <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 18 }}>→</Text>
+        </TouchableOpacity>
+
         {/* Cycle (female only) */}
         {user?.gender === "female" && (
           <TouchableOpacity
