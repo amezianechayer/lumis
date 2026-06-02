@@ -78,14 +78,14 @@ export default function HomeScreen() {
   }
 
   const skinScore = skinScan?.overall_score ?? null;
-  const scoreColor = skinScore === null ? "#C9A84C" : skinScore >= 75 ? "#4ade80" : skinScore >= 50 ? "#C9A96E" : "#f87171";
+  const scoreColor = skinScore === null ? "#C9826B" : skinScore >= 75 ? "#4ade80" : skinScore >= 50 ? "#C9826B" : "#f87171";
 
   return (
     <ScrollView
       className="flex-1 bg-lumis-black"
       contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 60, paddingBottom: 32 }}
       showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={false} onRefresh={onRefresh} tintColor="#C9A84C" />}
+      refreshControl={<RefreshControl refreshing={false} onRefresh={onRefresh} tintColor="#C9826B" />}
     >
       {/* Header */}
       <Animated.View entering={FadeInDown.delay(50)}>
@@ -114,7 +114,7 @@ export default function HomeScreen() {
             {t("home.skin_score_label")}
           </Text>
           {skinScore !== null && (
-            <Text style={{ color: "#C9A84C", fontSize: 12 }}>Voir détails →</Text>
+            <Text style={{ color: "#C9826B", fontSize: 12 }}>Voir détails →</Text>
           )}
         </View>
 
@@ -266,7 +266,7 @@ export default function HomeScreen() {
             <View className="flex-row items-center gap-2 mb-0.5">
               <Text className="text-lumis-white font-body-medium text-sm">Analyse IA avancée</Text>
               <View className="bg-lumis-gold/20 rounded-full px-2 py-0.5">
-                <Text style={{ color: "#C9A84C", fontSize: 9, fontWeight: "700" }}>GEMINI</Text>
+                <Text style={{ color: "#C9826B", fontSize: 9, fontWeight: "700" }}>GEMINI</Text>
               </View>
             </View>
             <Text className="text-lumis-white/40 font-body text-xs">
@@ -326,7 +326,7 @@ export default function HomeScreen() {
 }
 
 function MiniBar({ label, score }: { label: string; score: number }) {
-  const color = score >= 75 ? "#4ade80" : score >= 50 ? "#C9A96E" : "#f87171";
+  const color = score >= 75 ? "#4ade80" : score >= 50 ? "#C9826B" : "#f87171";
   return (
     <View>
       <View className="flex-row justify-between mb-0.5">

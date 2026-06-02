@@ -30,7 +30,7 @@ function RoutineSection({
 }) {
   return (
     <Animated.View entering={FadeInDown.delay(80)} style={{
-      backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 1,
+      backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5,
       borderColor: done ? `${accent}50` : "rgba(255,255,255,0.08)",
       borderRadius: 20, padding: 18, marginBottom: 16,
     }}>
@@ -63,9 +63,9 @@ function RoutineSection({
         }}
       >
         {busy ? (
-          <ActivityIndicator color={done ? "#fff" : "#0A0A0A"} size="small" />
+          <ActivityIndicator color={done ? "#fff" : "#0D0D0F"} size="small" />
         ) : (
-          <Text style={{ color: done ? "rgba(255,255,255,0.6)" : "#0A0A0A", fontWeight: "700", fontSize: 14 }}>
+          <Text style={{ color: done ? "rgba(255,255,255,0.6)" : "#0D0D0F", fontWeight: "700", fontSize: 14 }}>
             {done ? "Annuler" : "Marquer comme fait ✓"}
           </Text>
         )}
@@ -100,27 +100,27 @@ export default function RoutineScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#0A0A0A" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F" }}>
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 6, paddingBottom: 8 }}>
         <TouchableOpacity onPress={() => router.back()} style={{ padding: 6, marginRight: 6 }}>
-          <Text style={{ color: "#C9A84C", fontSize: 22 }}>←</Text>
+          <Text style={{ color: "#C9826B", fontSize: 22 }}>←</Text>
         </TouchableOpacity>
         <Text style={{ color: "#fff", fontWeight: "700", fontSize: 18 }}>Ma routine</Text>
       </View>
 
       {isLoading || !status ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator color="#C9A84C" size="large" />
+          <ActivityIndicator color="#C9826B" size="large" />
         </View>
       ) : (
         <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
           {/* Streak banner */}
           <Animated.View entering={FadeIn} style={{
-            backgroundColor: "rgba(201,168,76,0.12)", borderWidth: 1, borderColor: "rgba(201,168,76,0.35)",
+            backgroundColor: "rgba(201,168,76,0.12)", borderWidth: 0.5, borderColor: "rgba(201,168,76,0.35)",
             borderRadius: 20, padding: 20, marginBottom: 20, alignItems: "center",
           }}>
             <Text style={{ fontSize: 40 }}>🔥</Text>
-            <Text style={{ color: "#C9A84C", fontSize: 34, fontWeight: "800", marginTop: 4 }}>{status.streak}</Text>
+            <Text style={{ color: "#C9826B", fontSize: 34, fontWeight: "800", marginTop: 4 }}>{status.streak}</Text>
             <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 14 }}>
               {status.streak === 0 ? "Commence ta série aujourd'hui !" : `jour${status.streak > 1 ? "s" : ""} d'affilée`}
             </Text>

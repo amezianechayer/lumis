@@ -52,8 +52,8 @@ export default function ProfileScreen() {
   const totalScans = skinHistory.length;
   const latestScore = latestSkin?.overall_score ?? null;
   const scoreColor = latestScore === null
-    ? "#C9A84C"
-    : latestScore >= 75 ? "#4ade80" : latestScore >= 50 ? "#C9A96E" : "#f87171";
+    ? "#C9826B"
+    : latestScore >= 75 ? "#4ade80" : latestScore >= 50 ? "#C9826B" : "#f87171";
 
   // Streak : compter les semaines consécutives avec au moins un scan
   const streak = computeStreak(skinHistory.map((s) => s.created_at));
@@ -149,7 +149,7 @@ export default function ProfileScreen() {
         <InfoRow
           label={t("profile.subscription")}
           value={user?.premium_until ? t("profile.premium") : t("profile.free")}
-          valueColor={user?.premium_until ? "#C9A96E" : undefined}
+          valueColor={user?.premium_until ? "#C9826B" : undefined}
         />
         <View className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 flex-row items-center justify-between">
           <Text className="text-lumis-white/50 font-body text-xs uppercase tracking-widest">

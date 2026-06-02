@@ -366,7 +366,7 @@ export default function TryOnScreen() {
 
       {/* ── INTRO PHASE ── */}
       {phase === "intro" && (
-        <View style={{ flex: 1, backgroundColor: "#0A0A0A" }}>
+        <View style={{ flex: 1, backgroundColor: "#0D0D0F" }}>
           <View style={styles.topBar}>
             <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
               <Text style={{ color: "#fff", fontSize: 18 }}>←</Text>
@@ -409,7 +409,7 @@ export default function TryOnScreen() {
 
               {!mpReady && (
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 8 }}>
-                  <ActivityIndicator color="#C9A84C" size="small" />
+                  <ActivityIndicator color="#C9826B" size="small" />
                   <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>Chargement de la détection faciale…</Text>
                 </View>
               )}
@@ -431,7 +431,7 @@ export default function TryOnScreen() {
             <Image source={{ uri: photoUri }} style={StyleSheet.absoluteFill} resizeMode="cover" blurRadius={3} />
           )}
           <View style={styles.detectOverlay}>
-            <ActivityIndicator color="#C9A84C" size="large" />
+            <ActivityIndicator color="#C9826B" size="large" />
             <Text style={styles.detectText}>Détection de ton visage…</Text>
           </View>
         </View>
@@ -518,7 +518,7 @@ export default function TryOnScreen() {
               {/* Actions */}
               <View style={{ paddingHorizontal: 20, gap: 10 }}>
                 <TouchableOpacity onPress={handleSave} disabled={capturing} style={[styles.captureBtn, { opacity: capturing ? 0.7 : 1 }]} activeOpacity={0.85}>
-                  {capturing ? <ActivityIndicator color="#0A0A0A" size="small" /> : (
+                  {capturing ? <ActivityIndicator color="#0D0D0F" size="small" /> : (
                     <>
                       <Text style={{ fontSize: 18 }}>📸</Text>
                       <Text style={styles.captureBtnText}>Sauvegarder le look</Text>
@@ -538,43 +538,43 @@ export default function TryOnScreen() {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, backgroundColor: "#0A0A0A", alignItems: "center", justifyContent: "center", padding: 32 },
+  center: { flex: 1, backgroundColor: "#0D0D0F", alignItems: "center", justifyContent: "center", padding: 32 },
   title: { color: "#fff", fontSize: 22, fontWeight: "700", textAlign: "center", marginBottom: 20 },
-  btn: { backgroundColor: "#C9A84C", borderRadius: 16, paddingHorizontal: 28, paddingVertical: 14 },
+  btn: { backgroundColor: "#C9826B", borderRadius: 16, paddingHorizontal: 28, paddingVertical: 14 },
   btnText: { color: "#000", fontWeight: "700", fontSize: 15 },
   back: { color: "rgba(255,255,255,0.4)", fontSize: 14 },
   oval: { position: "absolute", borderWidth: 2, borderColor: "rgba(201,168,76,0.5)", borderStyle: "dashed" },
   topBar: { position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingTop: 54, paddingBottom: 16, backgroundColor: "rgba(0,0,0,0.4)" },
   backBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.4)", borderRadius: 20 },
   topTitle: { color: "#fff", fontSize: 18, fontWeight: "700" },
-  bigBtn: { backgroundColor: "#C9A84C", borderRadius: 16, paddingVertical: 16, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, elevation: 6 },
-  bigBtnText: { color: "#0A0A0A", fontWeight: "700", fontSize: 16 },
-  bigBtnOutline: { borderWidth: 1, borderColor: "rgba(201,168,76,0.4)", borderRadius: 16, paddingVertical: 16, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
-  bigBtnOutlineText: { color: "#C9A84C", fontWeight: "600", fontSize: 16 },
+  bigBtn: { backgroundColor: "#C9826B", borderRadius: 16, paddingVertical: 16, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, elevation: 6 },
+  bigBtnText: { color: "#0D0D0F", fontWeight: "700", fontSize: 16 },
+  bigBtnOutline: { borderWidth: 0.5, borderColor: "rgba(201,168,76,0.4)", borderRadius: 16, paddingVertical: 16, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 },
+  bigBtnOutlineText: { color: "#C9826B", fontWeight: "600", fontSize: 16 },
   detectOverlay: { alignItems: "center", gap: 16, backgroundColor: "rgba(0,0,0,0.5)", padding: 32, borderRadius: 24 },
-  detectText: { color: "#C9A84C", fontSize: 16, fontWeight: "600" },
-  noFaceBanner: { marginHorizontal: 20, marginTop: 16, backgroundColor: "rgba(249,115,22,0.15)", borderWidth: 1, borderColor: "rgba(249,115,22,0.3)", borderRadius: 12, padding: 12 },
+  detectText: { color: "#C9826B", fontSize: 16, fontWeight: "600" },
+  noFaceBanner: { marginHorizontal: 20, marginTop: 16, backgroundColor: "rgba(249,115,22,0.15)", borderWidth: 0.5, borderColor: "rgba(249,115,22,0.3)", borderRadius: 12, padding: 12 },
   noFaceText: { color: "#f97316", fontSize: 13, lineHeight: 18 },
   chipsRow: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 10, gap: 8 },
-  chip: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)" },
+  chip: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 0.5, backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.1)" },
   chipActive: { backgroundColor: "rgba(201,168,76,0.2)", borderColor: "rgba(201,168,76,0.6)" },
   chipOn: { borderColor: "rgba(201,168,76,0.3)" },
   chipLabel: { fontSize: 12, color: "rgba(255,255,255,0.5)" },
-  chipLabelActive: { color: "#C9A84C" },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#C9A84C" },
+  chipLabelActive: { color: "#C9826B" },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "#C9826B" },
   intensityRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, gap: 8, marginTop: 4, marginBottom: 8 },
   intensityLabel: { color: "rgba(255,255,255,0.4)", fontSize: 11, marginRight: 4 },
-  intensityBtn: { flex: 1, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,255,255,0.12)", alignItems: "center" },
-  intensityBtnActive: { backgroundColor: "rgba(201,168,76,0.2)", borderColor: "#C9A84C" },
+  intensityBtn: { flex: 1, paddingVertical: 8, borderRadius: 12, borderWidth: 0.5, borderColor: "rgba(255,255,255,0.12)", alignItems: "center" },
+  intensityBtnActive: { backgroundColor: "rgba(201,168,76,0.2)", borderColor: "#C9826B" },
   intensityText: { color: "rgba(255,255,255,0.5)", fontSize: 12 },
-  intensityTextActive: { color: "#C9A84C", fontWeight: "700" },
+  intensityTextActive: { color: "#C9826B", fontWeight: "700" },
   paletteRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, gap: 10, marginBottom: 16, marginTop: 4, flexWrap: "wrap" },
   swatch: { width: 30, height: 30, borderRadius: 15 },
-  swatchActive: { borderWidth: 3, borderColor: "#C9A84C", width: 36, height: 36, borderRadius: 18 },
-  toggleBtn: { marginLeft: "auto", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: "rgba(255,255,255,0.2)" },
-  toggleBtnOn: { borderColor: "#C9A84C", backgroundColor: "rgba(201,168,76,0.15)" },
-  captureBtn: { backgroundColor: "#C9A84C", borderRadius: 16, paddingVertical: 16, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 10, elevation: 6 },
-  captureBtnText: { color: "#0A0A0A", fontWeight: "700", fontSize: 16 },
-  retakeBtn: { borderWidth: 1, borderColor: "rgba(201,168,76,0.4)", borderRadius: 16, paddingVertical: 14, alignItems: "center" },
-  retakeText: { color: "#C9A84C", fontSize: 15, fontWeight: "600" },
+  swatchActive: { borderWidth: 3, borderColor: "#C9826B", width: 36, height: 36, borderRadius: 18 },
+  toggleBtn: { marginLeft: "auto", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 0.5, borderColor: "rgba(255,255,255,0.2)" },
+  toggleBtnOn: { borderColor: "#C9826B", backgroundColor: "rgba(201,168,76,0.15)" },
+  captureBtn: { backgroundColor: "#C9826B", borderRadius: 16, paddingVertical: 16, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 10, elevation: 6 },
+  captureBtnText: { color: "#0D0D0F", fontWeight: "700", fontSize: 16 },
+  retakeBtn: { borderWidth: 0.5, borderColor: "rgba(201,168,76,0.4)", borderRadius: 16, paddingVertical: 14, alignItems: "center" },
+  retakeText: { color: "#C9826B", fontSize: 15, fontWeight: "600" },
 });

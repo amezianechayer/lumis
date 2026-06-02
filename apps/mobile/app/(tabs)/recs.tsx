@@ -45,7 +45,7 @@ export default function RecsScreen() {
     if (generateMutation.isPending) {
       return (
         <Animated.View entering={FadeIn} className="flex-1 items-center justify-center py-20">
-          <ActivityIndicator color="#c9a84c" size="large" />
+          <ActivityIndicator color="#C9826B" size="large" />
           <Text className="mt-4 text-base" style={{ color: "#94a3b8" }}>
             {t("recs.generating")}
           </Text>
@@ -65,9 +65,9 @@ export default function RecsScreen() {
           onPress={() => generateMutation.mutate()}
           activeOpacity={0.8}
           className="mt-6 px-6 py-3 rounded-full"
-          style={{ backgroundColor: "#c9a84c" }}
+          style={{ backgroundColor: "#C9826B" }}
         >
-          <Text className="font-bold text-base" style={{ color: "#0f0e17" }}>
+          <Text className="font-bold text-base" style={{ color: "#0D0D0F" }}>
             {t("recs.generate")}
           </Text>
         </TouchableOpacity>
@@ -76,7 +76,7 @@ export default function RecsScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: "#0f0e17" }}>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: "#0D0D0F" }}>
       {/* Header */}
       <View className="px-5 pt-2 pb-3 flex-row items-center justify-between">
         <Text className="text-2xl font-bold" style={{ color: "#f8fafc" }}>
@@ -88,7 +88,7 @@ export default function RecsScreen() {
             disabled={generateMutation.isPending}
             activeOpacity={0.75}
           >
-            <Text style={{ color: "#c9a84c", fontSize: 13, fontWeight: "600" }}>
+            <Text style={{ color: "#C9826B", fontSize: 13, fontWeight: "600" }}>
               {generateMutation.isPending ? "…" : "↺ " + t("recs.regenerate")}
             </Text>
           </TouchableOpacity>
@@ -101,7 +101,7 @@ export default function RecsScreen() {
       {/* Content */}
       {isLoading ? (
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#c9a84c" size="large" />
+          <ActivityIndicator color="#C9826B" size="large" />
         </View>
       ) : isError ? (
         <View className="flex-1 items-center justify-center px-8">
@@ -109,7 +109,7 @@ export default function RecsScreen() {
             {t("recs.error")}
           </Text>
           <TouchableOpacity onPress={() => refetch()} activeOpacity={0.8}>
-            <Text style={{ color: "#c9a84c", fontWeight: "600" }}>{t("common.retry")}</Text>
+            <Text style={{ color: "#C9826B", fontWeight: "600" }}>{t("common.retry")}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -125,7 +125,7 @@ export default function RecsScreen() {
             <RefreshControl
               refreshing={isRefetching}
               onRefresh={refetch}
-              tintColor="#c9a84c"
+              tintColor="#C9826B"
             />
           }
         />

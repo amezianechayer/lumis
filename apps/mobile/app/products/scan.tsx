@@ -79,7 +79,7 @@ export default function ProductScanScreen() {
   if (state === "loading") {
     return (
       <View className="flex-1 bg-lumis-black items-center justify-center px-8">
-        <ActivityIndicator size="large" color="#C9A84C" />
+        <ActivityIndicator size="large" color="#C9826B" />
         <Text className="text-lumis-white font-display text-2xl text-center mt-6">
           Analyse IA du produit…
         </Text>
@@ -128,7 +128,7 @@ export default function ProductScanScreen() {
       product.compatibility_score >= 75
         ? "#4ade80"
         : product.compatibility_score >= 50
-        ? "#C9A96E"
+        ? "#C9826B"
         : "#f87171";
 
     const verdictConfig = {
@@ -335,10 +335,10 @@ export default function ProductScanScreen() {
             {/* Center transparent window */}
             <View style={{ width: 280 }}>
               {/* Corner decorations */}
-              <View style={{ position: "absolute", top: 0, left: 0, width: 28, height: 28, borderTopWidth: 3, borderLeftWidth: 3, borderColor: "#C9A84C", borderTopLeftRadius: 4 }} />
-              <View style={{ position: "absolute", top: 0, right: 0, width: 28, height: 28, borderTopWidth: 3, borderRightWidth: 3, borderColor: "#C9A84C", borderTopRightRadius: 4 }} />
-              <View style={{ position: "absolute", bottom: 0, left: 0, width: 28, height: 28, borderBottomWidth: 3, borderLeftWidth: 3, borderColor: "#C9A84C", borderBottomLeftRadius: 4 }} />
-              <View style={{ position: "absolute", bottom: 0, right: 0, width: 28, height: 28, borderBottomWidth: 3, borderRightWidth: 3, borderColor: "#C9A84C", borderBottomRightRadius: 4 }} />
+              <View style={{ position: "absolute", top: 0, left: 0, width: 28, height: 28, borderTopWidth: 3, borderLeftWidth: 3, borderColor: "#C9826B", borderTopLeftRadius: 4 }} />
+              <View style={{ position: "absolute", top: 0, right: 0, width: 28, height: 28, borderTopWidth: 3, borderRightWidth: 3, borderColor: "#C9826B", borderTopRightRadius: 4 }} />
+              <View style={{ position: "absolute", bottom: 0, left: 0, width: 28, height: 28, borderBottomWidth: 3, borderLeftWidth: 3, borderColor: "#C9826B", borderBottomLeftRadius: 4 }} />
+              <View style={{ position: "absolute", bottom: 0, right: 0, width: 28, height: 28, borderBottomWidth: 3, borderRightWidth: 3, borderColor: "#C9826B", borderBottomRightRadius: 4 }} />
             </View>
             <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.55)" }} />
           </View>

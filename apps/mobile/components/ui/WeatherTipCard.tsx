@@ -59,7 +59,7 @@ export function WeatherTipCard() {
   if (state.kind === "loading") {
     return (
       <View style={cardStyle}>
-        <ActivityIndicator color="#C9A84C" size="small" />
+        <ActivityIndicator color="#C9826B" size="small" />
       </View>
     );
   }
@@ -74,7 +74,7 @@ export function WeatherTipCard() {
             {state.kind === "denied" ? "Active la localisation pour un conseil météo personnalisé" : "Touche pour réessayer"}
           </Text>
         </View>
-        <Text style={{ color: "#C9A84C", fontSize: 12 }}>↻</Text>
+        <Text style={{ color: "#C9826B", fontSize: 12 }}>↻</Text>
       </TouchableOpacity>
     );
   }
@@ -106,7 +106,7 @@ export function WeatherTipCard() {
 
 const cardStyle = {
   backgroundColor: "rgba(255,255,255,0.05)",
-  borderWidth: 1,
+  borderWidth: 0.5,
   borderColor: "rgba(255,255,255,0.1)",
   borderRadius: 20,
   padding: 16,

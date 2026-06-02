@@ -5,18 +5,19 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        "lumis-black": "#0A0A0A",
-        "lumis-white": "#FAFAF8",
-        "lumis-cream": "#F5F0E8",
-        "lumis-gold": "#C9A96E",
-        "lumis-rose": "#E8A8A0",
-        "lumis-slate": "#6B7A8D",
-        "surface-1": "#FFFFFF",
-        "surface-2": "#F7F7F5",
-        "surface-3": "#EEEEEA",
-        success: "#4CAF50",
-        warning: "#FF9800",
-        danger: "#F44336",
+        // Design system Lumis (terracotta / cream sur fond sombre)
+        "lumis-black": "#0D0D0F",
+        "lumis-white": "#E8D5C0",
+        "lumis-cream": "#E8D5C0",
+        "lumis-gold": "#C9826B",
+        "lumis-rose": "#C9826B",
+        "lumis-slate": "#9A8A7A",
+        "surface-1": "#0D0D0F",
+        "surface-2": "#161618",
+        "surface-3": "#1E1E20",
+        success: "#5DCAA5",
+        warning: "#E8A35C",
+        danger: "#F09595",
       },
       fontFamily: {
         display: ["PlayfairDisplay_700Bold"],

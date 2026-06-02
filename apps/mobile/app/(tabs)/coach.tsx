@@ -125,7 +125,7 @@ export default function CoachScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 bg-lumis-black items-center justify-center">
-        <ActivityIndicator color="#C9A84C" size="large" />
+        <ActivityIndicator color="#C9826B" size="large" />
       </View>
     );
   }
@@ -141,10 +141,10 @@ export default function CoachScreen() {
       limit={premiumGate?.limit}
     />
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: "#0A0A0A" }}
+      style={{ flex: 1, backgroundColor: "#0D0D0F" }}
       behavior="padding"
       keyboardVerticalOffset={Platform.select({ ios: 90, android: 0 })}
-      style={{ flex: 1, backgroundColor: "#0A0A0A" }}
+      style={{ flex: 1, backgroundColor: "#0D0D0F" }}
     >
       {/* History modal */}
       <Modal
@@ -159,7 +159,7 @@ export default function CoachScreen() {
             backgroundColor: "#111", borderTopLeftRadius: 24, borderTopRightRadius: 24,
             maxHeight: "70%", paddingBottom: insets.bottom + 16,
           }}>
-            <View style={{ padding: 20, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.08)", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <View style={{ padding: 20, borderBottomWidth: 0.5, borderBottomColor: "rgba(255,255,255,0.08)", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               <Text style={{ color: "#fff", fontWeight: "700", fontSize: 17 }}>Historique des conversations</Text>
               <TouchableOpacity onPress={() => setShowHistory(false)}>
                 <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 22 }}>✕</Text>
@@ -178,14 +178,14 @@ export default function CoachScreen() {
                       onPress={() => loadConversation(conv.id)}
                       style={{
                         backgroundColor: isActive ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)",
-                        borderWidth: 1,
+                        borderWidth: 0.5,
                         borderColor: isActive ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.08)",
                         borderRadius: 16, padding: 14,
                       }}
                       activeOpacity={0.8}
                     >
                       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                        <Text style={{ color: isActive ? "#C9A84C" : "#fff", fontWeight: "600", fontSize: 14 }}>
+                        <Text style={{ color: isActive ? "#C9826B" : "#fff", fontWeight: "600", fontSize: 14 }}>
                           {isActive ? "✨ Conversation active" : `Conversation`}
                         </Text>
                         <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 11 }}>{date}</Text>
@@ -207,17 +207,17 @@ export default function CoachScreen() {
       {/* Header */}
       <Animated.View
         entering={FadeInDown.delay(50)}
-        style={{ paddingHorizontal: 24, paddingTop: insets.top + 8, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: "rgba(255,255,255,0.08)", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}
+        style={{ paddingHorizontal: 24, paddingTop: insets.top + 8, paddingBottom: 16, borderBottomWidth: 0.5, borderBottomColor: "rgba(255,255,255,0.08)", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}
       >
         <View>
-          <Text style={{ color: "#C9A84C", fontFamily: "PlayfairDisplay-Regular", fontSize: 20 }}>✨ Lumis Coach</Text>
+          <Text style={{ color: "#C9826B", fontFamily: "PlayfairDisplay-Regular", fontSize: 20 }}>✨ Lumis Coach</Text>
           <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, marginTop: 2 }}>Llama 3.3 70B</Text>
         </View>
         <View style={{ flexDirection: "row", gap: 8 }}>
           {allConversations.length > 1 && (
             <TouchableOpacity
               onPress={() => setShowHistory(true)}
-              style={{ backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 }}
+              style={{ backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.1)", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 }}
               activeOpacity={0.7}
             >
               <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>🕐 Historique</Text>
@@ -225,7 +225,7 @@ export default function CoachScreen() {
           )}
           <TouchableOpacity
             onPress={handleNewChat}
-            style={{ backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 }}
+            style={{ backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.1)", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 }}
             activeOpacity={0.7}
           >
             <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>+ Nouveau</Text>
@@ -282,7 +282,7 @@ export default function CoachScreen() {
                   <Text className="text-xs">✨</Text>
                 </View>
                 <View className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3">
-                  <ActivityIndicator color="#C9A84C" size="small" />
+                  <ActivityIndicator color="#C9826B" size="small" />
                 </View>
               </View>
             ) : null
@@ -305,7 +305,7 @@ export default function CoachScreen() {
           maxLength={500}
           style={{
             flex: 1, backgroundColor: "rgba(255,255,255,0.05)",
-            borderWidth: 1, borderColor: "rgba(255,255,255,0.1)",
+            borderWidth: 0.5, borderColor: "rgba(255,255,255,0.1)",
             borderRadius: 20, paddingHorizontal: 16, paddingVertical: 12,
             color: "#fff", fontSize: 14, maxHeight: 120, minHeight: 46,
           }}
@@ -320,7 +320,7 @@ export default function CoachScreen() {
           onPress={handleSend}
           disabled={!input.trim() || isSending}
           className="w-11 h-11 rounded-2xl items-center justify-center"
-          style={{ backgroundColor: input.trim() && !isSending ? "#C9A84C" : "rgba(255,255,255,0.08)" }}
+          style={{ backgroundColor: input.trim() && !isSending ? "#C9826B" : "rgba(255,255,255,0.08)" }}
           activeOpacity={0.8}
         >
           <Text className="text-base">→</Text>

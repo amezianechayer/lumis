@@ -38,7 +38,7 @@ function parseArr<T>(field: unknown): T[] {
 export function RecommendationCard({ rec, index }: Props) {
   const router = useRouter();
   const diffColor = DIFFICULTY_COLORS[rec.difficulty] ?? "#94a3b8";
-  const theme = TYPE_THEME[rec.type] ?? { from: "rgba(255,255,255,0.1)", to: "rgba(255,255,255,0.02)", accent: "#C9A84C", label: rec.type };
+  const theme = TYPE_THEME[rec.type] ?? { from: "rgba(255,255,255,0.1)", to: "rgba(255,255,255,0.02)", accent: "#C9826B", label: rec.type };
 
   const steps = parseArr<{ title: string }>(rec.steps);
   const products = parseArr<unknown>(rec.products);
@@ -51,7 +51,7 @@ export function RecommendationCard({ rec, index }: Props) {
       <TouchableOpacity
         activeOpacity={0.85}
         onPress={() => router.push(`/recs/${rec.id}` as any)}
-        style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 24, overflow: "hidden", borderWidth: 1, borderColor: `${theme.accent}30` }}
+        style={{ marginHorizontal: 16, marginBottom: 14, borderRadius: 24, overflow: "hidden", borderWidth: 0.5, borderColor: `${theme.accent}30` }}
       >
         <LinearGradient
           colors={[theme.from, theme.to]}
@@ -60,7 +60,7 @@ export function RecommendationCard({ rec, index }: Props) {
         >
           {/* Top: big icon + type + premium */}
           <View style={{ flexDirection: "row", alignItems: "center", padding: 16, paddingBottom: 12 }}>
-            <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: `${theme.accent}22`, borderWidth: 1, borderColor: `${theme.accent}40`, alignItems: "center", justifyContent: "center" }}>
+            <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: `${theme.accent}22`, borderWidth: 0.5, borderColor: `${theme.accent}40`, alignItems: "center", justifyContent: "center" }}>
               <Text style={{ fontSize: 30 }}>{rec.icon_emoji}</Text>
             </View>
             <View style={{ flex: 1, marginLeft: 14 }}>
@@ -70,7 +70,7 @@ export function RecommendationCard({ rec, index }: Props) {
                 </Text>
                 {rec.is_premium_only && (
                   <View style={{ backgroundColor: "rgba(201,168,76,0.2)", borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1 }}>
-                    <Text style={{ color: "#C9A84C", fontSize: 9, fontWeight: "700" }}>✨ PREMIUM</Text>
+                    <Text style={{ color: "#C9826B", fontSize: 9, fontWeight: "700" }}>✨ PREMIUM</Text>
                   </View>
                 )}
               </View>
@@ -100,7 +100,7 @@ export function RecommendationCard({ rec, index }: Props) {
           )}
 
           {/* Footer: metadata + CTA */}
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.08)" }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 0.5, borderTopColor: "rgba(255,255,255,0.08)" }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
                 <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: diffColor }} />

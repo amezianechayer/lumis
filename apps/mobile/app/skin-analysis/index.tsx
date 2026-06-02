@@ -110,7 +110,7 @@ export default function SkinAnalysisScreen() {
       {/* Analyzing overlay */}
       {isAnalyzing && phase !== "countdown" && (
         <View style={styles.analyzingOverlay}>
-          <ActivityIndicator color="#C9A84C" size="large" />
+          <ActivityIndicator color="#C9826B" size="large" />
           <Text style={styles.analyzingText}>
             {phase === "capturing" && "Capture en cours…"}
             {phase === "local_analysis" && "Analyse locale…"}
@@ -145,19 +145,19 @@ function SkinAnalysisResult({
 }) {
   const concernLevel = (v: string | null) => {
     if (!v || v === "none") return null;
-    const colors: Record<string, string> = { mild: "#C9A84C", moderate: "#f97316", severe: "#ef4444" };
+    const colors: Record<string, string> = { mild: "#C9826B", moderate: "#f97316", severe: "#ef4444" };
     return colors[v] ?? "#94a3b8";
   };
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: "#0A0A0A" }}
+      style={{ flex: 1, backgroundColor: "#0D0D0F" }}
       contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 60, paddingBottom: 48 }}
     >
       {/* Header */}
       <Animated.View entering={FadeInDown.delay(0)} style={{ marginBottom: 24 }}>
         <TouchableOpacity onPress={() => router.back()} style={{ marginBottom: 16 }}>
-          <Text style={{ color: "#C9A84C", fontSize: 15 }}>← Retour</Text>
+          <Text style={{ color: "#C9826B", fontSize: 15 }}>← Retour</Text>
         </TouchableOpacity>
         <Text style={{ color: "#fff", fontSize: 26, fontWeight: "700", marginBottom: 4 }}>
           Résultats de l'analyse
@@ -217,7 +217,7 @@ function SkinAnalysisResult({
           <Text style={styles.cardLabel}>☀️ Routine matin</Text>
           {result.skincareRoutine.morning.map((step, i) => (
             <View key={i} style={styles.routineStep}>
-              <View style={styles.stepNum}><Text style={{ color: "#C9A84C", fontSize: 11, fontWeight: "700" }}>{i + 1}</Text></View>
+              <View style={styles.stepNum}><Text style={{ color: "#C9826B", fontSize: 11, fontWeight: "700" }}>{i + 1}</Text></View>
               <Text style={styles.stepText}>{step}</Text>
             </View>
           ))}
@@ -230,7 +230,7 @@ function SkinAnalysisResult({
           <Text style={styles.cardLabel}>🌙 Routine soir</Text>
           {result.skincareRoutine.evening.map((step, i) => (
             <View key={i} style={styles.routineStep}>
-              <View style={styles.stepNum}><Text style={{ color: "#C9A84C", fontSize: 11, fontWeight: "700" }}>{i + 1}</Text></View>
+              <View style={styles.stepNum}><Text style={{ color: "#C9826B", fontSize: 11, fontWeight: "700" }}>{i + 1}</Text></View>
               <Text style={styles.stepText}>{step}</Text>
             </View>
           ))}
@@ -271,10 +271,10 @@ const CONCERN_LABELS: Record<string, string> = {
 };
 
 const styles = StyleSheet.create({
-  center: { flex: 1, backgroundColor: "#0A0A0A", alignItems: "center", justifyContent: "center", padding: 32 },
+  center: { flex: 1, backgroundColor: "#0D0D0F", alignItems: "center", justifyContent: "center", padding: 32 },
   title: { color: "#fff", fontSize: 22, fontWeight: "700", textAlign: "center", marginBottom: 12 },
   subtitle: { color: "rgba(255,255,255,0.5)", fontSize: 15, textAlign: "center", marginBottom: 24 },
-  btn: { backgroundColor: "#C9A84C", borderRadius: 16, paddingHorizontal: 28, paddingVertical: 14 },
+  btn: { backgroundColor: "#C9826B", borderRadius: 16, paddingHorizontal: 28, paddingVertical: 14 },
   btnText: { color: "#000", fontWeight: "700", fontSize: 15 },
   backText: { color: "rgba(255,255,255,0.4)", fontSize: 14 },
   topBar: {
@@ -302,37 +302,37 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.4)",
     alignItems: "center", justifyContent: "center",
   },
-  countdownNumber: { color: "#C9A84C", fontSize: 96, fontWeight: "800" },
+  countdownNumber: { color: "#C9826B", fontSize: 96, fontWeight: "800" },
   countdownText: { color: "rgba(255,255,255,0.7)", fontSize: 16, marginTop: 8 },
   analyzingOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0,0,0,0.6)",
     alignItems: "center", justifyContent: "center", gap: 16,
   },
-  analyzingText: { color: "#C9A84C", fontSize: 16, fontWeight: "600" },
+  analyzingText: { color: "#C9826B", fontSize: 16, fontWeight: "600" },
   bottomCTA: {
     position: "absolute", bottom: 0, left: 0, right: 0,
     padding: 20, paddingBottom: 40, backgroundColor: "rgba(0,0,0,0.7)",
   },
   ctaHint: { color: "rgba(255,255,255,0.5)", fontSize: 12, textAlign: "center", marginBottom: 12 },
   ctaBtn: {
-    backgroundColor: "#C9A84C", borderRadius: 16, paddingVertical: 16,
+    backgroundColor: "#C9826B", borderRadius: 16, paddingVertical: 16,
     alignItems: "center", elevation: 6,
   },
   ctaBtnText: { color: "#000", fontWeight: "700", fontSize: 16 },
-  warningBanner: { backgroundColor: "rgba(249,115,22,0.15)", borderWidth: 1, borderColor: "rgba(249,115,22,0.3)", borderRadius: 10, padding: 10, marginTop: 8 },
+  warningBanner: { backgroundColor: "rgba(249,115,22,0.15)", borderWidth: 0.5, borderColor: "rgba(249,115,22,0.3)", borderRadius: 10, padding: 10, marginTop: 8 },
   warningText: { color: "#f97316", fontSize: 13 },
-  card: { backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", borderRadius: 16, padding: 16, marginBottom: 12 },
+  card: { backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.1)", borderRadius: 16, padding: 16, marginBottom: 12 },
   cardLabel: { color: "rgba(255,255,255,0.4)", fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 10 },
   cardValue: { color: "#fff", fontSize: 18, fontWeight: "700", textTransform: "capitalize" },
   cardSub: { color: "rgba(255,255,255,0.5)", fontSize: 13, marginTop: 2, textTransform: "capitalize" },
   confidenceBadge: { marginLeft: "auto", backgroundColor: "rgba(201,168,76,0.2)", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 },
-  confidenceText: { color: "#C9A84C", fontSize: 13, fontWeight: "700" },
+  confidenceText: { color: "#C9826B", fontSize: 13, fontWeight: "700" },
   routineStep: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 6 },
   stepNum: { width: 20, height: 20, borderRadius: 10, backgroundColor: "rgba(201,168,76,0.2)", alignItems: "center", justifyContent: "center", marginTop: 1 },
   stepText: { color: "rgba(255,255,255,0.75)", fontSize: 14, flex: 1, lineHeight: 20 },
   catChip: { backgroundColor: "rgba(255,255,255,0.08)", borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 },
   catChipText: { color: "rgba(255,255,255,0.6)", fontSize: 12 },
-  retryBtn: { borderWidth: 1, borderColor: "rgba(201,168,76,0.35)", borderRadius: 16, paddingVertical: 14, alignItems: "center" },
-  retryText: { color: "#C9A84C", fontSize: 15, fontWeight: "600" },
+  retryBtn: { borderWidth: 0.5, borderColor: "rgba(201,168,76,0.35)", borderRadius: 16, paddingVertical: 14, alignItems: "center" },
+  retryText: { color: "#C9826B", fontSize: 15, fontWeight: "600" },
 });

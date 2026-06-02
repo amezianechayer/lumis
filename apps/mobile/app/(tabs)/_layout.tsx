@@ -9,9 +9,9 @@ function TabIcon({ icon, label, focused }: { icon: string; label: string; focuse
       <Text
         style={{
           fontSize: 9,
-          fontWeight: focused ? "700" : "400",
-          color: focused ? "#C9A84C" : "rgba(255,255,255,0.35)",
-          letterSpacing: 0.2,
+          fontWeight: focused ? "600" : "400",
+          color: focused ? "#C9826B" : "rgba(232,213,192,0.35)",
+          letterSpacing: 0.4,
         }}
         numberOfLines={1}
       >
@@ -30,9 +30,9 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: "#0A0A0A",
-          borderTopColor: "rgba(255,255,255,0.08)",
-          borderTopWidth: 1,
+          backgroundColor: "#0D0D0F",
+          borderTopColor: "rgba(232,213,192,0.08)",
+          borderTopWidth: 0.5,
           height: tabBarHeight,
           paddingBottom: insets.bottom,
           paddingTop: 0,

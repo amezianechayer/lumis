@@ -43,30 +43,30 @@ export default function RecDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#0A0A0A", alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator color="#C9A84C" size="large" />
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F", alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator color="#C9826B" size="large" />
       </SafeAreaView>
     );
   }
 
   if (isError || !rec) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#0A0A0A", alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F", alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
         <Text style={{ color: "#f87171", fontSize: 16, marginBottom: 16 }}>{t("common.error")}</Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={{ color: "#C9A84C", fontWeight: "600" }}>{t("common.back")}</Text>
+          <Text style={{ color: "#C9826B", fontWeight: "600" }}>{t("common.back")}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
   }
 
-  const theme = TYPE_THEME[rec.type] ?? { from: "rgba(201,168,76,0.2)", to: "rgba(201,168,76,0.03)", accent: "#C9A84C", label: rec.type };
+  const theme = TYPE_THEME[rec.type] ?? { from: "rgba(201,168,76,0.2)", to: "rgba(201,168,76,0.03)", accent: "#C9826B", label: rec.type };
   const diffColor = DIFFICULTY_COLORS[rec.difficulty] ?? "#94a3b8";
   const steps: RecStep[] = parseArr<RecStep>(rec.steps);
   const products: RecProduct[] = parseArr<RecProduct>(rec.products);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#0A0A0A" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F" }}>
       {/* Top bar */}
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 4, paddingBottom: 10 }}>
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.75} style={{ padding: 6 }}>
@@ -79,18 +79,18 @@ export default function RecDetailScreen() {
 
       <ScrollView contentContainerStyle={{ paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
         {/* Hero */}
-        <Animated.View entering={FadeInDown.springify()} style={{ marginHorizontal: 16, marginBottom: 16, borderRadius: 24, overflow: "hidden", borderWidth: 1, borderColor: `${theme.accent}30` }}>
+        <Animated.View entering={FadeInDown.springify()} style={{ marginHorizontal: 16, marginBottom: 16, borderRadius: 24, overflow: "hidden", borderWidth: 0.5, borderColor: `${theme.accent}30` }}>
           <LinearGradient colors={[theme.from, theme.to]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
             <View style={{ padding: 20 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 14 }}>
-                <View style={{ width: 60, height: 60, borderRadius: 20, backgroundColor: `${theme.accent}22`, borderWidth: 1, borderColor: `${theme.accent}40`, alignItems: "center", justifyContent: "center" }}>
+                <View style={{ width: 60, height: 60, borderRadius: 20, backgroundColor: `${theme.accent}22`, borderWidth: 0.5, borderColor: `${theme.accent}40`, alignItems: "center", justifyContent: "center" }}>
                   <Text style={{ fontSize: 32 }}>{rec.icon_emoji}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: "#fff", fontSize: 19, fontWeight: "700", lineHeight: 24 }}>{rec.title}</Text>
                   {rec.is_premium_only && (
                     <View style={{ alignSelf: "flex-start", marginTop: 6, backgroundColor: "rgba(201,168,76,0.2)", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 }}>
-                      <Text style={{ color: "#C9A84C", fontSize: 10, fontWeight: "700" }}>✨ PREMIUM</Text>
+                      <Text style={{ color: "#C9826B", fontSize: 10, fontWeight: "700" }}>✨ PREMIUM</Text>
                     </View>
                   )}
                 </View>
@@ -136,13 +136,13 @@ export default function RecDetailScreen() {
               <View key={i} style={{ flexDirection: "row", gap: 12, marginBottom: 14 }}>
                 <View style={{ alignItems: "center" }}>
                   <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: theme.accent, alignItems: "center", justifyContent: "center" }}>
-                    <Text style={{ color: "#0A0A0A", fontWeight: "800", fontSize: 13 }}>{step.order || i + 1}</Text>
+                    <Text style={{ color: "#0D0D0F", fontWeight: "800", fontSize: 13 }}>{step.order || i + 1}</Text>
                   </View>
                   {i < steps.length - 1 && (
                     <View style={{ width: 2, flex: 1, backgroundColor: `${theme.accent}25`, marginTop: 4 }} />
                   )}
                 </View>
-                <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", borderRadius: 16, padding: 14, marginBottom: 2 }}>
+                <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)", borderRadius: 16, padding: 14, marginBottom: 2 }}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
                     <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14, flex: 1 }}>{step.title}</Text>
                     {step.duration_min ? (
@@ -168,14 +168,14 @@ export default function RecDetailScreen() {
               {t("recs.products_title")}
             </Text>
             {products.map((p, i) => (
-              <View key={i} style={{ marginBottom: 10, borderRadius: 16, padding: 14, flexDirection: "row", gap: 12, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 1, borderColor: p.premium ? "rgba(201,168,76,0.3)" : "rgba(255,255,255,0.08)" }}>
+              <View key={i} style={{ marginBottom: 10, borderRadius: 16, padding: 14, flexDirection: "row", gap: 12, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: p.premium ? "rgba(201,168,76,0.3)" : "rgba(255,255,255,0.08)" }}>
                 <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: p.premium ? "rgba(201,168,76,0.2)" : `${theme.accent}18`, alignItems: "center", justifyContent: "center" }}>
                   <Text style={{ fontSize: 18 }}>{p.premium ? "💎" : "🛍️"}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                     <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14, flex: 1 }}>{p.name}</Text>
-                    {p.premium && <Text style={{ color: "#C9A84C", fontSize: 9, fontWeight: "700" }}>PREMIUM</Text>}
+                    {p.premium && <Text style={{ color: "#C9826B", fontSize: 9, fontWeight: "700" }}>PREMIUM</Text>}
                   </View>
                   <Text style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, marginTop: 1, marginBottom: 5 }}>{p.category}</Text>
                   <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, lineHeight: 18 }}>{p.why}</Text>

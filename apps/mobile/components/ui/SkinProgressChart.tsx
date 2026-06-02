@@ -7,7 +7,7 @@ import { SkinScan } from "../../types/api";
 type Metric = "overall" | "acne" | "hydration" | "texture" | "uniformity";
 
 const METRICS: { key: Metric; label: string; color: string }[] = [
-  { key: "overall", label: "Global", color: "#C9A84C" },
+  { key: "overall", label: "Global", color: "#C9826B" },
   { key: "acne", label: "Acné", color: "#f87171" },
   { key: "hydration", label: "Hydratation", color: "#60a5fa" },
   { key: "texture", label: "Texture", color: "#a78bfa" },
@@ -47,7 +47,7 @@ export function SkinProgressChart({ scans }: Props) {
   if (scans.length < 2) {
     return (
       <Animated.View entering={FadeInDown.delay(100)}
-        style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", borderRadius: 20, padding: 20, alignItems: "center", justifyContent: "center", minHeight: 140 }}>
+        style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)", borderRadius: 20, padding: 20, alignItems: "center", justifyContent: "center", minHeight: 140 }}>
         <Text style={{ fontSize: 32, marginBottom: 8 }}>📊</Text>
         <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, fontWeight: "600", textAlign: "center" }}>
           Fais au moins 2 scans
@@ -90,7 +90,7 @@ export function SkinProgressChart({ scans }: Props) {
   const prevScore = scores[scores.length - 2];
   const delta = latestScore - prevScore;
   const trend = delta > 2 ? "↑" : delta < -2 ? "↓" : "→";
-  const trendColor = delta > 2 ? "#4ade80" : delta < -2 ? "#f87171" : "#C9A84C";
+  const trendColor = delta > 2 ? "#4ade80" : delta < -2 ? "#f87171" : "#C9826B";
 
   return (
     <Animated.View entering={FadeInDown.delay(100)}>
@@ -155,7 +155,7 @@ export function SkinProgressChart({ scans }: Props) {
               <View key={i}>
                 {(isLast || isHovered) && (
                   <Circle cx={p.x} cy={p.y} r={isLast ? 5 : 4}
-                    fill={metric.color} stroke="#0A0A0A" strokeWidth={2} />
+                    fill={metric.color} stroke="#0D0D0F" strokeWidth={2} />
                 )}
                 {!isLast && !isHovered && (
                   <Circle cx={p.x} cy={p.y} r={3}
@@ -191,7 +191,7 @@ export function SkinProgressChart({ scans }: Props) {
             activeOpacity={0.8}
             style={{
               paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
-              borderWidth: 1,
+              borderWidth: 0.5,
               backgroundColor: activeMetric === m.key ? `${m.color}20` : "transparent",
               borderColor: activeMetric === m.key ? m.color : "rgba(255,255,255,0.12)",
             }}

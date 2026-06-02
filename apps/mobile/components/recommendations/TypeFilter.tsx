@@ -36,15 +36,15 @@ export function TypeFilter({ active, onChange }: Props) {
             activeOpacity={0.75}
             className="flex-row items-center px-3 py-2 rounded-full"
             style={{
-              backgroundColor: isActive ? "#C9A84C" : "rgba(255,255,255,0.05)",
-              borderWidth: 1,
-              borderColor: isActive ? "#C9A84C" : "rgba(255,255,255,0.1)",
+              backgroundColor: isActive ? "#C9826B" : "rgba(255,255,255,0.05)",
+              borderWidth: 0.5,
+              borderColor: isActive ? "#C9826B" : "rgba(255,255,255,0.1)",
             }}
           >
             <Text style={{ fontSize: 13, marginRight: 4 }}>{FILTER_EMOJIS[f]}</Text>
             <Text
               style={{
-                color: isActive ? "#0f0e17" : "#94a3b8",
+                color: isActive ? "#0D0D0F" : "#94a3b8",
                 fontSize: 13,
                 fontWeight: isActive ? "700" : "400",
               }}

@@ -21,7 +21,7 @@ function Stepper({ label, value, onChange, min, max, suffix }: {
   label: string; value: number; onChange: (v: number) => void; min: number; max: number; suffix: string;
 }) {
   return (
-    <View style={{ backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 1, borderColor: "rgba(255,255,255,0.1)", borderRadius: 16, padding: 16, marginBottom: 12 }}>
+    <View style={{ backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.1)", borderRadius: 16, padding: 16, marginBottom: 12 }}>
       <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, marginBottom: 12 }}>{label}</Text>
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
         <TouchableOpacity onPress={() => onChange(Math.max(min, value - 1))} style={stepBtn}>
@@ -65,22 +65,22 @@ export default function CycleScreen() {
   const showForm = editing || (cycle && !cycle.configured);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#0A0A0A" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F" }}>
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 6, paddingBottom: 8 }}>
         <TouchableOpacity onPress={() => router.back()} style={{ padding: 6, marginRight: 6 }}>
-          <Text style={{ color: "#C9A84C", fontSize: 22 }}>←</Text>
+          <Text style={{ color: "#C9826B", fontSize: 22 }}>←</Text>
         </TouchableOpacity>
         <Text style={{ color: "#fff", fontWeight: "700", fontSize: 18, flex: 1 }}>Cycle & Peau</Text>
         {cycle?.configured && !editing && (
           <TouchableOpacity onPress={() => setEditing(true)}>
-            <Text style={{ color: "#C9A84C", fontSize: 13 }}>Modifier</Text>
+            <Text style={{ color: "#C9826B", fontSize: 13 }}>Modifier</Text>
           </TouchableOpacity>
         )}
       </View>
 
       {isLoading ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator color="#C9A84C" size="large" />
+          <ActivityIndicator color="#C9826B" size="large" />
         </View>
       ) : showForm ? (
         <ScrollView contentContainerStyle={{ padding: 20 }}>
@@ -95,8 +95,8 @@ export default function CycleScreen() {
           <Stepper label="Il y a combien de jours ont commencé tes dernières règles ?" value={daysSince} onChange={setDaysSince} min={0} max={35} suffix="jours" />
           <Stepper label="Durée moyenne de ton cycle" value={cycleLength} onChange={setCycleLength} min={21} max={40} suffix="jours" />
 
-          <TouchableOpacity onPress={() => mutation.mutate()} disabled={mutation.isPending} style={{ backgroundColor: "#C9A84C", borderRadius: 16, paddingVertical: 16, alignItems: "center", marginTop: 8 }}>
-            {mutation.isPending ? <ActivityIndicator color="#0A0A0A" /> : <Text style={{ color: "#0A0A0A", fontWeight: "700", fontSize: 16 }}>Voir ma phase actuelle</Text>}
+          <TouchableOpacity onPress={() => mutation.mutate()} disabled={mutation.isPending} style={{ backgroundColor: "#C9826B", borderRadius: 16, paddingVertical: 16, alignItems: "center", marginTop: 8 }}>
+            {mutation.isPending ? <ActivityIndicator color="#0D0D0F" /> : <Text style={{ color: "#0D0D0F", fontWeight: "700", fontSize: 16 }}>Voir ma phase actuelle</Text>}
           </TouchableOpacity>
 
           <Text style={{ color: "rgba(255,255,255,0.25)", fontSize: 11, textAlign: "center", marginTop: 16, lineHeight: 16 }}>
@@ -107,11 +107,11 @@ export default function CycleScreen() {
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
           {(() => {
             const ph = cycle.phase!;
-            const color = PHASE_COLORS[ph.phase] ?? "#C9A84C";
+            const color = PHASE_COLORS[ph.phase] ?? "#C9826B";
             return (
               <>
                 {/* Phase hero */}
-                <Animated.View entering={FadeInDown} style={{ backgroundColor: `${color}15`, borderWidth: 1, borderColor: `${color}40`, borderRadius: 24, padding: 24, alignItems: "center", marginBottom: 16 }}>
+                <Animated.View entering={FadeInDown} style={{ backgroundColor: `${color}15`, borderWidth: 0.5, borderColor: `${color}40`, borderRadius: 24, padding: 24, alignItems: "center", marginBottom: 16 }}>
                   <Text style={{ fontSize: 48 }}>{PHASE_EMOJI[ph.phase] ?? "🌙"}</Text>
                   <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginTop: 8 }}>Phase actuelle</Text>
                   <Text style={{ color, fontSize: 26, fontWeight: "800", marginTop: 2 }}>{ph.phase_fr}</Text>
@@ -121,13 +121,13 @@ export default function CycleScreen() {
                 </Animated.View>
 
                 {/* Skin impact */}
-                <Animated.View entering={FadeInDown.delay(80)} style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", borderRadius: 18, padding: 18, marginBottom: 16 }}>
+                <Animated.View entering={FadeInDown.delay(80)} style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)", borderRadius: 18, padding: 18, marginBottom: 16 }}>
                   <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Impact sur ta peau</Text>
                   <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 14, lineHeight: 21 }}>{ph.skin_impact}</Text>
                 </Animated.View>
 
                 {/* Tips */}
-                <Animated.View entering={FadeInDown.delay(160)} style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", borderRadius: 18, padding: 18 }}>
+                <Animated.View entering={FadeInDown.delay(160)} style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)", borderRadius: 18, padding: 18 }}>
                   <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Conseils pour cette phase</Text>
                   <View style={{ gap: 10 }}>
                     {ph.tips.map((tip, i) => (

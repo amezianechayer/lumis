@@ -47,7 +47,7 @@ export function Skeleton({ width = "100%", height = 20, rounded = "md", style }:
           width: width as number,
           height,
           borderRadius: ROUNDED_MAP[rounded],
-          backgroundColor: "#ffffff",
+          backgroundColor: "rgba(232,213,192,0.12)",
         },
         style,
       ]}

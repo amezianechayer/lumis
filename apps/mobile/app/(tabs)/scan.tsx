@@ -33,7 +33,7 @@ import { SkinProgressChart } from "../../components/ui/SkinProgressChart";
 
 // ─── Score ring ───────────────────────────────────────────────────────────────
 function ScoreRing({ score, size = 80 }: { score: number; size?: number }) {
-  const color = score >= 75 ? "#4ade80" : score >= 50 ? "#C9A96E" : "#f87171";
+  const color = score >= 75 ? "#4ade80" : score >= 50 ? "#C9826B" : "#f87171";
   return (
     <View
       style={{
@@ -74,7 +74,7 @@ function ScoreBar({ label, score, icon, type }: {
   label: string; score: number; icon: string;
   type: "acne" | "hydration" | "texture" | "uniformity";
 }) {
-  const color = score >= 75 ? "#4ade80" : score >= 50 ? "#C9A96E" : "#f87171";
+  const color = score >= 75 ? "#4ade80" : score >= 50 ? "#C9826B" : "#f87171";
   const qual = scoreLabel(score, type);
   return (
     <View className="mb-4">
@@ -165,7 +165,7 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
         {buildPriorityActions(scan).map((action, i) => (
           <View key={i} className="flex-row items-start gap-3 mb-3">
             <View className="w-6 h-6 rounded-full bg-lumis-gold/20 items-center justify-center mt-0.5" style={{ minWidth: 24 }}>
-              <Text style={{ color: "#C9A84C", fontSize: 11, fontWeight: "700" }}>{i + 1}</Text>
+              <Text style={{ color: "#C9826B", fontSize: 11, fontWeight: "700" }}>{i + 1}</Text>
             </View>
             <View className="flex-1">
               <Text className="text-lumis-white font-body-medium text-sm mb-0.5">{action.title}</Text>
@@ -415,7 +415,7 @@ function ScanningLoader({ photoUri }: { photoUri: string | null }) {
 }
 
 function HistoryCard({ scan, onPress }: { scan: SkinScan; onPress: () => void }) {
-  const color = scan.overall_score >= 75 ? "#4ade80" : scan.overall_score >= 50 ? "#C9A96E" : "#f87171";
+  const color = scan.overall_score >= 75 ? "#4ade80" : scan.overall_score >= 50 ? "#C9826B" : "#f87171";
   const date = new Date(scan.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
   return (
     <TouchableOpacity
@@ -567,25 +567,25 @@ export default function ScanScreen() {
           {history.length >= 2 && (
             <TouchableOpacity
               onPress={() => router.push("/scan/compare")}
-              style={{ backgroundColor: "rgba(201,168,76,0.15)", borderWidth: 1, borderColor: "rgba(201,168,76,0.4)", borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5 }}
+              style={{ backgroundColor: "rgba(201,168,76,0.15)", borderWidth: 0.5, borderColor: "rgba(201,168,76,0.4)", borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5 }}
             >
-              <Text style={{ color: "#C9A84C", fontSize: 11, fontWeight: "600" }}>⇄ Comparer</Text>
+              <Text style={{ color: "#C9826B", fontSize: 11, fontWeight: "600" }}>⇄ Comparer</Text>
             </TouchableOpacity>
           )}
         </View>
         <ScrollView
           contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 40 }}
-          refreshControl={<RefreshControl refreshing={historyFetching && !historyLoading} onRefresh={refetchHistory} tintColor="#C9A84C" />}
+          refreshControl={<RefreshControl refreshing={historyFetching && !historyLoading} onRefresh={refetchHistory} tintColor="#C9826B" />}
         >
           {historyLoading || historyFetching ? (
             <View className="items-center py-20">
-              <ActivityIndicator color="#C9A84C" size="large" />
+              <ActivityIndicator color="#C9826B" size="large" />
             </View>
           ) : history.length > 0 ? (
             <View className="gap-3">
               {/* Graphique d'évolution */}
               <Animated.View entering={FadeInDown.delay(0)}
-                style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", borderRadius: 20, padding: 20, marginBottom: 4 }}>
+                style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)", borderRadius: 20, padding: 20, marginBottom: 4 }}>
                 <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>
                   📈 Évolution de ta peau
                 </Text>
@@ -722,7 +722,7 @@ export default function ScanScreen() {
           >
             {analyzeMutation.isPending ? (
               <View className="flex-row items-center gap-3">
-                <ActivityIndicator color="#0A0A0A" size="small" />
+                <ActivityIndicator color="#0D0D0F" size="small" />
                 <Text className="text-lumis-black font-body-bold text-base">
                   {photoBase64 ? "IA analyse ta peau…" : "Analyse en cours…"}
                 </Text>

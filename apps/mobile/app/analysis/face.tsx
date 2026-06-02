@@ -169,7 +169,7 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
               <Text style={{ color: "rgba(201,168,76,0.6)", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
                 Saison couleur
               </Text>
-              <Text style={{ color: "#C9A84C", fontWeight: "700", fontSize: 16, marginBottom: 4 }}>
+              <Text style={{ color: "#C9826B", fontWeight: "700", fontSize: 16, marginBottom: 4 }}>
                 {seasonLabel}
               </Text>
               <Text style={{ color: "rgba(255,255,255,0.45)", fontSize: 11, lineHeight: 16 }}>
@@ -214,7 +214,7 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
             activeOpacity={0.85}
             style={{
               backgroundColor: "rgba(255,255,255,0.05)",
-              borderWidth: 1, borderColor: "rgba(255,255,255,0.12)",
+              borderWidth: 0.5, borderColor: "rgba(255,255,255,0.12)",
               borderRadius: 16, padding: 16,
               flexDirection: "row", alignItems: "center", gap: 12,
             }}
@@ -228,7 +228,7 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
                 6 questions pour déterminer ton sous-ton précis (veines, bijoux, soleil…)
               </Text>
             </View>
-            <Text style={{ color: "#C9A84C", fontSize: 18 }}>→</Text>
+            <Text style={{ color: "#C9826B", fontSize: 18 }}>→</Text>
           </TouchableOpacity>
         </Animated.View>
 
@@ -334,21 +334,21 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
             activeOpacity={0.85}
             style={{
               backgroundColor: "rgba(201,168,76,0.12)",
-              borderWidth: 1, borderColor: "rgba(201,168,76,0.4)",
+              borderWidth: 0.5, borderColor: "rgba(201,168,76,0.4)",
               borderRadius: 16, padding: 16,
               flexDirection: "row", alignItems: "center", gap: 12,
             }}
           >
             <Text style={{ fontSize: 26 }}>✨</Text>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: "#C9A84C", fontWeight: "700", fontSize: 15 }}>
+              <Text style={{ color: "#C9826B", fontWeight: "700", fontSize: 15 }}>
                 Guide {isMale ? "grooming" : "maquillage"} personnalisé par IA
               </Text>
               <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, marginTop: 2 }}>
                 Adapté à ton teint, ton scan peau et tes objectifs
               </Text>
             </View>
-            <Text style={{ color: "#C9A84C", fontSize: 20 }}>→</Text>
+            <Text style={{ color: "#C9826B", fontSize: 20 }}>→</Text>
           </TouchableOpacity>
         </Animated.View>
 
@@ -363,14 +363,14 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
           {makeupGuide.steps.map((step, i) => (
             <View key={i} style={{ flexDirection: "row", gap: 12, marginBottom: i === makeupGuide.steps.length - 1 ? 0 : 16 }}>
               <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: "rgba(201,168,76,0.2)", alignItems: "center", justifyContent: "center", marginTop: 1 }}>
-                <Text style={{ color: "#C9A84C", fontSize: 12, fontWeight: "800" }}>{i + 1}</Text>
+                <Text style={{ color: "#C9826B", fontSize: 12, fontWeight: "800" }}>{i + 1}</Text>
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14, marginBottom: 2 }}>{step.title}</Text>
                 <Text style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, lineHeight: 19 }}>{step.description}</Text>
                 {step.tip ? (
                   <View style={{ marginTop: 6, backgroundColor: "rgba(201,168,76,0.1)", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
-                    <Text style={{ color: "#C9A84C", fontSize: 12 }}>💡 {step.tip}</Text>
+                    <Text style={{ color: "#C9826B", fontSize: 12 }}>💡 {step.tip}</Text>
                   </View>
                 ) : null}
               </View>

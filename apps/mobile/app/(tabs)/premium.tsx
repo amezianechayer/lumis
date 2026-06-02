@@ -276,14 +276,14 @@ export default function PremiumScreen() {
           activeOpacity={0.85}
           style={{
             opacity: isLoading ? 0.6 : 1,
-            shadowColor: "#C9A84C",
+            shadowColor: "#C9826B",
             shadowOpacity: 0.35,
             shadowRadius: 12,
             elevation: 6,
           }}
         >
           {isLoading || purchasing ? (
-            <ActivityIndicator color="#0A0A0A" />
+            <ActivityIndicator color="#0D0D0F" />
           ) : (
             <Text className="text-lumis-black font-body-medium text-base">
               Voir les offres Premium
