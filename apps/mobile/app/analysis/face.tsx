@@ -19,6 +19,9 @@ import { useAuthStore } from "../../stores/auth.store";
 import { t } from "../../utils/i18n";
 import { getMakeupGuide, FaceShape } from "../../utils/makeupTips";
 import { FaceMakeupDiagram } from "../../components/ui/FaceMakeupDiagram";
+import { useThemeColors } from "../../stores/theme.store";
+
+const TERRACOTTA = "#C9826B";
 
 const SEASON_PALETTES: Record<ColorSeason, string[]> = {
   spring: ["#FF9E80", "#FFD180", "#CCFF90", "#EA80FC", "#FFF9C4"],
@@ -85,6 +88,7 @@ export default function FaceAnalysisScreen() {
 }
 
 function ProfileDetail({ profile }: { profile: FaceProfile }) {
+  const tc = useThemeColors();
   const { user } = useAuthStore();
   const isMale = user?.gender === "male";
   const faceShapes = t("onboarding.selfie.face_shapes") as unknown as Record<string, string>;
@@ -151,13 +155,13 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
         <Animated.View entering={FadeInDown.delay(160)} className="mb-4">
           <View className="flex-row gap-3 mb-3">
             <View className="flex-1 bg-card border border-line rounded-2xl p-4">
-              <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
+              <Text style={{ color: tc.textMuted, fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
                 Sous-ton de peau
               </Text>
-              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 16, textTransform: "capitalize", marginBottom: 4 }}>
+              <Text style={{ color: tc.text, fontWeight: "700", fontSize: 16, textTransform: "capitalize", marginBottom: 4 }}>
                 {profile.undertone === "warm" ? "Chaud" : profile.undertone === "cool" ? "Froid" : "Neutre"}
               </Text>
-              <Text style={{ color: "rgba(255,255,255,0.45)", fontSize: 11, lineHeight: 16 }}>
+              <Text style={{ color: tc.textMuted, fontSize: 11, lineHeight: 16 }}>
                 {profile.undertone === "warm"
                   ? "Reflets dorés/pêche. Tes veines sont vertes. Les couleurs terre & or te subliment."
                   : profile.undertone === "cool"
@@ -166,13 +170,13 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
               </Text>
             </View>
             <View className="flex-1 bg-lumis-gold/10 border border-lumis-gold/30 rounded-2xl p-4">
-              <Text style={{ color: "rgba(201,168,76,0.6)", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
+              <Text style={{ color: tc.textMuted, fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
                 Saison couleur
               </Text>
-              <Text style={{ color: "#C9826B", fontWeight: "700", fontSize: 16, marginBottom: 4 }}>
+              <Text style={{ color: TERRACOTTA, fontWeight: "700", fontSize: 16, marginBottom: 4 }}>
                 {seasonLabel}
               </Text>
-              <Text style={{ color: "rgba(255,255,255,0.45)", fontSize: 11, lineHeight: 16 }}>
+              <Text style={{ color: tc.textMuted, fontSize: 11, lineHeight: 16 }}>
                 {profile.color_season === "spring"
                   ? "Couleurs chaudes & lumineuses : corail, pêche, ivoire. Évite le noir pur."
                   : profile.color_season === "summer"
@@ -194,7 +198,7 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
             <Text className="text-lumis-white/40 font-body text-[10px] uppercase tracking-widest mb-1">
               Ta palette de couleurs à porter
             </Text>
-            <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, marginBottom: 10 }}>
+            <Text style={{ color: tc.textFaint, fontSize: 11, marginBottom: 10 }}>
               Ces couleurs subliment naturellement ton teint
             </Text>
             <View className="flex-row gap-2">
@@ -213,22 +217,22 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
             onPress={() => router.push("/skin-tone-quiz")}
             activeOpacity={0.85}
             style={{
-              backgroundColor: "rgba(255,255,255,0.6)",
-              borderWidth: 0.5, borderColor: "rgba(201,130,107,0.22)",
+              backgroundColor: tc.bgCard,
+              borderWidth: 0.5, borderColor: tc.border,
               borderRadius: 16, padding: 16,
               flexDirection: "row", alignItems: "center", gap: 12,
             }}
           >
             <Text style={{ fontSize: 24 }}>🎨</Text>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14 }}>
+              <Text style={{ color: tc.text, fontWeight: "600", fontSize: 14 }}>
                 Affiner avec le test colorimétrie
               </Text>
-              <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, marginTop: 2 }}>
+              <Text style={{ color: tc.textMuted, fontSize: 12, marginTop: 2 }}>
                 6 questions pour déterminer ton sous-ton précis (veines, bijoux, soleil…)
               </Text>
             </View>
-            <Text style={{ color: "#C9826B", fontSize: 18 }}>→</Text>
+            <Text style={{ color: TERRACOTTA, fontSize: 18 }}>→</Text>
           </TouchableOpacity>
         </Animated.View>
 
@@ -285,7 +289,7 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
           <Text className="text-lumis-gold font-body-bold text-xs uppercase tracking-widest mb-1">
             {isMale ? "💈 Guide grooming" : "💄 Guide maquillage"}
           </Text>
-          <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, lineHeight: 18, marginBottom: 16 }}>
+          <Text style={{ color: tc.textMuted, fontSize: 12, lineHeight: 18, marginBottom: 16 }}>
             {makeupGuide.goal}
           </Text>
 
@@ -299,7 +303,7 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
             {makeupGuide.contour.map((z, i) => (
               <View key={`c${i}`} style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
                 <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "#7A5C3E", marginTop: 3 }} />
-                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, flex: 1 }}>
+                <Text style={{ color: tc.textMuted, fontSize: 13, flex: 1 }}>
                   <Text style={{ fontWeight: "700" }}>{z.zone} :</Text> {z.action}
                 </Text>
               </View>
@@ -307,7 +311,7 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
             {makeupGuide.highlight.map((z, i) => (
               <View key={`h${i}`} style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
                 <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "#FFF4D6", marginTop: 3 }} />
-                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, flex: 1 }}>
+                <Text style={{ color: tc.textMuted, fontSize: 13, flex: 1 }}>
                   <Text style={{ fontWeight: "700" }}>{z.zone} :</Text> {z.action}
                 </Text>
               </View>
@@ -315,14 +319,14 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
             {makeupGuide.blush ? (
               <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
                 <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "#F4A0B8", marginTop: 3 }} />
-                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, flex: 1 }}>
+                <Text style={{ color: tc.textMuted, fontSize: 13, flex: 1 }}>
                   <Text style={{ fontWeight: "700" }}>Blush :</Text> {makeupGuide.blush}
                 </Text>
               </View>
             ) : null}
             <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start", marginTop: 2 }}>
               <Text style={{ fontSize: 13 }}>✏️</Text>
-              <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, flex: 1 }}>
+              <Text style={{ color: tc.textMuted, fontSize: 13, flex: 1 }}>
                 <Text style={{ fontWeight: "700" }}>Sourcils :</Text> {makeupGuide.brows}
               </Text>
             </View>
@@ -335,28 +339,28 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
             onPress={() => router.push("/makeup-guide")}
             activeOpacity={0.85}
             style={{
-              backgroundColor: "rgba(201,168,76,0.12)",
-              borderWidth: 0.5, borderColor: "rgba(201,168,76,0.4)",
+              backgroundColor: tc.primaryMuted,
+              borderWidth: 0.5, borderColor: tc.border,
               borderRadius: 16, padding: 16,
               flexDirection: "row", alignItems: "center", gap: 12,
             }}
           >
             <Text style={{ fontSize: 26 }}>✨</Text>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: "#C9826B", fontWeight: "700", fontSize: 15 }}>
+              <Text style={{ color: TERRACOTTA, fontWeight: "700", fontSize: 15 }}>
                 Guide {isMale ? "grooming" : "maquillage"} personnalisé par IA
               </Text>
-              <Text style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, marginTop: 2 }}>
+              <Text style={{ color: tc.textMuted, fontSize: 12, marginTop: 2 }}>
                 Adapté à ton teint, ton scan peau et tes objectifs
               </Text>
             </View>
-            <Text style={{ color: "#C9826B", fontSize: 20 }}>→</Text>
+            <Text style={{ color: TERRACOTTA, fontSize: 20 }}>→</Text>
           </TouchableOpacity>
         </Animated.View>
 
         {/* ─── Step-by-step guide (base) ─── */}
         <Animated.View entering={FadeInDown.delay(420)} className="bg-lumis-gold/8 border border-lumis-gold/25 rounded-2xl p-5 mb-4">
-          <Text style={{ color: "rgba(255,255,255,0.35)", fontSize: 11, marginBottom: 12 }}>
+          <Text style={{ color: tc.textFaint, fontSize: 11, marginBottom: 12 }}>
             Conseils de base · le guide IA ci-dessus est personnalisé
           </Text>
           <Text className="text-lumis-gold font-body-bold text-xs uppercase tracking-widest mb-4">
@@ -364,15 +368,15 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
           </Text>
           {makeupGuide.steps.map((step, i) => (
             <View key={i} style={{ flexDirection: "row", gap: 12, marginBottom: i === makeupGuide.steps.length - 1 ? 0 : 16 }}>
-              <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: "rgba(201,168,76,0.2)", alignItems: "center", justifyContent: "center", marginTop: 1 }}>
-                <Text style={{ color: "#C9826B", fontSize: 12, fontWeight: "800" }}>{i + 1}</Text>
+              <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: tc.primaryMuted, alignItems: "center", justifyContent: "center", marginTop: 1 }}>
+                <Text style={{ color: TERRACOTTA, fontSize: 12, fontWeight: "800" }}>{i + 1}</Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14, marginBottom: 2 }}>{step.title}</Text>
-                <Text style={{ color: "rgba(255,255,255,0.55)", fontSize: 13, lineHeight: 19 }}>{step.description}</Text>
+                <Text style={{ color: tc.text, fontWeight: "600", fontSize: 14, marginBottom: 2 }}>{step.title}</Text>
+                <Text style={{ color: tc.textMuted, fontSize: 13, lineHeight: 19 }}>{step.description}</Text>
                 {step.tip ? (
-                  <View style={{ marginTop: 6, backgroundColor: "rgba(201,168,76,0.1)", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
-                    <Text style={{ color: "#C9826B", fontSize: 12 }}>💡 {step.tip}</Text>
+                  <View style={{ marginTop: 6, backgroundColor: tc.primaryMuted, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
+                    <Text style={{ color: TERRACOTTA, fontSize: 12 }}>💡 {step.tip}</Text>
                   </View>
                 ) : null}
               </View>

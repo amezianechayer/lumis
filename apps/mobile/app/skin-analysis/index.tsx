@@ -13,6 +13,9 @@ import { router } from "expo-router";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useSkinAnalysis } from "../../hooks/useSkinAnalysis";
 import { SkinAnalysisResult as SkinAnalysisResultData } from "../../services/gemini";
+import { useThemeColors } from "../../stores/theme.store";
+
+const TERRACOTTA = "#C9826B";
 
 export default function SkinAnalysisScreen() {
   const { width: W } = useWindowDimensions();
@@ -143,26 +146,30 @@ function SkinAnalysisResult({
   result: SkinAnalysisResultData;
   onRetry: () => void;
 }) {
+  const c = useThemeColors();
   const concernLevel = (v: string | null) => {
     if (!v || v === "none") return null;
     const colors: Record<string, string> = { mild: "#C9826B", moderate: "#f97316", severe: "#ef4444" };
     return colors[v] ?? "#94a3b8";
   };
 
+  const card = { backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.border, borderRadius: 16, padding: 16, marginBottom: 12 } as const;
+  const cardLabel = { color: c.textMuted, fontSize: 10, letterSpacing: 1.5, textTransform: "uppercase" as const, marginBottom: 10 };
+
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: "#EDE4D4" }}
+      style={{ flex: 1, backgroundColor: c.bg }}
       contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 60, paddingBottom: 48 }}
     >
       {/* Header */}
       <Animated.View entering={FadeInDown.delay(0)} style={{ marginBottom: 24 }}>
         <TouchableOpacity onPress={() => router.back()} style={{ marginBottom: 16 }}>
-          <Text style={{ color: "#C9826B", fontSize: 15 }}>← Retour</Text>
+          <Text style={{ color: TERRACOTTA, fontSize: 15 }}>← Retour</Text>
         </TouchableOpacity>
-        <Text style={{ color: "#fff", fontSize: 26, fontWeight: "700", marginBottom: 4 }}>
+        <Text style={{ color: c.text, fontSize: 26, fontWeight: "700", marginBottom: 4 }}>
           Résultats de l'analyse
         </Text>
-        <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>
+        <Text style={{ color: c.textMuted, fontSize: 12 }}>
           ⚕️ Résultats indicatifs, non médicaux
         </Text>
 
@@ -176,32 +183,32 @@ function SkinAnalysisResult({
       </Animated.View>
 
       {/* Skin type + tone */}
-      <Animated.View entering={FadeInDown.delay(80)} style={styles.card}>
-        <Text style={styles.cardLabel}>Type de peau</Text>
+      <Animated.View entering={FadeInDown.delay(80)} style={card}>
+        <Text style={cardLabel}>Type de peau</Text>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: result.dominantHex, borderWidth: 2, borderColor: "rgba(255,255,255,0.2)" }} />
+          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: result.dominantHex, borderWidth: 2, borderColor: c.border }} />
           <View>
-            <Text style={styles.cardValue}>{result.skinType ?? "—"}</Text>
-            <Text style={styles.cardSub}>
+            <Text style={{ color: c.text, fontSize: 18, fontWeight: "700", textTransform: "capitalize" }}>{result.skinType ?? "—"}</Text>
+            <Text style={{ color: c.textMuted, fontSize: 13, marginTop: 2, textTransform: "capitalize" }}>
               Fitzpatrick {result.fitzpatrickType} · {result.undertone}
             </Text>
           </View>
-          <View style={styles.confidenceBadge}>
-            <Text style={styles.confidenceText}>{Math.round(result.confidence * 100)}%</Text>
+          <View style={{ marginLeft: "auto", backgroundColor: c.primaryMuted, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4 }}>
+            <Text style={{ color: TERRACOTTA, fontSize: 13, fontWeight: "700" }}>{Math.round(result.confidence * 100)}%</Text>
           </View>
         </View>
       </Animated.View>
 
       {/* Visible concerns */}
-      <Animated.View entering={FadeInDown.delay(140)} style={styles.card}>
-        <Text style={styles.cardLabel}>Concernés visibles</Text>
+      <Animated.View entering={FadeInDown.delay(140)} style={card}>
+        <Text style={cardLabel}>Concernés visibles</Text>
         <View style={{ gap: 8 }}>
           {Object.entries(result.visibleConcerns).map(([key, val]) => {
             const color = concernLevel(val);
             if (!color) return null;
             return (
               <View key={key} style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 14 }}>
+                <Text style={{ color: c.textMuted, fontSize: 14 }}>
                   {CONCERN_LABELS[key] ?? key}
                 </Text>
                 <Text style={{ color, fontSize: 13, fontWeight: "600" }}>{val}</Text>
@@ -213,12 +220,12 @@ function SkinAnalysisResult({
 
       {/* Morning routine */}
       {result.skincareRoutine.morning.length > 0 && (
-        <Animated.View entering={FadeInDown.delay(200)} style={styles.card}>
-          <Text style={styles.cardLabel}>☀️ Routine matin</Text>
+        <Animated.View entering={FadeInDown.delay(200)} style={card}>
+          <Text style={cardLabel}>☀️ Routine matin</Text>
           {result.skincareRoutine.morning.map((step, i) => (
             <View key={i} style={styles.routineStep}>
-              <View style={styles.stepNum}><Text style={{ color: "#C9826B", fontSize: 11, fontWeight: "700" }}>{i + 1}</Text></View>
-              <Text style={styles.stepText}>{step}</Text>
+              <View style={styles.stepNum}><Text style={{ color: TERRACOTTA, fontSize: 11, fontWeight: "700" }}>{i + 1}</Text></View>
+              <Text style={{ color: c.textMuted, fontSize: 14, flex: 1, lineHeight: 20 }}>{step}</Text>
             </View>
           ))}
         </Animated.View>
@@ -226,12 +233,12 @@ function SkinAnalysisResult({
 
       {/* Evening routine */}
       {result.skincareRoutine.evening.length > 0 && (
-        <Animated.View entering={FadeInDown.delay(260)} style={styles.card}>
-          <Text style={styles.cardLabel}>🌙 Routine soir</Text>
+        <Animated.View entering={FadeInDown.delay(260)} style={card}>
+          <Text style={cardLabel}>🌙 Routine soir</Text>
           {result.skincareRoutine.evening.map((step, i) => (
             <View key={i} style={styles.routineStep}>
-              <View style={styles.stepNum}><Text style={{ color: "#C9826B", fontSize: 11, fontWeight: "700" }}>{i + 1}</Text></View>
-              <Text style={styles.stepText}>{step}</Text>
+              <View style={styles.stepNum}><Text style={{ color: TERRACOTTA, fontSize: 11, fontWeight: "700" }}>{i + 1}</Text></View>
+              <Text style={{ color: c.textMuted, fontSize: 14, flex: 1, lineHeight: 20 }}>{step}</Text>
             </View>
           ))}
         </Animated.View>
@@ -239,12 +246,12 @@ function SkinAnalysisResult({
 
       {/* Product categories */}
       {result.productCategories.length > 0 && (
-        <Animated.View entering={FadeInDown.delay(320)} style={styles.card}>
-          <Text style={styles.cardLabel}>Produits recommandés</Text>
+        <Animated.View entering={FadeInDown.delay(320)} style={card}>
+          <Text style={cardLabel}>Produits recommandés</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {result.productCategories.map((cat) => (
-              <View key={cat} style={styles.catChip}>
-                <Text style={styles.catChipText}>{cat}</Text>
+              <View key={cat} style={{ backgroundColor: c.primaryMuted, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6 }}>
+                <Text style={{ color: c.textMuted, fontSize: 12 }}>{cat}</Text>
               </View>
             ))}
           </View>
@@ -253,8 +260,8 @@ function SkinAnalysisResult({
 
       {/* Retry */}
       <Animated.View entering={FadeInDown.delay(380)}>
-        <TouchableOpacity onPress={onRetry} style={styles.retryBtn} activeOpacity={0.8}>
-          <Text style={styles.retryText}>🔄 Nouvelle analyse</Text>
+        <TouchableOpacity onPress={onRetry} style={{ borderWidth: 0.5, borderColor: c.border, borderRadius: 16, paddingVertical: 14, alignItems: "center" }} activeOpacity={0.8}>
+          <Text style={{ color: TERRACOTTA, fontSize: 15, fontWeight: "600" }}>🔄 Nouvelle analyse</Text>
         </TouchableOpacity>
       </Animated.View>
     </ScrollView>
@@ -271,7 +278,7 @@ const CONCERN_LABELS: Record<string, string> = {
 };
 
 const styles = StyleSheet.create({
-  center: { flex: 1, backgroundColor: "#EDE4D4", alignItems: "center", justifyContent: "center", padding: 32 },
+  center: { flex: 1, backgroundColor: "#0D0D0F", alignItems: "center", justifyContent: "center", padding: 32 },
   title: { color: "#fff", fontSize: 22, fontWeight: "700", textAlign: "center", marginBottom: 12 },
   subtitle: { color: "rgba(255,255,255,0.5)", fontSize: 15, textAlign: "center", marginBottom: 24 },
   btn: { backgroundColor: "#C9826B", borderRadius: 16, paddingHorizontal: 28, paddingVertical: 14 },
