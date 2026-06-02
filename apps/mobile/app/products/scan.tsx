@@ -9,12 +9,14 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../../services/api";
 import { ScannedProduct } from "../../types/api";
 
 type ScreenState = "scanner" | "loading" | "result";
 
 export default function ProductScanScreen() {
+  const queryClient = useQueryClient();
   const [permission, requestPermission] = useCameraPermissions();
   const [state, setState] = useState<ScreenState>("scanner");
   const [product, setProduct] = useState<ScannedProduct | null>(null);
@@ -31,6 +33,10 @@ export default function ProductScanScreen() {
       const result = await api.scanProduct(barcode);
       setProduct(result);
       setState("result");
+      // Refresh history so the new scan appears immediately
+      if (!result.not_found) {
+        queryClient.invalidateQueries({ queryKey: ["product-history"] });
+      }
     } catch (e) {
       setError("Une erreur est survenue. Réessaie.");
       setState("scanner");

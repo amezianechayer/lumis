@@ -73,7 +73,11 @@ export default function ProductHistoryScreen() {
             const date = new Date(p.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
             return (
               <Animated.View key={p.id} entering={FadeInDown.delay(i * 40)}>
-                <View style={{ backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight, borderRadius: 16, padding: 14, flexDirection: "row", gap: 12, alignItems: "center" }}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => router.push(`/products/${p.id}` as any)}
+                  style={{ backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight, borderRadius: 16, padding: 14, flexDirection: "row", gap: 12, alignItems: "center" }}
+                >
                   {/* Image or score circle */}
                   {p.image_url ? (
                     <Image source={{ uri: p.image_url }} style={{ width: 52, height: 52, borderRadius: 10, backgroundColor: c.bgCard }} resizeMode="contain" />
@@ -97,7 +101,8 @@ export default function ProductHistoryScreen() {
                     </View>
                   </View>
                   <Text style={{ color: sc, fontWeight: "700", fontSize: 15 }}>{p.compatibility_score}<Text style={{ color: c.textFaint, fontSize: 11 }}>/100</Text></Text>
-                </View>
+                  <Text style={{ color: c.textFaint, fontSize: 18 }}>›</Text>
+                </TouchableOpacity>
               </Animated.View>
             );
           })}
