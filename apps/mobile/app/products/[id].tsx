@@ -6,6 +6,8 @@ import Animated, { FadeIn, FadeInDown, ZoomIn } from "react-native-reanimated";
 import { api } from "../../services/api";
 import { ScannedProduct } from "../../types/api";
 import { useThemeColors } from "../../stores/theme.store";
+import { useAuthStore } from "../../stores/auth.store";
+import { InciAnalysis } from "../../components/products/InciAnalysis";
 
 const TERRACOTTA = "#C9826B";
 
@@ -24,6 +26,8 @@ export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const c = useThemeColors();
+  const { user } = useAuthStore();
+  const skinCtx = { skinType: user?.skin_type, acneProne: user?.skin_type === "oily" };
 
   const { data: product, isLoading, isError } = useQuery<ScannedProduct>({
     queryKey: ["product-detail", id],
@@ -156,11 +160,11 @@ export default function ProductDetailScreen() {
           </Animated.View>
         ) : null}
 
-        {/* Ingredients */}
+        {/* INCI analysis */}
         {product.ingredients ? (
           <Animated.View entering={FadeInDown.delay(240)} style={{ backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight, borderRadius: 18, padding: 16, marginBottom: 12 }}>
-            <Text style={{ color: c.textMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Ingrédients</Text>
-            <Text style={{ color: c.textMuted, fontSize: 12, lineHeight: 18 }}>{product.ingredients}</Text>
+            <Text style={{ color: c.textMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>🔬 Analyse INCI</Text>
+            <InciAnalysis ingredients={product.ingredients} skin={skinCtx} />
           </Animated.View>
         ) : null}
 

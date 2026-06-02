@@ -12,11 +12,15 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "../../services/api";
 import { ScannedProduct } from "../../types/api";
+import { useAuthStore } from "../../stores/auth.store";
+import { InciAnalysis } from "../../components/products/InciAnalysis";
 
 type ScreenState = "scanner" | "loading" | "result";
 
 export default function ProductScanScreen() {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const skinCtx = { skinType: user?.skin_type, acneProne: user?.skin_type === "oily" };
   const [permission, requestPermission] = useCameraPermissions();
   const [state, setState] = useState<ScreenState>("scanner");
   const [product, setProduct] = useState<ScannedProduct | null>(null);
@@ -145,11 +149,6 @@ export default function ProductScanScreen() {
     };
     const verdict = verdictConfig[product.verdict] ?? verdictConfig.neutral;
 
-    const truncatedIngredients =
-      product.ingredients && product.ingredients.length > 200
-        ? product.ingredients.slice(0, 200) + "..."
-        : product.ingredients;
-
     return (
       <View className="flex-1 bg-lumis-black">
         <ScrollView
@@ -271,15 +270,13 @@ export default function ProductScanScreen() {
             </View>
           ) : null}
 
-          {/* Ingredients */}
-          {truncatedIngredients ? (
-            <View className="mt-5">
-              <Text className="text-lumis-white/40 font-body text-xs uppercase tracking-widest mb-2">
-                Ingrédients
+          {/* INCI analysis */}
+          {product.ingredients ? (
+            <View className="mt-6">
+              <Text className="text-lumis-white/40 font-body text-xs uppercase tracking-widest mb-3">
+                🔬 Analyse INCI
               </Text>
-              <Text className="text-lumis-white/30 font-body text-xs leading-relaxed">
-                {truncatedIngredients}
-              </Text>
+              <InciAnalysis ingredients={product.ingredients} skin={skinCtx} />
             </View>
           ) : null}
 
@@ -360,6 +357,13 @@ export default function ProductScanScreen() {
             {error ? (
               <Text className="text-red-400 font-body text-sm text-center mt-3">{error}</Text>
             ) : null}
+            <TouchableOpacity
+              onPress={() => router.push("/products/inci" as any)}
+              style={{ marginTop: 18, borderWidth: 0.5, borderColor: "rgba(255,255,255,0.3)", borderRadius: 14, paddingHorizontal: 18, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 8 }}
+            >
+              <Text style={{ fontSize: 15 }}>🔬</Text>
+              <Text className="text-lumis-white font-body text-sm">Coller une liste INCI</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </CameraView>
