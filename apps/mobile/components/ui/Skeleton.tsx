@@ -57,7 +57,7 @@ export function Skeleton({ width = "100%", height = 20, rounded = "md", style }:
 
 export function SkeletonCard({ lines = 2 }: { lines?: number }) {
   return (
-    <View className="bg-white/5 border border-white/10 rounded-2xl p-5 gap-3">
+    <View className="bg-card border border-line rounded-2xl p-5 gap-3">
       <Skeleton width="60%" height={16} rounded="sm" />
       {Array.from({ length: lines }).map((_, i) => (
         <Skeleton

@@ -131,7 +131,7 @@ export default function SelfieScreen() {
 
             <View className="flex-row gap-3 mb-5">
               {["☀️ Lumière naturelle", "😐 Regard droit", "📵 Sans filtre"].map((tip) => (
-                <View key={tip} className="flex-1 bg-white/5 rounded-xl py-2 px-1 items-center">
+                <View key={tip} className="flex-1 bg-card rounded-xl py-2 px-1 items-center">
                   <Text className="text-lumis-white/45 font-body text-[10px] text-center leading-4">{tip}</Text>
                 </View>
               ))}
@@ -270,7 +270,7 @@ function FaceResultScreen({ result }: { result: FaceProfile }) {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200)} className="flex-row gap-3 mb-4">
-          <View className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 items-center">
+          <View className="flex-1 bg-card border border-line rounded-2xl p-4 items-center">
             <Text className="text-lumis-white/40 font-body text-[10px] uppercase tracking-widest mb-1">
               {t("onboarding.selfie.undertone_label")}
             </Text>
@@ -284,7 +284,7 @@ function FaceResultScreen({ result }: { result: FaceProfile }) {
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(280)} className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-4 flex-row items-center justify-between">
+        <Animated.View entering={FadeInDown.delay(280)} className="bg-card border border-line rounded-2xl p-4 mb-4 flex-row items-center justify-between">
           <View>
             <Text className="text-lumis-white/40 font-body text-[10px] uppercase tracking-widest mb-1">Forme des yeux</Text>
             <Text className="text-lumis-white font-body-medium text-base capitalize">{result.eye_shape}</Text>
@@ -296,7 +296,7 @@ function FaceResultScreen({ result }: { result: FaceProfile }) {
         </Animated.View>
 
         {palette.length > 0 && (
-          <Animated.View entering={FadeInDown.delay(360)} className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-6">
+          <Animated.View entering={FadeInDown.delay(360)} className="bg-card border border-line rounded-2xl p-4 mb-6">
             <Text className="text-lumis-white/40 font-body text-[10px] uppercase tracking-widest mb-3">
               Ta palette saison {seasonLabel}
             </Text>

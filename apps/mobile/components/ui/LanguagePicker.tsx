@@ -18,7 +18,7 @@ export function LanguagePicker() {
     <>
       <TouchableOpacity
         onPress={() => setOpen(true)}
-        className="flex-row items-center gap-1.5 bg-white/10 rounded-full px-3 py-1.5"
+        className="flex-row items-center gap-1.5 bg-card rounded-full px-3 py-1.5"
         activeOpacity={0.8}
       >
         <Text className="text-base">{current.flag}</Text>

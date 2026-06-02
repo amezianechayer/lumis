@@ -39,10 +39,10 @@ export function PrimaryButton({
   const variantClass =
     variant === "gold"
       ? disabled
-        ? "bg-white/10"
+        ? "bg-card"
         : "bg-lumis-gold"
       : variant === "outline"
-      ? "border border-white/20 bg-transparent"
+      ? "border border-line bg-transparent"
       : "bg-transparent";
 
   const textClass =

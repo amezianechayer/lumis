@@ -2,19 +2,23 @@
 module.exports = {
   content: ["./app/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
-        // Design system Lumis (terracotta / cream sur fond sombre)
-        "lumis-black": "#0D0D0F",
-        "lumis-white": "#E8D5C0",
-        "lumis-cream": "#E8D5C0",
-        "lumis-gold": "#C9826B",
-        "lumis-rose": "#C9826B",
+        // Theme-aware tokens (flip via CSS vars on light/dark)
+        "lumis-black": "rgb(var(--bg) / <alpha-value>)",
+        "lumis-white": "rgb(var(--text) / <alpha-value>)",
+        "lumis-cream": "rgb(var(--text) / <alpha-value>)",
+        "lumis-gold": "rgb(var(--primary) / <alpha-value>)",
+        "lumis-rose": "rgb(var(--primary) / <alpha-value>)",
         "lumis-slate": "#9A8A7A",
-        "surface-1": "#0D0D0F",
-        "surface-2": "#161618",
-        "surface-3": "#1E1E20",
+        "surface-1": "rgb(var(--bg) / <alpha-value>)",
+        "surface-2": "rgb(var(--bg) / <alpha-value>)",
+        "surface-3": "rgb(var(--bg) / <alpha-value>)",
+        // Semantic card/border tokens (replace white/X usage)
+        card: "var(--card)",
+        line: "var(--line)",
         success: "#5DCAA5",
         warning: "#E8A35C",
         danger: "#F09595",

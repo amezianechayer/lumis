@@ -27,7 +27,7 @@ export function ProgressBar({ step, total }: Props) {
   }));
 
   return (
-    <View className="h-0.5 bg-white/10 rounded-full overflow-hidden">
+    <View className="h-0.5 bg-card rounded-full overflow-hidden">
       <Animated.View
         style={animatedStyle}
         className="h-full bg-lumis-gold rounded-full"

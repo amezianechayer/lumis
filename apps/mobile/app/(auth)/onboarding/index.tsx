@@ -51,7 +51,7 @@ export default function OnboardingWelcome() {
             <Animated.View
               key={f.titleKey}
               entering={FadeInDown.delay(200 + i * 100).duration(500)}
-              className="flex-row items-start gap-4 bg-white/5 border border-white/10 rounded-2xl px-5 py-4"
+              className="flex-row items-start gap-4 bg-card border border-line rounded-2xl px-5 py-4"
             >
               <View className="w-10 h-10 rounded-xl bg-lumis-gold/15 items-center justify-center">
                 <Text className="text-xl">{f.icon}</Text>

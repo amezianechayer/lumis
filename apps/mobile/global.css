@@ -1,3 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: 237 228 212;        /* #EDE4D4 light */
+    --text: 44 24 16;         /* #2C1810 */
+    --primary: 201 130 107;   /* #C9826B (same both modes) */
+    --card: rgba(255, 255, 255, 0.65);
+    --line: rgba(201, 130, 107, 0.1);
+  }
+
+  .dark:root {
+    --bg: 13 13 15;           /* #0D0D0F dark */
+    --text: 232 213 192;      /* #E8D5C0 */
+    --primary: 201 130 107;
+    --card: rgba(255, 255, 255, 0.04);
+    --line: rgba(232, 213, 192, 0.08);
+  }
+}

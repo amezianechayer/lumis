@@ -251,7 +251,7 @@ export default function CoachScreen() {
               <TouchableOpacity
                 key={s}
                 onPress={() => setInput(s)}
-                className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3"
+                className="bg-card border border-line rounded-2xl px-4 py-3"
                 activeOpacity={0.7}
               >
                 <Text className="text-lumis-white/70 font-body text-sm">{s}</Text>
@@ -281,7 +281,7 @@ export default function CoachScreen() {
                 <View className="w-8 h-8 rounded-full bg-lumis-gold/20 border border-lumis-gold/30 items-center justify-center">
                   <Text className="text-xs">✨</Text>
                 </View>
-                <View className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3">
+                <View className="bg-card border border-line rounded-2xl rounded-tl-sm px-4 py-3">
                   <ActivityIndicator color="#C9826B" size="small" />
                 </View>
               </View>
@@ -293,7 +293,7 @@ export default function CoachScreen() {
       {/* Input bar */}
       <Animated.View
         entering={FadeInDown.delay(200)}
-        className="px-4 py-3 border-t border-white/10 flex-row items-end gap-3"
+        className="px-4 py-3 border-t border-line flex-row items-end gap-3"
       >
         <TextInput
           ref={inputRef}
@@ -344,7 +344,7 @@ function MessageBubble({ message }: { message: LocalMessage }) {
         className={`max-w-[80%] rounded-2xl px-4 py-3 ${
           isUser
             ? "bg-lumis-gold/20 border border-lumis-gold/30 rounded-tr-sm"
-            : "bg-white/5 border border-white/10 rounded-tl-sm"
+            : "bg-card border border-line rounded-tl-sm"
         }`}
       >
         <Text

@@ -176,7 +176,7 @@ function InputField({
     <View>
       <Text className="text-lumis-white/70 font-body-medium text-sm mb-1.5">{label}</Text>
       <TextInput
-        className="bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-lumis-white font-body text-base"
+        className="bg-card border border-line rounded-xl px-4 py-3.5 text-lumis-white font-body text-base"
         placeholder={placeholder}
         placeholderTextColor="#ffffff30"
         keyboardType={keyboardType}

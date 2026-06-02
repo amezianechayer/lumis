@@ -1,19 +1,19 @@
 import { Tabs } from "expo-router";
 import { Text, View, TouchableOpacity } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useThemeColors } from "../../stores/theme.store";
 
 const TERRACOTTA = "#C9826B";
-const CREAM_FAINT = "rgba(232,213,192,0.35)";
 
-function TabIcon({ icon, label, focused }: { icon: string; label: string; focused: boolean }) {
+function TabIcon({ icon, label, focused, faint }: { icon: string; label: string; focused: boolean; faint: string }) {
   return (
     <View style={{ alignItems: "center", justifyContent: "center", paddingTop: 6, gap: 2, width: 64 }}>
-      <Text style={{ fontSize: 18, opacity: focused ? 1 : 0.35 }}>{icon}</Text>
+      <Text style={{ fontSize: 18, opacity: focused ? 1 : 0.4 }}>{icon}</Text>
       <Text
         style={{
           fontSize: 9,
           fontWeight: focused ? "600" : "400",
-          color: focused ? TERRACOTTA : CREAM_FAINT,
+          color: focused ? TERRACOTTA : faint,
           letterSpacing: 0.4,
         }}
         numberOfLines={1}
@@ -25,32 +25,24 @@ function TabIcon({ icon, label, focused }: { icon: string; label: string; focuse
 }
 
 // Central elevated "+" scan button
-function ScanButton({ onPress, focused }: { onPress?: () => void; focused: boolean }) {
+function ScanButton({ onPress, focused, bg, faint }: { onPress?: () => void; focused: boolean; bg: string; faint: string }) {
   return (
     <View style={{ width: 70, alignItems: "center" }}>
       <TouchableOpacity
         onPress={onPress}
         activeOpacity={0.85}
         style={{
-          width: 54,
-          height: 54,
-          borderRadius: 27,
+          width: 54, height: 54, borderRadius: 27,
           backgroundColor: TERRACOTTA,
-          alignItems: "center",
-          justifyContent: "center",
+          alignItems: "center", justifyContent: "center",
           marginTop: -18,
-          shadowColor: TERRACOTTA,
-          shadowOpacity: 0.5,
-          shadowRadius: 12,
-          shadowOffset: { width: 0, height: 4 },
-          elevation: 8,
-          borderWidth: 3,
-          borderColor: "#0D0D0F",
+          shadowColor: TERRACOTTA, shadowOpacity: 0.5, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
+          elevation: 8, borderWidth: 3, borderColor: bg,
         }}
       >
-        <Text style={{ color: "#0D0D0F", fontSize: 30, fontWeight: "300", marginTop: -2 }}>+</Text>
+        <Text style={{ color: "#FFFFFF", fontSize: 30, fontWeight: "300", marginTop: -2 }}>+</Text>
       </TouchableOpacity>
-      <Text style={{ fontSize: 9, fontWeight: focused ? "600" : "400", color: focused ? TERRACOTTA : CREAM_FAINT, letterSpacing: 0.4, marginTop: 2 }}>
+      <Text style={{ fontSize: 9, fontWeight: focused ? "600" : "400", color: focused ? TERRACOTTA : faint, letterSpacing: 0.4, marginTop: 2 }}>
         Scan
       </Text>
     </View>
@@ -59,15 +51,17 @@ function ScanButton({ onPress, focused }: { onPress?: () => void; focused: boole
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
   const tabBarHeight = 58 + insets.bottom;
+  const faint = colors.textFaint;
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: "#0D0D0F",
-          borderTopColor: "rgba(232,213,192,0.08)",
+          backgroundColor: colors.bg,
+          borderTopColor: colors.borderLight,
           borderTopWidth: 0.5,
           height: tabBarHeight,
           paddingBottom: insets.bottom,
@@ -80,13 +74,13 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon icon="🏠" label="Accueil" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon icon="🏠" label="Accueil" focused={focused} faint={faint} />,
         }}
       />
       <Tabs.Screen
         name="coach"
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon icon="✨" label="Coach" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon icon="✨" label="Coach" focused={focused} faint={faint} />,
         }}
       />
       {/* Central scan button */}
@@ -94,20 +88,20 @@ export default function TabsLayout() {
         name="scan"
         options={{
           tabBarButton: (props) => (
-            <ScanButton onPress={props.onPress} focused={props.accessibilityState?.selected ?? false} />
+            <ScanButton onPress={props.onPress} focused={props.accessibilityState?.selected ?? false} bg={colors.bg} faint={faint} />
           ),
         }}
       />
       <Tabs.Screen
         name="recs"
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon icon="💡" label="Conseils" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon icon="💡" label="Conseils" focused={focused} faint={faint} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon icon="👤" label="Profil" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon icon="👤" label="Profil" focused={focused} faint={faint} />,
         }}
       />
       {/* Premium — hidden from tab bar, still reachable via dashboard/profile */}

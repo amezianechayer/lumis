@@ -119,7 +119,7 @@ function ScoreBar({ label, score, icon, type }: {
           <Text style={{ color }} className="font-body-bold text-sm">{score}/100</Text>
         </View>
       </View>
-      <View className="h-2 bg-white/8 rounded-full overflow-hidden">
+      <View className="h-2 bg-card rounded-full overflow-hidden">
         <View className="h-full rounded-full" style={{ width: `${score}%`, backgroundColor: color }} />
       </View>
     </View>
@@ -134,14 +134,14 @@ function Stepper({
   min: number; max: number; step?: number; unit: string; icon: string;
 }) {
   return (
-    <View className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 mb-3">
+    <View className="bg-card border border-line rounded-2xl px-5 py-4 mb-3">
       <Text className="text-lumis-white/50 font-body text-xs uppercase tracking-widest mb-3">
         {icon} {label}
       </Text>
       <View className="flex-row items-center justify-between">
         <TouchableOpacity
           onPress={() => onChange(Math.max(min, parseFloat((value - step).toFixed(1))))}
-          className="w-10 h-10 bg-white/10 rounded-xl items-center justify-center"
+          className="w-10 h-10 bg-card rounded-xl items-center justify-center"
           activeOpacity={0.7}
         >
           <Text className="text-lumis-white text-xl font-bold">−</Text>
@@ -151,7 +151,7 @@ function Stepper({
         </Text>
         <TouchableOpacity
           onPress={() => onChange(Math.min(max, parseFloat((value + step).toFixed(1))))}
-          className="w-10 h-10 bg-white/10 rounded-xl items-center justify-center"
+          className="w-10 h-10 bg-card rounded-xl items-center justify-center"
           activeOpacity={0.7}
         >
           <Text className="text-lumis-white text-xl font-bold">+</Text>
@@ -185,12 +185,12 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
         <Text className="text-lumis-white/40 font-body text-xs">{date}</Text>
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(80)} className="items-center mb-6 bg-white/5 border border-white/10 rounded-3xl p-6">
+      <Animated.View entering={FadeInDown.delay(80)} className="items-center mb-6 bg-card border border-line rounded-3xl p-6">
         <ScoreRing score={scan.overall_score} size={100} />
         <Text className="text-lumis-white/50 font-body text-sm mt-3">Score global de santé</Text>
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(160)} className="bg-white/5 border border-white/10 rounded-3xl p-5 mb-4">
+      <Animated.View entering={FadeInDown.delay(160)} className="bg-card border border-line rounded-3xl p-5 mb-4">
         <Text className="text-lumis-white/40 font-body text-xs uppercase tracking-widest mb-4">Détail</Text>
         <ScoreBar label="Acné" score={scan.acne_score} icon="🔴" type="acne" />
         <ScoreBar label="Hydratation" score={scan.hydration_score} icon="💧" type="hydration" />
@@ -215,7 +215,7 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
       </Animated.View>
 
       {/* Indicateurs qualitatifs */}
-      <Animated.View entering={FadeInDown.delay(300)} className="bg-white/5 border border-white/10 rounded-3xl p-5 mb-4">
+      <Animated.View entering={FadeInDown.delay(300)} className="bg-card border border-line rounded-3xl p-5 mb-4">
         <Text className="text-lumis-white/40 font-body text-xs uppercase tracking-widest mb-4">Indicateurs qualitatifs</Text>
         <View className="flex-row flex-wrap gap-2 mb-3">
           <Tag label={`Pores ${scan.pores_condition}`} warn={scan.pores_condition === "larges"} />
@@ -268,18 +268,18 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
           <View style={{ opacity: isPremium ? 1 : 0.25 }} pointerEvents={isPremium ? "auto" : "none"}>
             {/* Skin age + potential */}
             <View className="flex-row gap-3 mb-3">
-              <View className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 items-center">
+              <View className="flex-1 bg-card border border-line rounded-2xl p-4 items-center">
                 <Text className="text-lumis-white/40 font-body text-[10px] uppercase tracking-widest mb-1">Âge cutané estimé</Text>
                 <Text style={{ color: "#C9826B", fontSize: 28, fontWeight: "700" }}>{skinAge}<Text style={{ fontSize: 13, color: "rgba(232,213,192,0.4)" }}> ans</Text></Text>
               </View>
-              <View className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 items-center">
+              <View className="flex-1 bg-card border border-line rounded-2xl p-4 items-center">
                 <Text className="text-lumis-white/40 font-body text-[10px] uppercase tracking-widest mb-1">Potentiel (8 sem.)</Text>
                 <Text style={{ color: "#5DCAA5", fontSize: 28, fontWeight: "700" }}>{potential}<Text style={{ fontSize: 13, color: "rgba(232,213,192,0.4)" }}>/100</Text></Text>
               </View>
             </View>
 
             {/* Zone-by-zone */}
-            <View className="bg-white/5 border border-white/10 rounded-2xl p-4">
+            <View className="bg-card border border-line rounded-2xl p-4">
               <Text className="text-lumis-white/40 font-body text-[10px] uppercase tracking-widest mb-3">Analyse zone par zone</Text>
               <View style={{ gap: 10 }}>
                 {zones.map((z, i) => (
@@ -311,7 +311,7 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
         </View>
       </Animated.View>
 
-      <Animated.View entering={FadeInDown.delay(340)} className="bg-white/5 border border-white/10 rounded-3xl p-5 mb-6">
+      <Animated.View entering={FadeInDown.delay(340)} className="bg-card border border-line rounded-3xl p-5 mb-6">
         <Text className="text-lumis-white/40 font-body text-xs uppercase tracking-widest mb-3">Données saisies</Text>
         <View className="flex-row gap-3">
           <LifestyleTile icon="🌙" label="Sommeil" value={`${scan.sleep_hours}h`} />
@@ -409,7 +409,7 @@ function buildPriorityActions(scan: SkinScan): { title: string; desc: string }[]
 
 function Tag({ label, warn }: { label: string; warn?: boolean }) {
   return (
-    <View className={`rounded-full px-3 py-1 ${warn ? "bg-orange-500/15 border border-orange-500/30" : "bg-white/8 border border-white/15"}`}>
+    <View className={`rounded-full px-3 py-1 ${warn ? "bg-orange-500/15 border border-orange-500/30" : "bg-card border border-line"}`}>
       <Text className={`font-body text-xs ${warn ? "text-orange-400" : "text-lumis-white/60"}`}>{label}</Text>
     </View>
   );
@@ -417,7 +417,7 @@ function Tag({ label, warn }: { label: string; warn?: boolean }) {
 
 function LifestyleTile({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
-    <View className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-3 items-center">
+    <View className="flex-1 bg-card border border-line rounded-2xl p-3 items-center">
       <Text className="text-xl mb-1">{icon}</Text>
       <Text className="text-lumis-white/40 font-body text-[10px] uppercase tracking-widest mb-0.5">{label}</Text>
       <Text className="text-lumis-white font-body-bold text-sm">{value}</Text>
@@ -472,7 +472,7 @@ function ScanningLoader({ photoUri }: { photoUri: string | null }) {
           {photoUri ? (
             <Image source={{ uri: photoUri }} className="w-full h-full" resizeMode="cover" />
           ) : (
-            <View className="w-full h-full bg-white/5 items-center justify-center">
+            <View className="w-full h-full bg-card items-center justify-center">
               <Text className="text-4xl">🤳</Text>
             </View>
           )}
@@ -501,7 +501,7 @@ function ScanningLoader({ photoUri }: { photoUri: string | null }) {
         </Animated.Text>
 
         {/* Barre de progression indéterminée */}
-        <View className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
+        <View className="w-48 h-1 bg-card rounded-full overflow-hidden">
           <Animated.View
             className="h-full bg-lumis-gold rounded-full"
             style={{ width: "40%" }}
@@ -519,7 +519,7 @@ function HistoryCard({ scan, onPress }: { scan: SkinScan; onPress: () => void })
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.8}
-      className="bg-white/5 border border-white/10 rounded-2xl p-4 flex-row items-center gap-4"
+      className="bg-card border border-line rounded-2xl p-4 flex-row items-center gap-4"
     >
       <View style={{ borderColor: color }} className="w-14 h-14 rounded-full border-2 items-center justify-center">
         <Text style={{ color }} className="font-body-bold text-lg">{scan.overall_score}</Text>
@@ -657,7 +657,7 @@ export default function ScanScreen() {
   if (view === "history") {
     return (
       <SafeAreaView className="flex-1 bg-lumis-black" style={{ paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}>
-        <View className="px-6 pt-4 pb-3 flex-row items-center gap-3 border-b border-white/8">
+        <View className="px-6 pt-4 pb-3 flex-row items-center gap-3 border-b border-line">
           <TouchableOpacity onPress={() => setView("photo")} className="w-8 h-8 items-center justify-center">
             <Text className="text-lumis-white/60 text-xl">←</Text>
           </TouchableOpacity>
@@ -733,7 +733,7 @@ export default function ScanScreen() {
               <Text className="text-lumis-white/50 font-body text-sm mt-1">Analyse IA de ta peau</Text>
             </View>
             {history && history.length > 0 && (
-              <TouchableOpacity onPress={() => setView("history")} className="bg-white/8 border border-white/15 rounded-xl px-3 py-2">
+              <TouchableOpacity onPress={() => setView("history")} className="bg-card border border-line rounded-xl px-3 py-2">
                 <Text className="text-lumis-white/60 font-body text-xs">📊 Historique</Text>
               </TouchableOpacity>
             )}
@@ -741,7 +741,7 @@ export default function ScanScreen() {
 
           {/* Photo guide */}
           <Animated.View entering={FadeInDown.delay(80)} className="items-center mb-8">
-            <View className="w-48 h-48 rounded-3xl border-2 border-lumis-gold/40 items-center justify-center bg-white/5 mb-5">
+            <View className="w-48 h-48 rounded-3xl border-2 border-lumis-gold/40 items-center justify-center bg-card mb-5">
               <Text className="text-6xl mb-2">🤳</Text>
               <Text className="text-lumis-white/40 font-body text-xs text-center px-6">
                 Photo de ton visage ou d'une zone
@@ -749,7 +749,7 @@ export default function ScanScreen() {
             </View>
             <View className="flex-row gap-4 mb-2">
               {["☀️ Bonne lumière", "😐 Face caméra", "🚫 Sans filtre"].map((tip) => (
-                <View key={tip} className="bg-white/5 rounded-xl py-2 px-2 items-center flex-1">
+                <View key={tip} className="bg-card rounded-xl py-2 px-2 items-center flex-1">
                   <Text className="text-lumis-white/40 font-body text-[10px] text-center">{tip}</Text>
                 </View>
               ))}

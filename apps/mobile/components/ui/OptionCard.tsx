@@ -47,7 +47,7 @@ export function OptionCard({
       className={`rounded-2xl border px-5 py-4 flex-row items-center gap-4 ${
         selected
           ? "bg-lumis-gold/15 border-lumis-gold"
-          : "bg-white/5 border-white/10"
+          : "bg-card border-line"
       }`}
     >
       {icon && <Text className="text-2xl">{icon}</Text>}

@@ -149,7 +149,7 @@ export default function PremiumScreen() {
         <Animated.View entering={FadeInDown.delay(300)}>
           <TouchableOpacity
             onPress={handleCustomerCenter}
-            className="border border-white/10 rounded-2xl py-4 items-center"
+            className="border border-line rounded-2xl py-4 items-center"
             activeOpacity={0.8}
           >
             <Text className="text-lumis-white/50 font-body text-sm">
@@ -181,7 +181,7 @@ export default function PremiumScreen() {
 
       {/* Comparaison */}
       <Animated.View entering={FadeInDown.delay(80)} className="mb-8">
-        <View className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-3">
+        <View className="bg-card border border-line rounded-2xl p-5 mb-3">
           <Text className="text-lumis-white/60 font-body-medium text-xs uppercase tracking-widest mb-4">
             Gratuit
           </Text>
@@ -230,7 +230,7 @@ export default function PremiumScreen() {
                 className={`rounded-2xl p-4 border ${
                   isYearly
                     ? "bg-lumis-gold/15 border-lumis-gold/50"
-                    : "bg-white/5 border-white/10"
+                    : "bg-card border-line"
                 }`}
                 activeOpacity={0.8}
               >

@@ -25,7 +25,7 @@ export function PremiumGateModal({ visible, onClose, title, message, used, limit
           <TouchableWithoutFeedback>
             <Animated.View
               entering={SlideInDown.springify().damping(18)}
-              className="w-full max-w-sm mx-6 bg-[#111111] border border-white/10 rounded-3xl p-6"
+              className="w-full max-w-sm mx-6 bg-[#111111] border border-line rounded-3xl p-6"
               style={{ marginHorizontal: 24 }}
             >
               {/* Icon */}
@@ -41,7 +41,7 @@ export function PremiumGateModal({ visible, onClose, title, message, used, limit
                     <Text className="text-lumis-white/40 font-body text-xs">Utilisé</Text>
                     <Text className="text-lumis-white/60 font-body-medium text-xs">{used}/{limit}</Text>
                   </View>
-                  <View className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <View className="h-1.5 bg-card rounded-full overflow-hidden">
                     <View
                       className="h-full bg-lumis-gold rounded-full"
                       style={{ width: `${Math.min((used / limit) * 100, 100)}%` }}

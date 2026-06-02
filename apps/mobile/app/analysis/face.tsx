@@ -150,7 +150,7 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
         {/* Undertone + Season avec explications */}
         <Animated.View entering={FadeInDown.delay(160)} className="mb-4">
           <View className="flex-row gap-3 mb-3">
-            <View className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4">
+            <View className="flex-1 bg-card border border-line rounded-2xl p-4">
               <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>
                 Sous-ton de peau
               </Text>
@@ -189,7 +189,7 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
         {palette.length > 0 && (
           <Animated.View
             entering={FadeInDown.delay(200)}
-            className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-4"
+            className="bg-card border border-line rounded-2xl p-4 mb-4"
           >
             <Text className="text-lumis-white/40 font-body text-[10px] uppercase tracking-widest mb-1">
               Ta palette de couleurs à porter
@@ -265,14 +265,14 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
         {profile.haircut_recommendations && profile.haircut_recommendations.length > 0 && (
           <Animated.View
             entering={FadeInDown.delay(340)}
-            className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-4"
+            className="bg-card border border-line rounded-2xl p-4 mb-4"
           >
             <Text className="text-lumis-white/40 font-body text-xs uppercase tracking-widest mb-3">
               Coupes recommandées
             </Text>
             <View className="flex-row flex-wrap gap-2">
               {profile.haircut_recommendations.map((r) => (
-                <View key={r} className="bg-white/10 rounded-full px-3 py-1.5">
+                <View key={r} className="bg-card rounded-full px-3 py-1.5">
                   <Text className="text-lumis-white/70 font-body text-xs">{r.replace(/_/g, " ")}</Text>
                 </View>
               ))}
@@ -281,7 +281,7 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
         )}
 
         {/* ─── Guide maquillage / grooming par forme de visage ─── */}
-        <Animated.View entering={FadeInDown.delay(380)} className="bg-white/5 border border-white/10 rounded-2xl p-5 mb-4">
+        <Animated.View entering={FadeInDown.delay(380)} className="bg-card border border-line rounded-2xl p-5 mb-4">
           <Text className="text-lumis-gold font-body-bold text-xs uppercase tracking-widest mb-1">
             {isMale ? "💈 Guide grooming" : "💄 Guide maquillage"}
           </Text>
@@ -401,7 +401,7 @@ function InfoTile({ label, value, gold }: { label: string; value: string; gold: 
   return (
     <View
       className={`flex-1 rounded-2xl p-4 items-center border ${
-        gold ? "bg-lumis-gold/10 border-lumis-gold/30" : "bg-white/5 border-white/10"
+        gold ? "bg-lumis-gold/10 border-lumis-gold/30" : "bg-card border-line"
       }`}
     >
       <Text className={`font-body text-[10px] uppercase tracking-widest mb-1 ${gold ? "text-lumis-gold/60" : "text-lumis-white/40"}`}>
@@ -416,7 +416,7 @@ function InfoTile({ label, value, gold }: { label: string; value: string; gold: 
 
 function FeatureTile({ label, value }: { label: string; value: string }) {
   return (
-    <View className="bg-white/5 border border-white/8 rounded-xl p-3 items-center" style={{ width: "30.5%" }}>
+    <View className="bg-card border border-line rounded-xl p-3 items-center" style={{ width: "30.5%" }}>
       <Text className="text-lumis-white/35 font-body text-[9px] uppercase tracking-widest mb-0.5">
         {label}
       </Text>

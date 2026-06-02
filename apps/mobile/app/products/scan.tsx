@@ -182,7 +182,7 @@ export default function ProductScanScreen() {
           ) : null}
 
           {/* Score + Verdict */}
-          <View className="flex-row items-center gap-4 mt-6 bg-white/5 border border-white/10 rounded-2xl p-5">
+          <View className="flex-row items-center gap-4 mt-6 bg-card border border-line rounded-2xl p-5">
             {/* Score circle */}
             <View
               style={{

@@ -10,10 +10,9 @@ import Animated, {
   interpolate,
   Easing,
 } from "react-native-reanimated";
+import { useThemeColors } from "../../stores/theme.store";
 
-const BG = "#0D0D0F";
 const TERRACOTTA = "#C9826B";
-const CREAM = "#E8D5C0";
 
 interface Props {
   size?: number;
@@ -21,6 +20,7 @@ interface Props {
 }
 
 export function LumisLogo({ size = 80, showWordmark = false }: Props) {
+  const colors = useThemeColors();
   const cx = size / 2;
   const cy = size / 2;
   const ringR = size * 0.229;
@@ -125,7 +125,7 @@ export function LumisLogo({ size = 80, showWordmark = false }: Props) {
         {/* Circular background */}
         <View style={layer}>
           <Svg width={size} height={size}>
-            <Circle cx={cx} cy={cy} r={size / 2} fill={BG} />
+            <Circle cx={cx} cy={cy} r={size / 2} fill={colors.logoBg} />
           </Svg>
         </View>
 
@@ -193,7 +193,7 @@ export function LumisLogo({ size = 80, showWordmark = false }: Props) {
       {/* Wordmark */}
       {showWordmark && (
         <View style={styles.wordmarkWrap}>
-          <Text style={styles.wordmark}>LUMIS</Text>
+          <Text style={[styles.wordmark, { color: colors.text }]}>LUMIS</Text>
           <Text style={styles.tagline}>your skin. your light.</Text>
         </View>
       )}
@@ -207,7 +207,6 @@ const styles = StyleSheet.create({
     marginTop: 18,
   },
   wordmark: {
-    color: CREAM,
     fontSize: 28,
     fontWeight: "300",
     letterSpacing: 4,

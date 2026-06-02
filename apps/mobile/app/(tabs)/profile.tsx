@@ -1,9 +1,10 @@
-import { View, Text, TouchableOpacity, ScrollView, Alert } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Alert, Switch } from "react-native";
 import { router } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../../stores/auth.store";
 import { useLanguageStore } from "../../stores/language.store";
+import { useThemeStore } from "../../stores/theme.store";
 import { LanguagePicker } from "../../components/ui/LanguagePicker";
 import { t } from "../../utils/i18n";
 import { api } from "../../services/api";
@@ -99,7 +100,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Total scans */}
-        <View className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 items-center">
+        <View className="flex-1 bg-card border border-line rounded-2xl p-4 items-center">
           <Text className="text-lumis-white/40 font-body text-[9px] uppercase tracking-widest mb-1">Scans</Text>
           {skinLoading ? (
             <Skeleton width={32} height={28} />
@@ -110,7 +111,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* Streak */}
-        <View className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 items-center">
+        <View className="flex-1 bg-card border border-line rounded-2xl p-4 items-center">
           <Text className="text-lumis-white/40 font-body text-[9px] uppercase tracking-widest mb-1">Streak</Text>
           {skinLoading ? (
             <Skeleton width={32} height={28} />
@@ -125,7 +126,7 @@ export default function ProfileScreen() {
       {faceProfile && (
         <Animated.View
           entering={FadeInDown.delay(140)}
-          className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 mb-4 flex-row items-center justify-between"
+          className="bg-card border border-line rounded-2xl px-5 py-4 mb-4 flex-row items-center justify-between"
         >
           <View>
             <Text className="text-lumis-white/40 font-body text-[10px] uppercase tracking-widest mb-1">Profil facial</Text>
@@ -151,12 +152,13 @@ export default function ProfileScreen() {
           value={user?.premium_until ? t("profile.premium") : t("profile.free")}
           valueColor={user?.premium_until ? "#C9826B" : undefined}
         />
-        <View className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4 flex-row items-center justify-between">
+        <View className="bg-card border border-line rounded-2xl px-5 py-4 flex-row items-center justify-between">
           <Text className="text-lumis-white/50 font-body text-xs uppercase tracking-widest">
             {t("profile.language")}
           </Text>
           <LanguagePicker />
         </View>
+        <DarkModeRow />
       </Animated.View>
 
       {/* Objectifs */}
@@ -210,9 +212,30 @@ export default function ProfileScreen() {
 
 function InfoRow({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
   return (
-    <View className="bg-white/5 border border-white/10 rounded-2xl px-5 py-4">
+    <View className="bg-card border border-line rounded-2xl px-5 py-4">
       <Text className="text-lumis-white/50 font-body text-xs uppercase tracking-widest mb-1">{label}</Text>
-      <Text className="font-body-medium text-base" style={{ color: valueColor ?? "#FAFAF8" }}>{value}</Text>
+      <Text className="font-body-medium text-base text-lumis-white" style={valueColor ? { color: valueColor } : undefined}>{value}</Text>
+    </View>
+  );
+}
+
+function DarkModeRow() {
+  const { mode, toggle } = useThemeStore();
+  const isDark = mode === "dark";
+  return (
+    <View className="bg-card border border-line rounded-2xl px-5 py-4 flex-row items-center justify-between">
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <Text style={{ fontSize: 18 }}>{isDark ? "🌙" : "☀️"}</Text>
+        <Text className="text-lumis-white/50 font-body text-xs uppercase tracking-widest">
+          {isDark ? "Mode sombre" : "Mode clair"}
+        </Text>
+      </View>
+      <Switch
+        value={isDark}
+        onValueChange={toggle}
+        trackColor={{ false: "rgba(201,130,107,0.3)", true: "rgba(201,130,107,0.5)" }}
+        thumbColor="#C9826B"
+      />
     </View>
   );
 }

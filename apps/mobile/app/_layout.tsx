@@ -17,6 +17,7 @@ import { useAuthStore } from "../stores/auth.store";
 import { initRevenueCat } from "../services/revenuecat";
 // Initialize language store on boot (restores persisted locale)
 import "../stores/language.store";
+import { useThemeStore } from "../stores/theme.store";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,6 +32,7 @@ const queryClient = new QueryClient({
 
 export default function RootLayout() {
   const { checkAuth } = useAuthStore();
+  const { mode, colors } = useThemeStore();
 
   const [fontsLoaded, fontError] = useFonts({
     PlayfairDisplay_700Bold,
@@ -59,7 +61,7 @@ export default function RootLayout() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <StatusBar style="light" backgroundColor="#0D0D0F" />
+      <StatusBar style={mode === "dark" ? "light" : "dark"} backgroundColor={colors.bg} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
