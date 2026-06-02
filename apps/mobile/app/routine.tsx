@@ -3,9 +3,13 @@ import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from "rea
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import Svg, { Circle } from "react-native-svg";
 import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { api } from "../services/api";
 import { RoutineStatus } from "../types/api";
+import { useThemeColors } from "../stores/theme.store";
+
+const TERRACOTTA = "#C9826B";
 
 const MORNING_STEPS = [
   { icon: "🧼", title: "Nettoyant doux", desc: "Nettoie en douceur pour retirer le sébum de la nuit." },
@@ -21,6 +25,46 @@ const EVENING_STEPS = [
   { icon: "🌿", title: "Crème de nuit", desc: "Nourrit et répare pendant le sommeil." },
 ];
 
+// Streak milestones for motivation
+const MILESTONES = [3, 7, 14, 30, 60, 100];
+function nextMilestone(streak: number): number {
+  return MILESTONES.find((m) => m > streak) ?? streak + 30;
+}
+function streakMessage(streak: number): string {
+  if (streak === 0) return "Commence ta série aujourd'hui ✨";
+  if (streak < 3) return "Bon départ, continue !";
+  if (streak < 7) return "Tu prends le rythme 🔥";
+  if (streak < 14) return "Une vraie habitude se forme !";
+  if (streak < 30) return "Impressionnant, ne lâche rien !";
+  return "Légende du skincare 👑";
+}
+
+// ─── Daily progress ring ─────────────────────────────────────────────────────
+function ProgressRing({ done, total }: { done: number; total: number }) {
+  const c = useThemeColors();
+  const size = 130;
+  const stroke = 10;
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const progress = total > 0 ? done / total : 0;
+  return (
+    <View style={{ width: size, height: size, alignItems: "center", justifyContent: "center" }}>
+      <Svg width={size} height={size} style={{ position: "absolute" }}>
+        <Circle cx={size / 2} cy={size / 2} r={r} stroke={c.borderLight} strokeWidth={stroke} fill="none" />
+        <Circle
+          cx={size / 2} cy={size / 2} r={r}
+          stroke={progress === 1 ? "#5DCAA5" : TERRACOTTA} strokeWidth={stroke} fill="none"
+          strokeDasharray={circ} strokeDashoffset={circ * (1 - progress)}
+          strokeLinecap="round" transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        />
+      </Svg>
+      <Text style={{ fontSize: 30 }}>{progress === 1 ? "🎉" : "🔥"}</Text>
+      <Text style={{ color: c.text, fontSize: 14, fontWeight: "700", marginTop: 2 }}>{done}/{total}</Text>
+      <Text style={{ color: c.textFaint, fontSize: 10 }}>aujourd'hui</Text>
+    </View>
+  );
+}
+
 function RoutineSection({
   title, emoji, steps, done, onToggle, busy, accent,
 }: {
@@ -28,15 +72,16 @@ function RoutineSection({
   steps: { icon: string; title: string; desc: string }[];
   done: boolean; onToggle: () => void; busy: boolean; accent: string;
 }) {
+  const c = useThemeColors();
   return (
     <Animated.View entering={FadeInDown.delay(80)} style={{
-      backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5,
-      borderColor: done ? `${accent}50` : "rgba(201,130,107,0.12)",
+      backgroundColor: c.bgCard, borderWidth: 0.5,
+      borderColor: done ? `${accent}60` : c.borderLight,
       borderRadius: 20, padding: 18, marginBottom: 16,
     }}>
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 14 }}>
         <Text style={{ fontSize: 22, marginRight: 8 }}>{emoji}</Text>
-        <Text style={{ color: "#fff", fontSize: 17, fontWeight: "700", flex: 1 }}>{title}</Text>
+        <Text style={{ color: c.text, fontSize: 17, fontWeight: "700", flex: 1 }}>{title}</Text>
         {done && <Text style={{ color: accent, fontSize: 13, fontWeight: "700" }}>✓ Fait</Text>}
       </View>
 
@@ -45,8 +90,8 @@ function RoutineSection({
           <View key={i} style={{ flexDirection: "row", gap: 10, alignItems: "flex-start", opacity: done ? 0.6 : 1 }}>
             <Text style={{ fontSize: 16 }}>{s.icon}</Text>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: "#fff", fontSize: 13, fontWeight: "600" }}>{s.title}</Text>
-              <Text style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, lineHeight: 17 }}>{s.desc}</Text>
+              <Text style={{ color: c.text, fontSize: 13, fontWeight: "600" }}>{s.title}</Text>
+              <Text style={{ color: c.textMuted, fontSize: 12, lineHeight: 17 }}>{s.desc}</Text>
             </View>
           </View>
         ))}
@@ -58,14 +103,14 @@ function RoutineSection({
         activeOpacity={0.85}
         style={{
           borderRadius: 14, paddingVertical: 13, alignItems: "center",
-          backgroundColor: done ? "rgba(255,255,255,0.55)" : accent,
-          borderWidth: done ? 1 : 0, borderColor: "rgba(255,255,255,0.15)",
+          backgroundColor: done ? c.bgCard : accent,
+          borderWidth: done ? 0.5 : 0, borderColor: c.border,
         }}
       >
         {busy ? (
-          <ActivityIndicator color={done ? "#fff" : "#EDE4D4"} size="small" />
+          <ActivityIndicator color={done ? c.text : "#fff"} size="small" />
         ) : (
-          <Text style={{ color: done ? "rgba(255,255,255,0.6)" : "#EDE4D4", fontWeight: "700", fontSize: 14 }}>
+          <Text style={{ color: done ? c.textMuted : "#fff", fontWeight: "700", fontSize: 14 }}>
             {done ? "Annuler" : "Marquer comme fait ✓"}
           </Text>
         )}
@@ -76,7 +121,9 @@ function RoutineSection({
 
 export default function RoutineScreen() {
   const router = useRouter();
+  const c = useThemeColors();
   const queryClient = useQueryClient();
+  const [busyPeriod, setBusyPeriod] = useState<"morning" | "evening" | null>(null);
 
   const { data: status, isLoading } = useQuery({
     queryKey: ["routine-status"],
@@ -84,49 +131,65 @@ export default function RoutineScreen() {
   });
 
   const mutation = useMutation({
-    mutationFn: async ({ period, done }: { period: "morning" | "evening"; done: boolean }) => {
-      return done ? api.uncompleteRoutine(period) : api.completeRoutine(period);
-    },
+    mutationFn: async ({ period, done }: { period: "morning" | "evening"; done: boolean }) =>
+      done ? api.uncompleteRoutine(period) : api.completeRoutine(period),
     onSuccess: (data: RoutineStatus) => {
       queryClient.setQueryData(["routine-status"], data);
     },
   });
-
-  const [busyPeriod, setBusyPeriod] = useState<"morning" | "evening" | null>(null);
 
   const toggle = (period: "morning" | "evening", done: boolean) => {
     setBusyPeriod(period);
     mutation.mutate({ period, done }, { onSettled: () => setBusyPeriod(null) });
   };
 
+  const doneToday = (status?.morning_done ? 1 : 0) + (status?.evening_done ? 1 : 0);
+  const streak = status?.streak ?? 0;
+  const target = nextMilestone(streak);
+  const toGo = target - streak;
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 6, paddingBottom: 8 }}>
         <TouchableOpacity onPress={() => router.back()} style={{ padding: 6, marginRight: 6 }}>
-          <Text style={{ color: "#C9826B", fontSize: 22 }}>←</Text>
+          <Text style={{ color: TERRACOTTA, fontSize: 22 }}>←</Text>
         </TouchableOpacity>
-        <Text style={{ color: "#fff", fontWeight: "700", fontSize: 18 }}>Ma routine</Text>
+        <Text style={{ color: c.text, fontWeight: "700", fontSize: 18 }}>Ma routine</Text>
       </View>
 
       {isLoading || !status ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <ActivityIndicator color="#C9826B" size="large" />
+          <ActivityIndicator color={TERRACOTTA} size="large" />
         </View>
       ) : (
         <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
-          {/* Streak banner */}
+          {/* Hero: progress ring + streak */}
           <Animated.View entering={FadeIn} style={{
-            backgroundColor: "rgba(201,168,76,0.12)", borderWidth: 0.5, borderColor: "rgba(201,168,76,0.35)",
-            borderRadius: 20, padding: 20, marginBottom: 20, alignItems: "center",
+            backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.border,
+            borderRadius: 24, padding: 20, marginBottom: 16, flexDirection: "row", alignItems: "center", gap: 16,
           }}>
-            <Text style={{ fontSize: 40 }}>🔥</Text>
-            <Text style={{ color: "#C9826B", fontSize: 34, fontWeight: "800", marginTop: 4 }}>{status.streak}</Text>
-            <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 14 }}>
-              {status.streak === 0 ? "Commence ta série aujourd'hui !" : `jour${status.streak > 1 ? "s" : ""} d'affilée`}
-            </Text>
-            <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 12, marginTop: 6 }}>
-              {status.total_completed} routines complétées au total
-            </Text>
+            <ProgressRing done={doneToday} total={2} />
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: "row", alignItems: "baseline", gap: 6 }}>
+                <Text style={{ color: TERRACOTTA, fontSize: 32, fontWeight: "800" }}>{streak}</Text>
+                <Text style={{ color: c.textMuted, fontSize: 13 }}>jour{streak > 1 ? "s" : ""} 🔥</Text>
+              </View>
+              <Text style={{ color: c.text, fontSize: 13, fontWeight: "600", marginTop: 2 }}>{streakMessage(streak)}</Text>
+              <Text style={{ color: c.textFaint, fontSize: 11, marginTop: 6 }}>
+                {toGo > 0 ? `Plus que ${toGo} j pour atteindre ${target} jours` : ""}
+              </Text>
+            </View>
+          </Animated.View>
+
+          {/* Milestone progress bar */}
+          <Animated.View entering={FadeInDown.delay(40)} style={{ marginBottom: 20 }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 6 }}>
+              <Text style={{ color: c.textFaint, fontSize: 11 }}>Objectif {target} jours</Text>
+              <Text style={{ color: TERRACOTTA, fontSize: 11, fontWeight: "600" }}>{Math.round((streak / target) * 100)}%</Text>
+            </View>
+            <View style={{ height: 8, backgroundColor: c.borderLight, borderRadius: 4, overflow: "hidden" }}>
+              <View style={{ height: "100%", width: `${Math.min(100, (streak / target) * 100)}%`, backgroundColor: TERRACOTTA, borderRadius: 4 }} />
+            </View>
           </Animated.View>
 
           <RoutineSection
@@ -141,12 +204,16 @@ export default function RoutineScreen() {
           />
 
           {status.morning_done && status.evening_done && (
-            <Animated.View entering={FadeIn} style={{ alignItems: "center", marginTop: 8 }}>
-              <Text style={{ color: "#4ade80", fontSize: 14, fontWeight: "600", textAlign: "center" }}>
-                🎉 Routine complète aujourd'hui ! Continue comme ça.
+            <Animated.View entering={FadeIn} style={{ alignItems: "center", marginTop: 8, backgroundColor: "rgba(93,202,165,0.12)", borderRadius: 16, padding: 16 }}>
+              <Text style={{ color: "#5DCAA5", fontSize: 14, fontWeight: "700", textAlign: "center" }}>
+                🎉 Journée complète ! +1 jour de série. Reviens demain.
               </Text>
             </Animated.View>
           )}
+
+          <Text style={{ color: c.textFaint, fontSize: 11, textAlign: "center", marginTop: 16 }}>
+            {status.total_completed} routines complétées au total
+          </Text>
         </ScrollView>
       )}
     </SafeAreaView>
