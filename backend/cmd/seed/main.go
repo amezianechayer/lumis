@@ -50,7 +50,7 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	profileRepo := repository.NewFaceProfileRepository(db)
 	recRepo := repository.NewRecommendationRepository(db)
-	recSvc := services.NewRecommendationService(recRepo, profileRepo, userRepo, nil, "")
+	recSvc := services.NewRecommendationService(recRepo, profileRepo, userRepo, nil, nil, "", nil)
 
 	// ─── Seed users ───────────────────────────────────────────────────
 	users := []struct {

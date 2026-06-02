@@ -72,6 +72,109 @@ export function analyzeColorLocally(avgR: number, avgG: number, avgB: number): L
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// ─── AI INCI analysis (photo OCR + ingredient analysis) ───────────────────────
+export interface AiInciIngredient {
+  name: string;
+  fonction: string;                       // function in French
+  rating: "good" | "ok" | "caution";
+  comedogenic: number;                    // 0-5
+  concern?: string;                       // why flagged for this user (or empty)
+}
+
+export interface AiInciResult {
+  productGuess?: string;                   // guessed product name (photo)
+  ingredients: AiInciIngredient[];
+  alerts: string[];                        // personalized warnings
+  verdict: "excellent" | "good" | "neutral" | "avoid";
+  score: number;                           // 0-100 skin compatibility
+  summary: string;
+}
+
+export interface InciSkinContext {
+  skinType?: string;       // normal | oily | dry | combination | sensitive
+  acneProne?: boolean;
+  age?: number;
+}
+
+function inciPrompt(ctx: InciSkinContext, fromImage: boolean): string {
+  const profile = [
+    ctx.skinType ? `type de peau: ${ctx.skinType}` : "",
+    ctx.acneProne ? "peau à tendance acnéique" : "",
+    ctx.age ? `âge: ${ctx.age} ans` : "",
+  ].filter(Boolean).join(", ") || "profil non précisé";
+
+  return `Tu es un expert cosmétologue spécialiste de l'analyse INCI (liste d'ingrédients cosmétiques).
+${fromImage
+    ? "Lis la liste d'ingrédients (INCI) visible sur cette photo d'emballage de produit."
+    : "Analyse la liste d'ingrédients (INCI) fournie."}
+Profil de l'utilisateur : ${profile}.
+
+Pour CHAQUE ingrédient identifié :
+- donne sa fonction en français (ex: hydratant, conservateur, tensioactif, parfum, filtre UV, actif…)
+- une note de comédogénicité de 0 à 5
+- un "rating": "good" (bon/sûr), "ok" (modéré), ou "caution" (à surveiller)
+- "concern": SI l'ingrédient pose problème POUR CE PROFIL précis, explique pourquoi en une courte phrase (sinon "")
+
+Puis donne des "alerts" : alertes personnalisées pour CE profil de peau (allergènes, irritants, comédogènes, asséchants pertinents).
+Donne un "verdict" global, un "score" de compatibilité 0-100, et un "summary" (2 phrases max).
+Ne fais aucun diagnostic médical.
+
+Réponds UNIQUEMENT en JSON valide brut (sans markdown), format :
+{
+  "productGuess": "<nom du produit si visible, sinon ''>",
+  "ingredients": [
+    { "name": "<INCI>", "fonction": "<fonction>", "rating": "good|ok|caution", "comedogenic": 0, "concern": "" }
+  ],
+  "alerts": ["<alerte perso>"],
+  "verdict": "excellent|good|neutral|avoid",
+  "score": 0,
+  "summary": "<résumé>"
+}`;
+}
+
+export async function analyzeInciWithGemini(
+  opts: { imageBase64?: string; text?: string; skin?: InciSkinContext }
+): Promise<AiInciResult> {
+  const ctx = opts.skin ?? {};
+  const fromImage = !!opts.imageBase64;
+  const prompt = inciPrompt(ctx, fromImage);
+
+  const parts: any[] = [];
+  if (fromImage) parts.push({ inlineData: { mimeType: "image/jpeg", data: opts.imageBase64! } });
+  parts.push({ text: fromImage ? prompt : `${prompt}\n\nListe INCI :\n${opts.text ?? ""}` });
+
+  const MAX_RETRIES = 3;
+  const BASE_DELAY_MS = 2500;
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      const result = await model.generateContent(parts);
+      const text = result.response.text().trim();
+      const cleaned = text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+      const parsed: AiInciResult = JSON.parse(cleaned);
+      // sanitize
+      parsed.ingredients = Array.isArray(parsed.ingredients) ? parsed.ingredients : [];
+      parsed.alerts = Array.isArray(parsed.alerts) ? parsed.alerts : [];
+      parsed.score = Math.max(0, Math.min(100, Math.round(parsed.score || 0)));
+      return parsed;
+    } catch (err: unknown) {
+      lastError = err;
+      const isQuota = err instanceof Error && (err.message.includes("429") || err.message.toLowerCase().includes("quota"));
+      if (isQuota && attempt < MAX_RETRIES - 1) {
+        await sleep(BASE_DELAY_MS * Math.pow(2, attempt));
+        continue;
+      }
+      break;
+    }
+  }
+  const errMsg = lastError instanceof Error ? lastError.message : String(lastError);
+  if (errMsg.includes("429") || errMsg.toLowerCase().includes("quota")) {
+    throw new Error("Quota IA dépassé. Réessaie dans quelques minutes.");
+  }
+  throw new Error("Analyse IA impossible. Vérifie la photo/le texte et réessaie.");
+}
+
 // ─── Gemini Flash 2.0 analysis ────────────────────────────────────────────────
 export async function analyzeSkinWithGemini(
   imageBase64: string

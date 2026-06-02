@@ -362,7 +362,7 @@ export default function ProductScanScreen() {
               style={{ marginTop: 18, borderWidth: 0.5, borderColor: "rgba(255,255,255,0.3)", borderRadius: 14, paddingHorizontal: 18, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 8 }}
             >
               <Text style={{ fontSize: 15 }}>🔬</Text>
-              <Text className="text-lumis-white font-body text-sm">Coller une liste INCI</Text>
+              <Text className="text-lumis-white font-body text-sm">Analyse INCI par IA (photo)</Text>
             </TouchableOpacity>
           </View>
         </View>
