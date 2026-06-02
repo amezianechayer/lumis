@@ -317,8 +317,20 @@ func (s *RecommendationService) generateAllWithGroq(
 		sb.WriteString("\n")
 	}
 
+	// Required recommendation types depend on gender
+	isMale := gender == "male" || gender == "homme"
+	var typesList string
+	if isMale {
+		typesList = "skincare, skincare_advanced, haircut, grooming, color_season"
+		sb.WriteString("## IMPORTANT — Profil MASCULIN : INTERDICTION absolue de recommandations de maquillage (makeup). Remplace par soins/grooming masculins.\n\n")
+	} else {
+		typesList = "skincare, makeup, haircut, skincare_advanced, color_season"
+		sb.WriteString("## IMPORTANT — Profil FÉMININ : pas de grooming barbe. Focus skincare, makeup, coiffure, couleurs.\n\n")
+	}
+
 	sb.WriteString(`## Instructions STRICTES
-Génère EXACTEMENT 5 recommandations ultra-personnalisées, une par type : skincare, makeup, haircut, grooming, color_season.
+Génère EXACTEMENT 5 recommandations ultra-personnalisées, une par type : ` + typesList + `.
+(skincare_advanced = une 2e routine skincare ciblée sur le problème principal détecté.)
 
 RÈGLES ABSOLUES :
 1. INTERDICTION de conseils génériques comme "hydrate ta peau" sans mentionner POURQUOI selon les données (score, zone, problème détecté).
@@ -446,9 +458,16 @@ Génère 4-6 étapes et 3-5 produits par recommandation. Types requis : skincare
 		prodsJSON, _ := json.Marshal(p.Products)
 
 		recType := p.Type
-		validTypes := map[string]bool{"skincare": true, "makeup": true, "haircut": true, "grooming": true, "color_season": true}
+		validTypes := map[string]bool{"skincare": true, "skincare_advanced": true, "makeup": true, "haircut": true, "grooming": true, "color_season": true}
 		if !validTypes[recType] {
 			recType = "skincare"
+		}
+		// Safety: never show makeup to men, nor beard grooming to women
+		if isMale && recType == "makeup" {
+			recType = "skincare_advanced"
+		}
+		if !isMale && recType == "grooming" {
+			recType = "makeup"
 		}
 
 		difficulty := p.Difficulty
@@ -458,8 +477,11 @@ Génère 4-6 étapes et 3-5 produits par recommandation. Types requis : skincare
 
 		icon := p.Icon
 		if icon == "" {
-			icons := map[string]string{"skincare": "🌿", "makeup": "💄", "haircut": "✂️", "grooming": "🧔", "color_season": "🎨"}
+			icons := map[string]string{"skincare": "🌿", "skincare_advanced": "🧪", "makeup": "💄", "haircut": "✂️", "grooming": "🧔", "color_season": "🎨"}
 			icon = icons[recType]
+			if icon == "" {
+				icon = "🌿"
+			}
 		}
 
 		occasions := p.Occasions
@@ -530,6 +552,7 @@ func buildFallbackRecs(userID uuid.UUID, profile *models.FaceProfile, user *mode
 	defaultProds, _ := json.Marshal(fallbackProds)
 
 	skincareTitle, skincareSum := buildSkincareTitle(scan, skinType)
+	isMale := gender == "male" || gender == "homme"
 
 	recs := []models.Recommendation{
 		{
@@ -538,31 +561,45 @@ func buildFallbackRecs(userID uuid.UUID, profile *models.FaceProfile, user *mode
 			Steps: models.JSON(defaultSteps), Products: models.JSON(defaultProds),
 			Occasions: pq.StringArray{"daily"}, IconEmoji: "🌿", DurationMin: 8, Difficulty: "easy",
 		},
-		{
-			UserID: userID, Type: "makeup", GenderTarget: "all",
+	}
+
+	// Gender-specific 2nd recommendation: men → grooming, women → makeup
+	if isMale {
+		recs = append(recs, models.Recommendation{
+			UserID: userID, Type: "grooming", GenderTarget: "male",
+			Title: "Routine Barbe & Soin", Summary: "Les gestes essentiels pour une barbe nette et une peau saine.",
+			Steps: models.JSON(defaultSteps), Products: models.JSON(defaultProds),
+			Occasions: pq.StringArray{"daily"}, IconEmoji: "🧔", DurationMin: 5, Difficulty: "easy",
+		})
+	} else {
+		recs = append(recs, models.Recommendation{
+			UserID: userID, Type: "makeup", GenderTarget: "female",
 			Title: makeupTitle, Summary: makeupSummary,
 			Steps: models.JSON(defaultSteps), Products: models.JSON(defaultProds),
 			Occasions: pq.StringArray{"daily"}, IconEmoji: "💄", DurationMin: 5, Difficulty: "easy",
-		},
-		{
+		})
+	}
+
+	recs = append(recs,
+		models.Recommendation{
 			UserID: userID, Type: "haircut", GenderTarget: "all",
 			Title: "Coupe Adaptée à Ton Visage", Summary: "Une coupe qui met en valeur tes traits naturels.",
 			Steps: models.JSON(defaultSteps), Products: models.JSON(defaultProds),
 			Occasions: pq.StringArray{"daily"}, IconEmoji: "✂️", DurationMin: 0, Difficulty: "easy",
 		},
-		{
-			UserID: userID, Type: "grooming", GenderTarget: "all",
-			Title: "Entretien & Finitions", Summary: "Les gestes essentiels pour un look soigné au quotidien.",
+		models.Recommendation{
+			UserID: userID, Type: "skincare_advanced", GenderTarget: "all",
+			Title: "Soin Ciblé Anti-Imperfections", Summary: "Une routine complémentaire ciblée sur tes besoins spécifiques détectés.",
 			Steps: models.JSON(defaultSteps), Products: models.JSON(defaultProds),
-			Occasions: pq.StringArray{"daily"}, IconEmoji: "🧔", DurationMin: 5, Difficulty: "easy",
+			Occasions: pq.StringArray{"evening"}, IconEmoji: "🧪", DurationMin: 5, Difficulty: "medium",
 		},
-		{
+		models.Recommendation{
 			UserID: userID, Type: "color_season", GenderTarget: "all",
 			Title: "Ta Palette de Couleurs", Summary: "Les couleurs qui subliment naturellement ton teint et tes yeux.",
 			Steps: models.JSON(defaultSteps), Products: models.JSON(defaultProds),
 			Occasions: pq.StringArray{"daily"}, IconEmoji: "🎨", DurationMin: 0, Difficulty: "easy",
 		},
-	}
+	)
 
 	for i := range recs {
 		if recs[i].ID == uuid.Nil {

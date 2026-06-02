@@ -20,6 +20,7 @@ const TYPE_THEME: Record<string, { from: string; to: string; accent: string; lab
   grooming:     { from: "rgba(96,165,250,0.25)",  to: "rgba(96,165,250,0.03)",  accent: "#60a5fa", label: "Grooming" },
   haircut:      { from: "rgba(167,139,250,0.25)", to: "rgba(167,139,250,0.03)", accent: "#a78bfa", label: "Coupe" },
   skincare:     { from: "rgba(74,222,128,0.25)",  to: "rgba(74,222,128,0.03)",  accent: "#4ade80", label: "Skincare" },
+  skincare_advanced: { from: "rgba(93,202,165,0.25)", to: "rgba(93,202,165,0.03)", accent: "#5DCAA5", label: "Soin ciblé" },
   color_season: { from: "rgba(251,191,36,0.25)",  to: "rgba(251,191,36,0.03)",  accent: "#fbbf24", label: "Couleurs" },
 };
 
