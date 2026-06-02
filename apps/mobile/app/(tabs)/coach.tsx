@@ -141,10 +141,10 @@ export default function CoachScreen() {
       limit={premiumGate?.limit}
     />
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: "#0D0D0F" }}
+      style={{ flex: 1, backgroundColor: "#EDE4D4" }}
       behavior="padding"
       keyboardVerticalOffset={Platform.select({ ios: 90, android: 0 })}
-      style={{ flex: 1, backgroundColor: "#0D0D0F" }}
+      style={{ flex: 1, backgroundColor: "#EDE4D4" }}
     >
       {/* History modal */}
       <Modal
@@ -159,7 +159,7 @@ export default function CoachScreen() {
             backgroundColor: "#111", borderTopLeftRadius: 24, borderTopRightRadius: 24,
             maxHeight: "70%", paddingBottom: insets.bottom + 16,
           }}>
-            <View style={{ padding: 20, borderBottomWidth: 0.5, borderBottomColor: "rgba(255,255,255,0.08)", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <View style={{ padding: 20, borderBottomWidth: 0.5, borderBottomColor: "rgba(201,130,107,0.12)", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
               <Text style={{ color: "#fff", fontWeight: "700", fontSize: 17 }}>Historique des conversations</Text>
               <TouchableOpacity onPress={() => setShowHistory(false)}>
                 <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 22 }}>✕</Text>
@@ -177,9 +177,9 @@ export default function CoachScreen() {
                       key={conv.id}
                       onPress={() => loadConversation(conv.id)}
                       style={{
-                        backgroundColor: isActive ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.04)",
+                        backgroundColor: isActive ? "rgba(201,168,76,0.12)" : "rgba(255,255,255,0.65)",
                         borderWidth: 0.5,
-                        borderColor: isActive ? "rgba(201,168,76,0.4)" : "rgba(255,255,255,0.08)",
+                        borderColor: isActive ? "rgba(201,168,76,0.4)" : "rgba(201,130,107,0.12)",
                         borderRadius: 16, padding: 14,
                       }}
                       activeOpacity={0.8}
@@ -207,7 +207,7 @@ export default function CoachScreen() {
       {/* Header */}
       <Animated.View
         entering={FadeInDown.delay(50)}
-        style={{ paddingHorizontal: 24, paddingTop: insets.top + 8, paddingBottom: 16, borderBottomWidth: 0.5, borderBottomColor: "rgba(255,255,255,0.08)", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}
+        style={{ paddingHorizontal: 24, paddingTop: insets.top + 8, paddingBottom: 16, borderBottomWidth: 0.5, borderBottomColor: "rgba(201,130,107,0.12)", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}
       >
         <View>
           <Text style={{ color: "#C9826B", fontFamily: "PlayfairDisplay-Regular", fontSize: 20 }}>✨ Lumis Coach</Text>
@@ -217,7 +217,7 @@ export default function CoachScreen() {
           {allConversations.length > 1 && (
             <TouchableOpacity
               onPress={() => setShowHistory(true)}
-              style={{ backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.1)", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 }}
+              style={{ backgroundColor: "rgba(255,255,255,0.6)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.2)", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 }}
               activeOpacity={0.7}
             >
               <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>🕐 Historique</Text>
@@ -225,7 +225,7 @@ export default function CoachScreen() {
           )}
           <TouchableOpacity
             onPress={handleNewChat}
-            style={{ backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.1)", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 }}
+            style={{ backgroundColor: "rgba(255,255,255,0.6)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.2)", borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 }}
             activeOpacity={0.7}
           >
             <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 11 }}>+ Nouveau</Text>
@@ -304,8 +304,8 @@ export default function CoachScreen() {
           multiline
           maxLength={500}
           style={{
-            flex: 1, backgroundColor: "rgba(255,255,255,0.05)",
-            borderWidth: 0.5, borderColor: "rgba(255,255,255,0.1)",
+            flex: 1, backgroundColor: "rgba(255,255,255,0.6)",
+            borderWidth: 0.5, borderColor: "rgba(201,130,107,0.2)",
             borderRadius: 20, paddingHorizontal: 16, paddingVertical: 12,
             color: "#fff", fontSize: 14, maxHeight: 120, minHeight: 46,
           }}
@@ -320,7 +320,7 @@ export default function CoachScreen() {
           onPress={handleSend}
           disabled={!input.trim() || isSending}
           className="w-11 h-11 rounded-2xl items-center justify-center"
-          style={{ backgroundColor: input.trim() && !isSending ? "#C9826B" : "rgba(255,255,255,0.08)" }}
+          style={{ backgroundColor: input.trim() && !isSending ? "#C9826B" : "rgba(201,130,107,0.12)" }}
           activeOpacity={0.8}
         >
           <Text className="text-base">→</Text>

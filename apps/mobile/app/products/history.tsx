@@ -29,9 +29,9 @@ export default function ProductHistoryScreen() {
   const found = products.filter((p) => !p.not_found);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4" }}>
       {/* Header */}
-      <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, borderBottomWidth: 0.5, borderBottomColor: "rgba(255,255,255,0.08)" }}>
+      <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, borderBottomWidth: 0.5, borderBottomColor: "rgba(201,130,107,0.12)" }}>
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} style={{ marginRight: 12, padding: 4 }}>
           <Text style={{ color: "#C9826B", fontSize: 22 }}>←</Text>
         </TouchableOpacity>
@@ -58,7 +58,7 @@ export default function ProductHistoryScreen() {
             Scanne le code-barres de tes produits pour vérifier leur compatibilité avec ta peau.
           </Text>
           <TouchableOpacity onPress={() => router.replace("/products/scan")} style={{ backgroundColor: "#C9826B", borderRadius: 14, paddingHorizontal: 24, paddingVertical: 12 }}>
-            <Text style={{ color: "#0D0D0F", fontWeight: "700" }}>📷 Scanner un produit</Text>
+            <Text style={{ color: "#EDE4D4", fontWeight: "700" }}>📷 Scanner un produit</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -69,10 +69,10 @@ export default function ProductHistoryScreen() {
             const date = new Date(p.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
             return (
               <Animated.View key={p.id} entering={FadeInDown.delay(i * 40)}>
-                <View style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)", borderRadius: 16, padding: 14, flexDirection: "row", gap: 12, alignItems: "center" }}>
+                <View style={{ backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)", borderRadius: 16, padding: 14, flexDirection: "row", gap: 12, alignItems: "center" }}>
                   {/* Image or score circle */}
                   {p.image_url ? (
-                    <Image source={{ uri: p.image_url }} style={{ width: 52, height: 52, borderRadius: 10, backgroundColor: "rgba(255,255,255,0.05)" }} resizeMode="contain" />
+                    <Image source={{ uri: p.image_url }} style={{ width: 52, height: 52, borderRadius: 10, backgroundColor: "rgba(255,255,255,0.6)" }} resizeMode="contain" />
                   ) : (
                     <View style={{ width: 52, height: 52, borderRadius: 26, borderWidth: 2, borderColor: sc, alignItems: "center", justifyContent: "center" }}>
                       <Text style={{ color: sc, fontWeight: "700", fontSize: 16 }}>{p.compatibility_score}</Text>

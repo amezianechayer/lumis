@@ -30,8 +30,8 @@ function RoutineSection({
 }) {
   return (
     <Animated.View entering={FadeInDown.delay(80)} style={{
-      backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5,
-      borderColor: done ? `${accent}50` : "rgba(255,255,255,0.08)",
+      backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5,
+      borderColor: done ? `${accent}50` : "rgba(201,130,107,0.12)",
       borderRadius: 20, padding: 18, marginBottom: 16,
     }}>
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 14 }}>
@@ -58,14 +58,14 @@ function RoutineSection({
         activeOpacity={0.85}
         style={{
           borderRadius: 14, paddingVertical: 13, alignItems: "center",
-          backgroundColor: done ? "rgba(255,255,255,0.06)" : accent,
+          backgroundColor: done ? "rgba(255,255,255,0.55)" : accent,
           borderWidth: done ? 1 : 0, borderColor: "rgba(255,255,255,0.15)",
         }}
       >
         {busy ? (
-          <ActivityIndicator color={done ? "#fff" : "#0D0D0F"} size="small" />
+          <ActivityIndicator color={done ? "#fff" : "#EDE4D4"} size="small" />
         ) : (
-          <Text style={{ color: done ? "rgba(255,255,255,0.6)" : "#0D0D0F", fontWeight: "700", fontSize: 14 }}>
+          <Text style={{ color: done ? "rgba(255,255,255,0.6)" : "#EDE4D4", fontWeight: "700", fontSize: 14 }}>
             {done ? "Annuler" : "Marquer comme fait ✓"}
           </Text>
         )}
@@ -100,7 +100,7 @@ export default function RoutineScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4" }}>
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 6, paddingBottom: 8 }}>
         <TouchableOpacity onPress={() => router.back()} style={{ padding: 6, marginRight: 6 }}>
           <Text style={{ color: "#C9826B", fontSize: 22 }}>←</Text>

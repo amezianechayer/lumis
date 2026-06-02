@@ -105,9 +105,9 @@ export function WeatherTipCard() {
 }
 
 const cardStyle = {
-  backgroundColor: "rgba(255,255,255,0.05)",
+  backgroundColor: "rgba(255,255,255,0.6)",
   borderWidth: 0.5,
-  borderColor: "rgba(255,255,255,0.1)",
+  borderColor: "rgba(201,130,107,0.2)",
   borderRadius: 20,
   padding: 16,
   flexDirection: "row" as const,

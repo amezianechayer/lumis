@@ -47,7 +47,7 @@ export function SkinProgressChart({ scans }: Props) {
   if (scans.length < 2) {
     return (
       <Animated.View entering={FadeInDown.delay(100)}
-        style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)", borderRadius: 20, padding: 20, alignItems: "center", justifyContent: "center", minHeight: 140 }}>
+        style={{ backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)", borderRadius: 20, padding: 20, alignItems: "center", justifyContent: "center", minHeight: 140 }}>
         <Text style={{ fontSize: 32, marginBottom: 8 }}>📊</Text>
         <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, fontWeight: "600", textAlign: "center" }}>
           Fais au moins 2 scans
@@ -132,7 +132,7 @@ export function SkinProgressChart({ scans }: Props) {
             return (
               <View key={v}>
                 <Line x1={PAD_L} y1={y} x2={W - PAD_R} y2={y}
-                  stroke="rgba(255,255,255,0.06)" strokeWidth={1} />
+                  stroke="rgba(255,255,255,0.55)" strokeWidth={1} />
                 <SvgText x={PAD_L - 4} y={y + 4} fontSize={9}
                   fill="rgba(255,255,255,0.25)" textAnchor="end">{v}</SvgText>
               </View>
@@ -155,7 +155,7 @@ export function SkinProgressChart({ scans }: Props) {
               <View key={i}>
                 {(isLast || isHovered) && (
                   <Circle cx={p.x} cy={p.y} r={isLast ? 5 : 4}
-                    fill={metric.color} stroke="#0D0D0F" strokeWidth={2} />
+                    fill={metric.color} stroke="#EDE4D4" strokeWidth={2} />
                 )}
                 {!isLast && !isHovered && (
                   <Circle cx={p.x} cy={p.y} r={3}
@@ -193,7 +193,7 @@ export function SkinProgressChart({ scans }: Props) {
               paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
               borderWidth: 0.5,
               backgroundColor: activeMetric === m.key ? `${m.color}20` : "transparent",
-              borderColor: activeMetric === m.key ? m.color : "rgba(255,255,255,0.12)",
+              borderColor: activeMetric === m.key ? m.color : "rgba(201,130,107,0.22)",
             }}
           >
             <Text style={{

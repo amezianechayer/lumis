@@ -283,7 +283,7 @@ export default function PremiumScreen() {
           }}
         >
           {isLoading || purchasing ? (
-            <ActivityIndicator color="#0D0D0F" />
+            <ActivityIndicator color="#EDE4D4" />
           ) : (
             <Text className="text-lumis-black font-body-medium text-base">
               Voir les offres Premium

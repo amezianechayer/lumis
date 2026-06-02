@@ -77,7 +77,7 @@ export default function MenStylesScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F", alignItems: "center", justifyContent: "center" }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4", alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator color="#C9826B" size="large" />
       </SafeAreaView>
     );
@@ -85,14 +85,14 @@ export default function MenStylesScreen() {
 
   if (!profile) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F", alignItems: "center", justifyContent: "center", padding: 32 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4", alignItems: "center", justifyContent: "center", padding: 32 }}>
         <Text style={{ fontSize: 44, marginBottom: 12 }}>💈</Text>
-        <Text style={{ color: "#E8D5C0", fontSize: 16, fontWeight: "600", marginBottom: 6, textAlign: "center" }}>Analyse faciale requise</Text>
-        <Text style={{ color: "rgba(232,213,192,0.45)", fontSize: 13, textAlign: "center", marginBottom: 20 }}>
+        <Text style={{ color: "#2C1810", fontSize: 16, fontWeight: "600", marginBottom: 6, textAlign: "center" }}>Analyse faciale requise</Text>
+        <Text style={{ color: "rgba(44,24,16,0.5)", fontSize: 13, textAlign: "center", marginBottom: 20 }}>
           Fais ton analyse faciale pour voir les coupes et barbes adaptées à ta forme de visage.
         </Text>
         <TouchableOpacity onPress={() => router.push("/(auth)/onboarding/selfie")} style={{ backgroundColor: "#C9826B", borderRadius: 14, paddingHorizontal: 24, paddingVertical: 12 }}>
-          <Text style={{ color: "#0D0D0F", fontWeight: "700" }}>Analyser mon visage</Text>
+          <Text style={{ color: "#EDE4D4", fontWeight: "700" }}>Analyser mon visage</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -105,29 +105,29 @@ export default function MenStylesScreen() {
   const shapeLabel = { oval: "Ovale", round: "Rond", square: "Carré", heart: "Cœur", oblong: "Allongé", diamond: "Diamant" }[shape];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4" }}>
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 6, paddingBottom: 8 }}>
         <TouchableOpacity onPress={() => router.back()} style={{ padding: 6, marginRight: 6 }}>
           <Text style={{ color: "#C9826B", fontSize: 22 }}>←</Text>
         </TouchableOpacity>
-        <Text style={{ color: "#E8D5C0", fontWeight: "700", fontSize: 18 }}>Coupes & Barbes</Text>
+        <Text style={{ color: "#2C1810", fontWeight: "700", fontSize: 18 }}>Coupes & Barbes</Text>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
         {/* Face shape hero */}
-        <Animated.View entering={FadeInDown} style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.18)", borderRadius: 20, padding: 20, marginBottom: 16, alignItems: "center" }}>
-          <Text style={{ color: "rgba(232,213,192,0.45)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Ta forme de visage</Text>
+        <Animated.View entering={FadeInDown} style={{ backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.18)", borderRadius: 20, padding: 20, marginBottom: 16, alignItems: "center" }}>
+          <Text style={{ color: "rgba(44,24,16,0.5)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Ta forme de visage</Text>
           <Text style={{ color: "#C9826B", fontSize: 26, fontWeight: "700", marginBottom: 6 }}>{shapeLabel}</Text>
-          <Text style={{ color: "rgba(232,213,192,0.55)", fontSize: 13, lineHeight: 19, textAlign: "center" }}>{guide.goal}</Text>
+          <Text style={{ color: "rgba(44,24,16,0.55)", fontSize: 13, lineHeight: 19, textAlign: "center" }}>{guide.goal}</Text>
         </Animated.View>
 
         {/* Haircuts */}
         <Animated.View entering={FadeInDown.delay(80)} style={{ marginBottom: 16 }}>
-          <Text style={{ color: "#E8D5C0", fontSize: 16, fontWeight: "700", marginBottom: 12 }}>✂️ Coupes recommandées</Text>
+          <Text style={{ color: "#2C1810", fontSize: 16, fontWeight: "700", marginBottom: 12 }}>✂️ Coupes recommandées</Text>
           {haircuts.map((h, i) => (
-            <View key={i} style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(232,213,192,0.08)", borderRadius: 16, padding: 16, marginBottom: 10 }}>
-              <Text style={{ color: "#E8D5C0", fontWeight: "600", fontSize: 15, marginBottom: 4 }}>{h.name}</Text>
-              <Text style={{ color: "rgba(232,213,192,0.55)", fontSize: 13, lineHeight: 19, marginBottom: 8 }}>{h.desc}</Text>
+            <View key={i} style={{ backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.1)", borderRadius: 16, padding: 16, marginBottom: 10 }}>
+              <Text style={{ color: "#2C1810", fontWeight: "600", fontSize: 15, marginBottom: 4 }}>{h.name}</Text>
+              <Text style={{ color: "rgba(44,24,16,0.55)", fontSize: 13, lineHeight: 19, marginBottom: 8 }}>{h.desc}</Text>
               <View style={{ backgroundColor: "rgba(201,130,107,0.1)", borderRadius: 10, padding: 10 }}>
                 <Text style={{ color: "#C9826B", fontSize: 12, lineHeight: 17 }}>💬 Chez le coiffeur : {h.ask}</Text>
               </View>
@@ -137,11 +137,11 @@ export default function MenStylesScreen() {
 
         {/* Beards */}
         <Animated.View entering={FadeInDown.delay(160)}>
-          <Text style={{ color: "#E8D5C0", fontSize: 16, fontWeight: "700", marginBottom: 12 }}>🧔 Barbes recommandées</Text>
+          <Text style={{ color: "#2C1810", fontSize: 16, fontWeight: "700", marginBottom: 12 }}>🧔 Barbes recommandées</Text>
           {beards.map((b, i) => (
-            <View key={i} style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(232,213,192,0.08)", borderRadius: 16, padding: 16, marginBottom: 10 }}>
-              <Text style={{ color: "#E8D5C0", fontWeight: "600", fontSize: 15, marginBottom: 4 }}>{b.name}</Text>
-              <Text style={{ color: "rgba(232,213,192,0.55)", fontSize: 13, lineHeight: 19 }}>{b.desc}</Text>
+            <View key={i} style={{ backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.1)", borderRadius: 16, padding: 16, marginBottom: 10 }}>
+              <Text style={{ color: "#2C1810", fontWeight: "600", fontSize: 15, marginBottom: 4 }}>{b.name}</Text>
+              <Text style={{ color: "rgba(44,24,16,0.55)", fontSize: 13, lineHeight: 19 }}>{b.desc}</Text>
             </View>
           ))}
         </Animated.View>

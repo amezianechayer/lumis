@@ -13,9 +13,9 @@ import { useLanguageStore } from "../../stores/language.store";
 import { t } from "../../utils/i18n";
 import { Skeleton, SkeletonCard } from "../../components/ui/Skeleton";
 import { WeatherTipCard } from "../../components/ui/WeatherTipCard";
+import { useThemeColors } from "../../stores/theme.store";
 import { api } from "../../services/api";
 
-const CREAM = "#E8D5C0";
 const TERRACOTTA = "#C9826B";
 
 function PulseScoreRing({ score, color, size = 84 }: { score: number; color: string; size?: number }) {
@@ -46,6 +46,7 @@ function PulseScoreRing({ score, color, size = 84 }: { score: number; color: str
 
 export default function HomeScreen() {
   useLanguageStore();
+  const c = useThemeColors();
   const { user, isLoading: authLoading } = useAuthStore();
   const queryClient = useQueryClient();
   const firstName = user?.full_name?.split(" ")[0] ?? "toi";
@@ -103,8 +104,8 @@ export default function HomeScreen() {
     >
       {/* ── Header ── */}
       <Animated.View entering={FadeInDown.delay(40)}>
-        <Text style={{ color: "rgba(232,213,192,0.4)", fontSize: 12, textTransform: "capitalize" }}>{today}</Text>
-        <Text style={{ color: CREAM, fontSize: 26, fontWeight: "300", letterSpacing: 0.2, marginTop: 2 }}>
+        <Text style={{ color: c.textMuted, fontSize: 12, textTransform: "capitalize" }}>{today}</Text>
+        <Text style={{ color: c.text, fontSize: 26, fontWeight: "300", letterSpacing: 0.2, marginTop: 2 }}>
           Bonjour <Text style={{ fontWeight: "600", color: TERRACOTTA }}>{firstName}</Text>
         </Text>
       </Animated.View>
@@ -121,14 +122,14 @@ export default function HomeScreen() {
               <View style={{ flexDirection: "row", alignItems: "center", gap: 18 }}>
                 <PulseScoreRing score={skinScore} color={scoreColor} />
                 <View style={{ flex: 1, gap: 7 }}>
-                  <Text style={{ color: "rgba(232,213,192,0.45)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1.2 }}>Score de peau</Text>
+                  <Text style={{ color: c.textMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 1.2 }}>Score de peau</Text>
                   <MiniBar label="Hydratation" score={skinScan?.hydration_score ?? 0} />
                   <MiniBar label="Texture" score={skinScan?.texture_score ?? 0} />
                   <MiniBar label="Uniformité" score={skinScan?.uniformity_score ?? 0} />
                 </View>
               </View>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 14 }}>
-                <Text style={{ color: "rgba(232,213,192,0.35)", fontSize: 11 }}>
+                <Text style={{ color: c.textFaint, fontSize: 11 }}>
                   {skinScan ? `Dernier scan · ${new Date(skinScan.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}` : ""}
                 </Text>
                 <Text style={{ color: TERRACOTTA, fontSize: 12, fontWeight: "600" }}>Détails →</Text>
@@ -137,12 +138,12 @@ export default function HomeScreen() {
           ) : (
             <View style={{ alignItems: "center", paddingVertical: 8 }}>
               <Text style={{ fontSize: 40, marginBottom: 8 }}>📸</Text>
-              <Text style={{ color: CREAM, fontSize: 16, fontWeight: "600", marginBottom: 4 }}>Fais ton premier scan</Text>
-              <Text style={{ color: "rgba(232,213,192,0.45)", fontSize: 13, textAlign: "center", marginBottom: 12 }}>
+              <Text style={{ color: c.text, fontSize: 16, fontWeight: "600", marginBottom: 4 }}>Fais ton premier scan</Text>
+              <Text style={{ color: c.textMuted, fontSize: 13, textAlign: "center", marginBottom: 12 }}>
                 Découvre ton score de peau et tes recommandations
               </Text>
               <View style={{ backgroundColor: TERRACOTTA, borderRadius: 12, paddingHorizontal: 22, paddingVertical: 10 }}>
-                <Text style={{ color: "#0D0D0F", fontWeight: "700", fontSize: 13 }}>Commencer →</Text>
+                <Text style={{ color: "#EDE4D4", fontWeight: "700", fontSize: 13 }}>Commencer →</Text>
               </View>
             </View>
           )}
@@ -160,10 +161,10 @@ export default function HomeScreen() {
           <TouchableOpacity
             onPress={() => router.push("/analysis/face")}
             activeOpacity={0.85}
-            style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(232,213,192,0.08)", borderRadius: 20, padding: 16 }}
+            style={{ backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight, borderRadius: 20, padding: 16 }}
           >
             <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
-              <Text style={{ color: "rgba(232,213,192,0.4)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1 }}>Profil facial</Text>
+              <Text style={{ color: c.textMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 1 }}>Profil facial</Text>
               <Text style={{ color: TERRACOTTA, fontSize: 11 }}>Voir →</Text>
             </View>
             <View style={{ flexDirection: "row", gap: 8 }}>
@@ -177,7 +178,7 @@ export default function HomeScreen() {
 
       {/* ── Mon espace : grille bento ── */}
       <Animated.View entering={FadeInDown.delay(280)} className="mt-6">
-        <Text style={{ color: "rgba(232,213,192,0.4)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 12 }}>Mon espace</Text>
+        <Text style={{ color: c.textMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 12 }}>Mon espace</Text>
 
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
           <ToolTile
@@ -216,10 +217,10 @@ export default function HomeScreen() {
           <Text style={{ color: TERRACOTTA, fontSize: 11, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1.2, marginBottom: 4 }}>
             {t("home.premium_badge")}
           </Text>
-          <Text style={{ color: CREAM, fontSize: 19, fontWeight: "300", marginBottom: 2 }}>
+          <Text style={{ color: c.text, fontSize: 19, fontWeight: "300", marginBottom: 2 }}>
             {t("home.premium_title")}
           </Text>
-          <Text style={{ color: "rgba(232,213,192,0.5)", fontSize: 13, marginBottom: 14 }}>
+          <Text style={{ color: c.textMuted, fontSize: 13, marginBottom: 14 }}>
             {t("home.premium_subtitle")}
           </Text>
           <TouchableOpacity
@@ -227,7 +228,7 @@ export default function HomeScreen() {
             style={{ backgroundColor: TERRACOTTA, borderRadius: 12, paddingVertical: 13, alignItems: "center" }}
             activeOpacity={0.85}
           >
-            <Text style={{ color: "#0D0D0F", fontWeight: "700", fontSize: 14 }}>{t("home.premium_cta")}</Text>
+            <Text style={{ color: "#EDE4D4", fontWeight: "700", fontSize: 14 }}>{t("home.premium_cta")}</Text>
           </TouchableOpacity>
         </Animated.View>
       )}
@@ -236,14 +237,15 @@ export default function HomeScreen() {
 }
 
 function MiniBar({ label, score }: { label: string; score: number }) {
+  const c = useThemeColors();
   const color = score >= 75 ? "#5DCAA5" : score >= 50 ? TERRACOTTA : "#F09595";
   return (
     <View>
       <View className="flex-row justify-between mb-0.5">
-        <Text style={{ color: "rgba(232,213,192,0.5)", fontSize: 10 }}>{label}</Text>
+        <Text style={{ color: c.textMuted, fontSize: 10 }}>{label}</Text>
         <Text style={{ color, fontSize: 10, fontWeight: "600" }}>{score}</Text>
       </View>
-      <View style={{ height: 4, backgroundColor: "rgba(232,213,192,0.1)", borderRadius: 2, overflow: "hidden" }}>
+      <View style={{ height: 4, backgroundColor: c.borderLight, borderRadius: 2, overflow: "hidden" }}>
         <View style={{ height: "100%", width: `${score}%`, backgroundColor: color, borderRadius: 2 }} />
       </View>
     </View>
@@ -251,16 +253,17 @@ function MiniBar({ label, score }: { label: string; score: number }) {
 }
 
 function ProfileChip({ label, value, gold = false }: { label: string; value: string; gold?: boolean }) {
+  const c = useThemeColors();
   return (
     <View style={{
       flex: 1, borderRadius: 12, padding: 10, alignItems: "center", borderWidth: 0.5,
-      backgroundColor: gold ? "rgba(201,130,107,0.1)" : "rgba(255,255,255,0.04)",
-      borderColor: gold ? "rgba(201,130,107,0.3)" : "rgba(232,213,192,0.08)",
+      backgroundColor: gold ? "rgba(201,130,107,0.1)" : c.bgCard,
+      borderColor: gold ? "rgba(201,130,107,0.3)" : c.borderLight,
     }}>
-      <Text style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 1, marginBottom: 2, color: gold ? "rgba(201,130,107,0.6)" : "rgba(232,213,192,0.4)" }}>
+      <Text style={{ fontSize: 9, textTransform: "uppercase", letterSpacing: 1, marginBottom: 2, color: gold ? "rgba(201,130,107,0.7)" : c.textMuted }}>
         {label}
       </Text>
-      <Text style={{ fontSize: 12, fontWeight: "500", textTransform: "capitalize", color: gold ? TERRACOTTA : "rgba(232,213,192,0.8)" }}>
+      <Text style={{ fontSize: 12, fontWeight: "500", textTransform: "capitalize", color: gold ? TERRACOTTA : c.text }}>
         {value}
       </Text>
     </View>
@@ -268,22 +271,23 @@ function ProfileChip({ label, value, gold = false }: { label: string; value: str
 }
 
 function ToolTile({ icon, label, sub, tint, onPress }: { icon: string; label: string; sub: string; tint: string; onPress: () => void }) {
+  const c = useThemeColors();
   return (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.85}
       style={{
         width: "47.5%", flexGrow: 1,
-        backgroundColor: "rgba(255,255,255,0.04)",
-        borderWidth: 0.5, borderColor: "rgba(232,213,192,0.08)",
+        backgroundColor: c.bgCard,
+        borderWidth: 0.5, borderColor: c.borderLight,
         borderRadius: 18, padding: 16,
       }}
     >
       <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: `${tint}22`, alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
         <Text style={{ fontSize: 22 }}>{icon}</Text>
       </View>
-      <Text style={{ color: CREAM, fontSize: 14, fontWeight: "600" }}>{label}</Text>
-      <Text style={{ color: "rgba(232,213,192,0.4)", fontSize: 11, marginTop: 1 }}>{sub}</Text>
+      <Text style={{ color: c.text, fontSize: 14, fontWeight: "600" }}>{label}</Text>
+      <Text style={{ color: c.textMuted, fontSize: 11, marginTop: 1 }}>{sub}</Text>
     </TouchableOpacity>
   );
 }

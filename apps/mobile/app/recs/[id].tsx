@@ -44,7 +44,7 @@ export default function RecDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F", alignItems: "center", justifyContent: "center" }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4", alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator color="#C9826B" size="large" />
       </SafeAreaView>
     );
@@ -52,7 +52,7 @@ export default function RecDetailScreen() {
 
   if (isError || !rec) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F", alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4", alignItems: "center", justifyContent: "center", paddingHorizontal: 32 }}>
         <Text style={{ color: "#f87171", fontSize: 16, marginBottom: 16 }}>{t("common.error")}</Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={{ color: "#C9826B", fontWeight: "600" }}>{t("common.back")}</Text>
@@ -67,7 +67,7 @@ export default function RecDetailScreen() {
   const products: RecProduct[] = parseArr<RecProduct>(rec.products);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4" }}>
       {/* Top bar */}
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 4, paddingBottom: 10 }}>
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.75} style={{ padding: 6 }}>
@@ -137,13 +137,13 @@ export default function RecDetailScreen() {
               <View key={i} style={{ flexDirection: "row", gap: 12, marginBottom: 14 }}>
                 <View style={{ alignItems: "center" }}>
                   <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: theme.accent, alignItems: "center", justifyContent: "center" }}>
-                    <Text style={{ color: "#0D0D0F", fontWeight: "800", fontSize: 13 }}>{step.order || i + 1}</Text>
+                    <Text style={{ color: "#EDE4D4", fontWeight: "800", fontSize: 13 }}>{step.order || i + 1}</Text>
                   </View>
                   {i < steps.length - 1 && (
                     <View style={{ width: 2, flex: 1, backgroundColor: `${theme.accent}25`, marginTop: 4 }} />
                   )}
                 </View>
-                <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)", borderRadius: 16, padding: 14, marginBottom: 2 }}>
+                <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)", borderRadius: 16, padding: 14, marginBottom: 2 }}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
                     <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14, flex: 1 }}>{step.title}</Text>
                     {step.duration_min ? (
@@ -169,7 +169,7 @@ export default function RecDetailScreen() {
               {t("recs.products_title")}
             </Text>
             {products.map((p, i) => (
-              <View key={i} style={{ marginBottom: 10, borderRadius: 16, padding: 14, flexDirection: "row", gap: 12, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: p.premium ? "rgba(201,168,76,0.3)" : "rgba(255,255,255,0.08)" }}>
+              <View key={i} style={{ marginBottom: 10, borderRadius: 16, padding: 14, flexDirection: "row", gap: 12, backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: p.premium ? "rgba(201,168,76,0.3)" : "rgba(201,130,107,0.12)" }}>
                 <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: p.premium ? "rgba(201,168,76,0.2)" : `${theme.accent}18`, alignItems: "center", justifyContent: "center" }}>
                   <Text style={{ fontSize: 18 }}>{p.premium ? "💎" : "🛍️"}</Text>
                 </View>

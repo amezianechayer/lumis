@@ -39,7 +39,7 @@ function parseArr<T>(field: unknown): T[] {
 export function RecommendationCard({ rec, index }: Props) {
   const router = useRouter();
   const diffColor = DIFFICULTY_COLORS[rec.difficulty] ?? "#94a3b8";
-  const theme = TYPE_THEME[rec.type] ?? { from: "rgba(255,255,255,0.1)", to: "rgba(255,255,255,0.02)", accent: "#C9826B", label: rec.type };
+  const theme = TYPE_THEME[rec.type] ?? { from: "rgba(201,130,107,0.2)", to: "rgba(255,255,255,0.02)", accent: "#C9826B", label: rec.type };
 
   const steps = parseArr<{ title: string }>(rec.steps);
   const products = parseArr<unknown>(rec.products);
@@ -101,7 +101,7 @@ export function RecommendationCard({ rec, index }: Props) {
           )}
 
           {/* Footer: metadata + CTA */}
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 0.5, borderTopColor: "rgba(255,255,255,0.08)" }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 12, borderTopWidth: 0.5, borderTopColor: "rgba(201,130,107,0.12)" }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
                 <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: diffColor }} />

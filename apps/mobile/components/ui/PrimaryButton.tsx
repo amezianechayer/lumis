@@ -63,7 +63,7 @@ export function PrimaryButton({
       className={`${baseClass} ${variantClass}`}
     >
       {loading ? (
-        <ActivityIndicator color={variant === "gold" ? "#0D0D0F" : "#FAFAF8"} />
+        <ActivityIndicator color={variant === "gold" ? "#EDE4D4" : "#FAFAF8"} />
       ) : (
         <Text className={`font-body-bold text-base ${textClass}`}>{label}</Text>
       )}

@@ -67,7 +67,7 @@ export default function RecsScreen() {
           className="mt-6 px-6 py-3 rounded-full"
           style={{ backgroundColor: "#C9826B" }}
         >
-          <Text className="font-bold text-base" style={{ color: "#0D0D0F" }}>
+          <Text className="font-bold text-base" style={{ color: "#EDE4D4" }}>
             {t("recs.generate")}
           </Text>
         </TouchableOpacity>
@@ -76,7 +76,7 @@ export default function RecsScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: "#0D0D0F" }}>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: "#EDE4D4" }}>
       {/* Header */}
       <View className="px-5 pt-2 pb-3 flex-row items-center justify-between">
         <Text className="text-2xl font-bold" style={{ color: "#f8fafc" }}>

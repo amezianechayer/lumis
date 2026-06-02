@@ -213,8 +213,8 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
             onPress={() => router.push("/skin-tone-quiz")}
             activeOpacity={0.85}
             style={{
-              backgroundColor: "rgba(255,255,255,0.05)",
-              borderWidth: 0.5, borderColor: "rgba(255,255,255,0.12)",
+              backgroundColor: "rgba(255,255,255,0.6)",
+              borderWidth: 0.5, borderColor: "rgba(201,130,107,0.22)",
               borderRadius: 16, padding: 16,
               flexDirection: "row", alignItems: "center", gap: 12,
             }}

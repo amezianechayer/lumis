@@ -270,11 +270,11 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
             <View className="flex-row gap-3 mb-3">
               <View className="flex-1 bg-card border border-line rounded-2xl p-4 items-center">
                 <Text className="text-lumis-white/40 font-body text-[10px] uppercase tracking-widest mb-1">Âge cutané estimé</Text>
-                <Text style={{ color: "#C9826B", fontSize: 28, fontWeight: "700" }}>{skinAge}<Text style={{ fontSize: 13, color: "rgba(232,213,192,0.4)" }}> ans</Text></Text>
+                <Text style={{ color: "#C9826B", fontSize: 28, fontWeight: "700" }}>{skinAge}<Text style={{ fontSize: 13, color: "rgba(44,24,16,0.45)" }}> ans</Text></Text>
               </View>
               <View className="flex-1 bg-card border border-line rounded-2xl p-4 items-center">
                 <Text className="text-lumis-white/40 font-body text-[10px] uppercase tracking-widest mb-1">Potentiel (8 sem.)</Text>
-                <Text style={{ color: "#5DCAA5", fontSize: 28, fontWeight: "700" }}>{potential}<Text style={{ fontSize: 13, color: "rgba(232,213,192,0.4)" }}>/100</Text></Text>
+                <Text style={{ color: "#5DCAA5", fontSize: 28, fontWeight: "700" }}>{potential}<Text style={{ fontSize: 13, color: "rgba(44,24,16,0.45)" }}>/100</Text></Text>
               </View>
             </View>
 
@@ -284,7 +284,7 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
               <View style={{ gap: 10 }}>
                 {zones.map((z, i) => (
                   <View key={i} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                    <Text style={{ color: "rgba(232,213,192,0.7)", fontSize: 13 }}>{z.zone}</Text>
+                    <Text style={{ color: "rgba(44,24,16,0.7)", fontSize: 13 }}>{z.zone}</Text>
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                       <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: z.color }} />
                       <Text style={{ color: z.color, fontSize: 12, fontWeight: "500" }}>{z.state}</Text>
@@ -300,10 +300,10 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
             <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, alignItems: "center", justifyContent: "center" }}>
               <View style={{ backgroundColor: "rgba(13,13,15,0.85)", borderRadius: 16, paddingHorizontal: 20, paddingVertical: 16, alignItems: "center", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.4)" }}>
                 <Text style={{ fontSize: 28, marginBottom: 6 }}>🔒</Text>
-                <Text style={{ color: "#E8D5C0", fontSize: 14, fontWeight: "700", marginBottom: 2 }}>Analyse approfondie</Text>
-                <Text style={{ color: "rgba(232,213,192,0.5)", fontSize: 12, textAlign: "center", marginBottom: 12 }}>Âge cutané, analyse par zone et potentiel</Text>
+                <Text style={{ color: "#2C1810", fontSize: 14, fontWeight: "700", marginBottom: 2 }}>Analyse approfondie</Text>
+                <Text style={{ color: "rgba(44,24,16,0.5)", fontSize: 12, textAlign: "center", marginBottom: 12 }}>Âge cutané, analyse par zone et potentiel</Text>
                 <TouchableOpacity onPress={() => router.push("/(tabs)/premium" as any)} style={{ backgroundColor: "#C9826B", borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10 }}>
-                  <Text style={{ color: "#0D0D0F", fontWeight: "700", fontSize: 13 }}>Débloquer avec Premium</Text>
+                  <Text style={{ color: "#EDE4D4", fontWeight: "700", fontSize: 13 }}>Débloquer avec Premium</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -683,7 +683,7 @@ export default function ScanScreen() {
             <View className="gap-3">
               {/* Graphique d'évolution */}
               <Animated.View entering={FadeInDown.delay(0)}
-                style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)", borderRadius: 20, padding: 20, marginBottom: 4 }}>
+                style={{ backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)", borderRadius: 20, padding: 20, marginBottom: 4 }}>
                 <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>
                   📈 Évolution de ta peau
                 </Text>
@@ -820,7 +820,7 @@ export default function ScanScreen() {
           >
             {analyzeMutation.isPending ? (
               <View className="flex-row items-center gap-3">
-                <ActivityIndicator color="#0D0D0F" size="small" />
+                <ActivityIndicator color="#EDE4D4" size="small" />
                 <Text className="text-lumis-black font-body-bold text-base">
                   {photoBase64 ? "IA analyse ta peau…" : "Analyse en cours…"}
                 </Text>

@@ -63,7 +63,7 @@ export default function SkinToneQuizScreen() {
     const palette = SEASON_PALETTES[result.colorSeason] ?? [];
     const utColor = result.undertone === "warm" ? "#E8A35C" : result.undertone === "cool" ? "#7BA0D0" : "#B0A0C0";
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F" }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4" }}>
         <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 48 }}>
           <Animated.View entering={FadeIn} style={{ alignItems: "center", marginTop: 12, marginBottom: 24 }}>
             <Text style={{ fontSize: 48, marginBottom: 8 }}>🎨</Text>
@@ -88,7 +88,7 @@ export default function SkinToneQuizScreen() {
 
           {/* Skin tone + season */}
           <Animated.View entering={FadeInDown.delay(140)} style={{ flexDirection: "row", gap: 12, marginBottom: 14 }}>
-            <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.1)", borderRadius: 18, padding: 16 }}>
+            <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.6)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.2)", borderRadius: 18, padding: 16 }}>
               <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Carnation</Text>
               <Text style={{ color: "#fff", fontSize: 16, fontWeight: "700" }}>Fitzpatrick {result.skinTone.replace("fitzpatrick_", "")}</Text>
             </View>
@@ -99,7 +99,7 @@ export default function SkinToneQuizScreen() {
           </Animated.View>
 
           {/* Palette */}
-          <Animated.View entering={FadeInDown.delay(200)} style={{ backgroundColor: "rgba(255,255,255,0.05)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.1)", borderRadius: 18, padding: 16, marginBottom: 24 }}>
+          <Animated.View entering={FadeInDown.delay(200)} style={{ backgroundColor: "rgba(255,255,255,0.6)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.2)", borderRadius: 18, padding: 16, marginBottom: 24 }}>
             <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Tes couleurs à porter</Text>
             <View style={{ flexDirection: "row", gap: 8 }}>
               {palette.map((c) => (
@@ -110,7 +110,7 @@ export default function SkinToneQuizScreen() {
 
           <Animated.View entering={FadeInDown.delay(260)} style={{ gap: 10 }}>
             <TouchableOpacity onPress={handleSave} disabled={saving} style={{ backgroundColor: "#C9826B", borderRadius: 16, paddingVertical: 16, alignItems: "center" }}>
-              {saving ? <ActivityIndicator color="#0D0D0F" /> : <Text style={{ color: "#0D0D0F", fontWeight: "700", fontSize: 16 }}>✓ Enregistrer dans mon profil</Text>}
+              {saving ? <ActivityIndicator color="#EDE4D4" /> : <Text style={{ color: "#EDE4D4", fontWeight: "700", fontSize: 16 }}>✓ Enregistrer dans mon profil</Text>}
             </TouchableOpacity>
             <TouchableOpacity onPress={() => { setStep(0); setAnswers({}); setResult(null); }} style={{ borderWidth: 0.5, borderColor: "rgba(201,168,76,0.4)", borderRadius: 16, paddingVertical: 14, alignItems: "center" }}>
               <Text style={{ color: "#C9826B", fontWeight: "600", fontSize: 14 }}>🔄 Refaire le test</Text>
@@ -124,14 +124,14 @@ export default function SkinToneQuizScreen() {
   // ── QUESTION ──
   const q = QUIZ[step];
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4" }}>
       {/* Header + progress */}
       <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 16 }}>
           <TouchableOpacity onPress={handleBack} style={{ padding: 4 }}>
             <Text style={{ color: "#C9826B", fontSize: 22 }}>←</Text>
           </TouchableOpacity>
-          <View style={{ flex: 1, height: 6, backgroundColor: "rgba(255,255,255,0.08)", borderRadius: 3, overflow: "hidden" }}>
+          <View style={{ flex: 1, height: 6, backgroundColor: "rgba(201,130,107,0.12)", borderRadius: 3, overflow: "hidden" }}>
             <View style={{ width: `${progress * 100}%`, height: "100%", backgroundColor: "#C9826B", borderRadius: 3 }} />
           </View>
           <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 12 }}>{step + 1}/{QUIZ.length}</Text>
@@ -155,8 +155,8 @@ export default function SkinToneQuizScreen() {
                   activeOpacity={0.85}
                   style={{
                     flexDirection: "row", alignItems: "center", gap: 14,
-                    backgroundColor: selected ? "rgba(201,168,76,0.15)" : "rgba(255,255,255,0.05)",
-                    borderWidth: 0.5, borderColor: selected ? "#C9826B" : "rgba(255,255,255,0.1)",
+                    backgroundColor: selected ? "rgba(201,168,76,0.15)" : "rgba(255,255,255,0.6)",
+                    borderWidth: 0.5, borderColor: selected ? "#C9826B" : "rgba(201,130,107,0.2)",
                     borderRadius: 16, padding: 16,
                   }}
                 >

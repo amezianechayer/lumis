@@ -24,7 +24,7 @@ function DeltaBadge({ from, to }: { from: number; to: number }) {
 
 function MetricRow({ label, from, to }: { label: string; from: number; to: number }) {
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: "rgba(255,255,255,0.06)" }}>
+    <View style={{ flexDirection: "row", alignItems: "center", paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: "rgba(255,255,255,0.55)" }}>
       <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, flex: 1.4 }}>{label}</Text>
       <Text style={{ color: scoreColor(from), fontSize: 14, fontWeight: "600", flex: 1, textAlign: "center" }}>{from}</Text>
       <Text style={{ color: scoreColor(to), fontSize: 14, fontWeight: "600", flex: 1, textAlign: "center" }}>{to}</Text>
@@ -53,8 +53,8 @@ function ScanPicker({ label, scans, selectedId, onSelect, exclude }: {
               onPress={() => onSelect(s.id)}
               style={{
                 opacity: disabled ? 0.3 : 1,
-                backgroundColor: isSel ? "rgba(201,168,76,0.18)" : "rgba(255,255,255,0.05)",
-                borderWidth: 0.5, borderColor: isSel ? "#C9826B" : "rgba(255,255,255,0.1)",
+                backgroundColor: isSel ? "rgba(201,168,76,0.18)" : "rgba(255,255,255,0.6)",
+                borderWidth: 0.5, borderColor: isSel ? "#C9826B" : "rgba(201,130,107,0.2)",
                 borderRadius: 12, paddingHorizontal: 14, paddingVertical: 8, alignItems: "center", minWidth: 64,
               }}
             >
@@ -94,14 +94,14 @@ export default function CompareScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F", alignItems: "center", justifyContent: "center" }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4", alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator color="#C9826B" size="large" />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4" }}>
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 6, paddingBottom: 12 }}>
         <TouchableOpacity onPress={() => router.back()} style={{ padding: 6, marginRight: 6 }}>
           <Text style={{ color: "#C9826B", fontSize: 22 }}>←</Text>
@@ -117,13 +117,13 @@ export default function CompareScreen() {
             Fais plusieurs scans pour comparer ton évolution dans le temps.
           </Text>
           <TouchableOpacity onPress={() => router.replace("/(tabs)/scan")} style={{ backgroundColor: "#C9826B", borderRadius: 14, paddingHorizontal: 24, paddingVertical: 12 }}>
-            <Text style={{ color: "#0D0D0F", fontWeight: "700" }}>📸 Faire un scan</Text>
+            <Text style={{ color: "#EDE4D4", fontWeight: "700" }}>📸 Faire un scan</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
           {/* Pickers */}
-          <View style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)", borderRadius: 16, padding: 14, marginBottom: 16 }}>
+          <View style={{ backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)", borderRadius: 16, padding: 14, marginBottom: 16 }}>
             <ScanPicker label="Avant" scans={sorted} selectedId={beforeId} onSelect={setBeforeId} exclude={afterId} />
             <ScanPicker label="Après" scans={sorted} selectedId={afterId} onSelect={setAfterId} exclude={beforeId} />
           </View>
@@ -135,7 +135,7 @@ export default function CompareScreen() {
                 {[before, after].map((s, i) => {
                   const oc = scoreColor(s.overall_score);
                   return (
-                    <View key={i} style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: `${oc}40`, borderRadius: 18, padding: 16, alignItems: "center" }}>
+                    <View key={i} style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: `${oc}40`, borderRadius: 18, padding: 16, alignItems: "center" }}>
                       <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{i === 0 ? "Avant" : "Après"}</Text>
                       <View style={{ width: 76, height: 76, borderRadius: 38, borderWidth: 3, borderColor: oc, backgroundColor: `${oc}18`, alignItems: "center", justifyContent: "center" }}>
                         <Text style={{ color: oc, fontWeight: "800", fontSize: 26 }}>{s.overall_score}</Text>
@@ -163,7 +163,7 @@ export default function CompareScreen() {
               </Animated.View>
 
               {/* Metric breakdown */}
-              <Animated.View entering={FadeInDown.delay(160)} style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)", borderRadius: 18, padding: 16 }}>
+              <Animated.View entering={FadeInDown.delay(160)} style={{ backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)", borderRadius: 18, padding: 16 }}>
                 <View style={{ flexDirection: "row", marginBottom: 8 }}>
                   <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, flex: 1.4 }}>Métrique</Text>
                   <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 11, flex: 1, textAlign: "center" }}>Avant</Text>

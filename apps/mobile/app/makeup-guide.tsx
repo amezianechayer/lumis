@@ -16,7 +16,7 @@ export default function MakeupGuideScreen() {
   });
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4" }}>
       {/* Header */}
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 }}>
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} style={{ marginRight: 12, padding: 4 }}>
@@ -49,7 +49,7 @@ export default function MakeupGuideScreen() {
               : "Réessaie dans un moment."}
           </Text>
           <TouchableOpacity onPress={() => router.back()} style={{ backgroundColor: "#C9826B", borderRadius: 14, paddingHorizontal: 24, paddingVertical: 12 }}>
-            <Text style={{ color: "#0D0D0F", fontWeight: "700" }}>Retour</Text>
+            <Text style={{ color: "#EDE4D4", fontWeight: "700" }}>Retour</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -68,7 +68,7 @@ export default function MakeupGuideScreen() {
 
           {/* Color tips */}
           {guide.color_tips && guide.color_tips.length > 0 && (
-            <Animated.View entering={FadeInDown.delay(80)} style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)", borderRadius: 20, padding: 20, marginBottom: 16 }}>
+            <Animated.View entering={FadeInDown.delay(80)} style={{ backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)", borderRadius: 20, padding: 20, marginBottom: 16 }}>
               <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>
                 🎨 Tes couleurs
               </Text>
@@ -91,9 +91,9 @@ export default function MakeupGuideScreen() {
             {guide.steps.map((step, i) => (
               <View key={i} style={{ flexDirection: "row", gap: 12, marginBottom: 14 }}>
                 <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: "#C9826B", alignItems: "center", justifyContent: "center", marginTop: 2 }}>
-                  <Text style={{ color: "#0D0D0F", fontWeight: "800", fontSize: 13 }}>{i + 1}</Text>
+                  <Text style={{ color: "#EDE4D4", fontWeight: "800", fontSize: 13 }}>{i + 1}</Text>
                 </View>
-                <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)", borderRadius: 16, padding: 14 }}>
+                <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)", borderRadius: 16, padding: 14 }}>
                   <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14, marginBottom: 4 }}>{step.title}</Text>
                   <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, lineHeight: 19 }}>{step.description}</Text>
                   {step.tip ? (
@@ -113,7 +113,7 @@ export default function MakeupGuideScreen() {
                 🛍️ Produits recommandés
               </Text>
               {guide.products.map((p, i) => (
-                <View key={i} style={{ backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)", borderRadius: 16, padding: 14, marginBottom: 10 }}>
+                <View key={i} style={{ backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)", borderRadius: 16, padding: 14, marginBottom: 10 }}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
                     <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14, flex: 1 }}>{p.name}</Text>
                   </View>

@@ -58,7 +58,7 @@ function ScoreRow({ label, score, type, icon, delay = 0 }: {
           <Text style={{ color, fontWeight: "700", fontSize: 14 }}>{score}/100</Text>
         </View>
       </View>
-      <View style={{ height: 8, backgroundColor: "rgba(255,255,255,0.08)", borderRadius: 4, overflow: "hidden" }}>
+      <View style={{ height: 8, backgroundColor: "rgba(201,130,107,0.12)", borderRadius: 4, overflow: "hidden" }}>
         <Animated.View style={[{ height: "100%", backgroundColor: color, borderRadius: 4 }, barStyle]} />
       </View>
     </Animated.View>
@@ -141,7 +141,7 @@ export default function ScanDetailScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F", alignItems: "center", justifyContent: "center" }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4", alignItems: "center", justifyContent: "center" }}>
         <ActivityIndicator color="#C9826B" size="large" />
       </SafeAreaView>
     );
@@ -149,7 +149,7 @@ export default function ScanDetailScreen() {
 
   if (isError || !scan) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F", alignItems: "center", justifyContent: "center", padding: 32 }}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4", alignItems: "center", justifyContent: "center", padding: 32 }}>
         <Text style={{ color: "#ef4444", fontSize: 16, marginBottom: 16 }}>Scan introuvable</Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={{ color: "#C9826B", fontWeight: "600" }}>← Retour</Text>
@@ -165,7 +165,7 @@ export default function ScanDetailScreen() {
   const oc = scoreColor(overall);
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#0D0D0F" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#EDE4D4" }}>
       {/* Header */}
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12 }}>
         <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7} style={{ marginRight: 12, padding: 4 }}>
@@ -183,7 +183,7 @@ export default function ScanDetailScreen() {
 
         {/* Sub-scores */}
         <Animated.View entering={FadeInDown.delay(80)} style={{
-          backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)",
+          backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)",
           borderRadius: 20, padding: 20, marginBottom: 16,
         }}>
           <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 16 }}>Métriques détaillées</Text>
@@ -195,7 +195,7 @@ export default function ScanDetailScreen() {
 
         {/* Qualitative indicators */}
         <Animated.View entering={FadeInDown.delay(140)} style={{
-          backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)",
+          backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)",
           borderRadius: 20, padding: 20, marginBottom: 16,
         }}>
           <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 16 }}>Indicateurs qualitatifs</Text>
@@ -205,7 +205,7 @@ export default function ScanDetailScreen() {
               { label: "Pores", val: scan.pores_condition },
               { label: "Hyperpigmentation", val: scan.hyperpigmentation_level },
             ].map(({ label, val }) => (
-              <View key={label} style={{ backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 12, padding: 12, flex: 1, minWidth: 90 }}>
+              <View key={label} style={{ backgroundColor: "rgba(255,255,255,0.55)", borderRadius: 12, padding: 12, flex: 1, minWidth: 90 }}>
                 <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, marginBottom: 4 }}>{label}</Text>
                 <Text style={{ color: "#fff", fontWeight: "600", fontSize: 13, textTransform: "capitalize" }}>{val || "—"}</Text>
               </View>
@@ -221,7 +221,7 @@ export default function ScanDetailScreen() {
 
         {/* Zones */}
         <Animated.View entering={FadeInDown.delay(200)} style={{
-          backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)",
+          backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)",
           borderRadius: 20, padding: 20, marginBottom: 16,
         }}>
           <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 16 }}>Zones concernées</Text>
@@ -232,22 +232,22 @@ export default function ScanDetailScreen() {
 
         {/* Lifestyle */}
         <Animated.View entering={FadeInDown.delay(260)} style={{
-          backgroundColor: "rgba(255,255,255,0.04)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.08)",
+          backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)",
           borderRadius: 20, padding: 20,
         }}>
           <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 16 }}>Lifestyle au moment du scan</Text>
           <View style={{ flexDirection: "row", gap: 12 }}>
-            <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 12, padding: 12, alignItems: "center" }}>
+            <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.55)", borderRadius: 12, padding: 12, alignItems: "center" }}>
               <Text style={{ fontSize: 20 }}>😴</Text>
               <Text style={{ color: "#fff", fontWeight: "700", fontSize: 18, marginTop: 4 }}>{scan.sleep_hours}h</Text>
               <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11 }}>Sommeil</Text>
             </View>
-            <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 12, padding: 12, alignItems: "center" }}>
+            <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.55)", borderRadius: 12, padding: 12, alignItems: "center" }}>
               <Text style={{ fontSize: 20 }}>💧</Text>
               <Text style={{ color: "#fff", fontWeight: "700", fontSize: 18, marginTop: 4 }}>{scan.water_intake_liters}L</Text>
               <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11 }}>Eau</Text>
             </View>
-            <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.06)", borderRadius: 12, padding: 12, alignItems: "center" }}>
+            <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.55)", borderRadius: 12, padding: 12, alignItems: "center" }}>
               <Text style={{ fontSize: 20 }}>🌡️</Text>
               <Text style={{ color: "#fff", fontWeight: "700", fontSize: 18, marginTop: 4 }}>{scan.stress_level}/10</Text>
               <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 11 }}>Stress</Text>
