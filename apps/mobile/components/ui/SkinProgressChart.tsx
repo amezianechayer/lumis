@@ -3,6 +3,7 @@ import { useState } from "react";
 import Svg, { Path, Circle, Line, Text as SvgText, Defs, LinearGradient, Stop, Rect } from "react-native-svg";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SkinScan } from "../../types/api";
+import { useThemeColors } from "../../stores/theme.store";
 
 type Metric = "overall" | "acne" | "hydration" | "texture" | "uniformity";
 
@@ -41,18 +42,19 @@ interface Props {
 }
 
 export function SkinProgressChart({ scans }: Props) {
+  const c = useThemeColors();
   const [activeMetric, setActiveMetric] = useState<Metric>("overall");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   if (scans.length < 2) {
     return (
       <Animated.View entering={FadeInDown.delay(100)}
-        style={{ backgroundColor: "rgba(255,255,255,0.65)", borderWidth: 0.5, borderColor: "rgba(201,130,107,0.12)", borderRadius: 20, padding: 20, alignItems: "center", justifyContent: "center", minHeight: 140 }}>
+        style={{ backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight, borderRadius: 20, padding: 20, alignItems: "center", justifyContent: "center", minHeight: 140 }}>
         <Text style={{ fontSize: 32, marginBottom: 8 }}>📊</Text>
-        <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, fontWeight: "600", textAlign: "center" }}>
+        <Text style={{ color: c.textMuted, fontSize: 14, fontWeight: "600", textAlign: "center" }}>
           Fais au moins 2 scans
         </Text>
-        <Text style={{ color: "rgba(255,255,255,0.35)", fontSize: 12, textAlign: "center", marginTop: 4 }}>
+        <Text style={{ color: c.textFaint, fontSize: 12, textAlign: "center", marginTop: 4 }}>
           Le graphique d'évolution apparaîtra ici
         </Text>
       </Animated.View>
@@ -97,16 +99,16 @@ export function SkinProgressChart({ scans }: Props) {
       {/* Header */}
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
         <View>
-          <Text style={{ color: "rgba(255,255,255,0.4)", fontSize: 10, textTransform: "uppercase", letterSpacing: 1 }}>
+          <Text style={{ color: c.textMuted, fontSize: 10, textTransform: "uppercase", letterSpacing: 1 }}>
             Évolution sur {data.length} scans
           </Text>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 }}>
-            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 22 }}>{latestScore}</Text>
+            <Text style={{ color: c.text, fontWeight: "700", fontSize: 22 }}>{latestScore}</Text>
             <Text style={{ color: trendColor, fontSize: 16, fontWeight: "700" }}>{trend} {Math.abs(delta) > 0 ? Math.abs(delta) : ""}</Text>
           </View>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={{ color: "rgba(255,255,255,0.3)", fontSize: 10 }}>
+          <Text style={{ color: c.textFaint, fontSize: 10 }}>
             {new Date(data[data.length - 1].created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
           </Text>
           <Text style={{ color: metric.color, fontSize: 11, fontWeight: "600", marginTop: 2 }}>
@@ -132,9 +134,9 @@ export function SkinProgressChart({ scans }: Props) {
             return (
               <View key={v}>
                 <Line x1={PAD_L} y1={y} x2={W - PAD_R} y2={y}
-                  stroke="rgba(255,255,255,0.55)" strokeWidth={1} />
+                  stroke={c.borderLight} strokeWidth={1} />
                 <SvgText x={PAD_L - 4} y={y + 4} fontSize={9}
-                  fill="rgba(255,255,255,0.25)" textAnchor="end">{v}</SvgText>
+                  fill={c.textFaint} textAnchor="end">{v}</SvgText>
               </View>
             );
           })}
@@ -155,7 +157,7 @@ export function SkinProgressChart({ scans }: Props) {
               <View key={i}>
                 {(isLast || isHovered) && (
                   <Circle cx={p.x} cy={p.y} r={isLast ? 5 : 4}
-                    fill={metric.color} stroke="#EDE4D4" strokeWidth={2} />
+                    fill={metric.color} stroke={c.bg} strokeWidth={2} />
                 )}
                 {!isLast && !isHovered && (
                   <Circle cx={p.x} cy={p.y} r={3}
@@ -176,7 +178,7 @@ export function SkinProgressChart({ scans }: Props) {
             const label = new Date(scan.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
             return (
               <SvgText key={i} x={x} y={H - 4} fontSize={8}
-                fill="rgba(255,255,255,0.3)" textAnchor="middle">{label}</SvgText>
+                fill={c.textFaint} textAnchor="middle">{label}</SvgText>
             );
           })}
         </Svg>
@@ -193,12 +195,12 @@ export function SkinProgressChart({ scans }: Props) {
               paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
               borderWidth: 0.5,
               backgroundColor: activeMetric === m.key ? `${m.color}20` : "transparent",
-              borderColor: activeMetric === m.key ? m.color : "rgba(201,130,107,0.22)",
+              borderColor: activeMetric === m.key ? m.color : c.border,
             }}
           >
             <Text style={{
               fontSize: 11, fontWeight: activeMetric === m.key ? "700" : "400",
-              color: activeMetric === m.key ? m.color : "rgba(255,255,255,0.4)",
+              color: activeMetric === m.key ? m.color : c.textMuted,
             }}>
               {m.label}
             </Text>
