@@ -4,6 +4,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import type { FaceDiagnostic } from "../../types/api";
 import { useThemeColors } from "../../stores/theme.store";
 import type { ThemeColors } from "../../constants/theme";
+import { PremiumBadge } from "./PremiumBadge";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   const c = useThemeColors();
@@ -74,6 +75,7 @@ export function FaceDiagnosticCard({
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}>
         <Text style={{ fontSize: 18 }}>🧬</Text>
         <Text style={{ color: c.text, fontWeight: "700", fontSize: 16 }}>Diagnostic morpho & couleur</Text>
+        {!isPremium && <PremiumBadge />}
       </View>
 
       {!!d.summary && <Text style={{ color: c.textMuted, fontSize: 14, lineHeight: 21 }}>{d.summary}</Text>}

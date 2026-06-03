@@ -4,6 +4,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import type { SkinDiagnostic } from "../../types/api";
 import { useThemeColors } from "../../stores/theme.store";
 import type { ThemeColors } from "../../constants/theme";
+import { PremiumBadge } from "./PremiumBadge";
 
 const SKIN_TYPE_LABEL: Record<string, string> = {
   grasse: "Peau grasse",
@@ -67,6 +68,7 @@ export function SkinDiagnosticCard({
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}>
         <Text style={{ fontSize: 18 }}>🧴</Text>
         <Text style={{ color: c.text, fontWeight: "700", fontSize: 16 }}>Diagnostic peau</Text>
+        {!isPremium && <PremiumBadge />}
         {typeLabel ? (
           <View
             style={{

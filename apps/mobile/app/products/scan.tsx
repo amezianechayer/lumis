@@ -14,6 +14,7 @@ import { api } from "../../services/api";
 import { ScannedProduct } from "../../types/api";
 import { useAuthStore } from "../../stores/auth.store";
 import { InciAnalysis } from "../../components/products/InciAnalysis";
+import { PremiumBadge } from "../../components/ui/PremiumBadge";
 
 type ScreenState = "scanner" | "loading" | "result";
 
@@ -21,6 +22,7 @@ export default function ProductScanScreen() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
   const skinCtx = { skinType: user?.skin_type, acneProne: user?.skin_type === "oily" };
+  const isPremium = !!user?.premium_until && new Date(user.premium_until) > new Date();
   const [permission, requestPermission] = useCameraPermissions();
   const [state, setState] = useState<ScreenState>("scanner");
   const [product, setProduct] = useState<ScannedProduct | null>(null);
@@ -363,6 +365,7 @@ export default function ProductScanScreen() {
             >
               <Text style={{ fontSize: 15 }}>🔬</Text>
               <Text className="font-body text-sm" style={{ color: "#FAFAF8" }}>Analyse INCI par IA (photo)</Text>
+              {!isPremium && <PremiumBadge />}
             </TouchableOpacity>
           </View>
         </View>

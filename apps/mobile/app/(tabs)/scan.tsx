@@ -29,6 +29,7 @@ import { router, useFocusEffect } from "expo-router";
 import { api } from "../../services/api";
 import { SkinScan } from "../../types/api";
 import { PremiumGateModal } from "../../components/ui/PremiumGateModal";
+import { PremiumBadge } from "../../components/ui/PremiumBadge";
 import { SkinDiagnosticCard } from "../../components/ui/SkinDiagnosticCard";
 import { SkinProgressChart } from "../../components/ui/SkinProgressChart";
 import { WeeklySkinCard } from "../../components/ui/WeeklySkinCard";
@@ -272,11 +273,7 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
       <Animated.View entering={FadeInDown.delay(300)} className="mb-4">
         <View className="flex-row items-center gap-2 mb-3">
           <Text className="text-lumis-gold font-body text-xs uppercase tracking-widest">💎 Analyse approfondie</Text>
-          {!isPremium && (
-            <View style={{ backgroundColor: c.primaryMuted, borderRadius: 8, paddingHorizontal: 6, paddingVertical: 1 }}>
-              <Text style={{ color: TERRACOTTA, fontSize: 9, fontWeight: "700" }}>PREMIUM</Text>
-            </View>
-          )}
+          {!isPremium && <PremiumBadge />}
         </View>
 
         <View style={{ position: "relative" }}>
