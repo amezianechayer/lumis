@@ -1,38 +1,38 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { router } from "expo-router";
-import * as Google from "expo-auth-session/providers/google";
-import * as WebBrowser from "expo-web-browser";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { useAuthStore } from "../../stores/auth.store";
 import { t } from "../../utils/i18n";
 
-WebBrowser.maybeCompleteAuthSession();
+// Native Google Sign-In (no browser redirect → avoids the expo-auth-session
+// "invalid_request" issue on Android). idToken aud = webClientId, accepted by the
+// backend's GOOGLE_CLIENT_IDS.
+GoogleSignin.configure({
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+});
 
-/**
- * Google sign-in button. Requires the native modules (dev-client rebuild) and
- * OAuth client IDs in EXPO_PUBLIC_GOOGLE_* env vars.
- * (Apple Sign In intentionally omitted for now — see project notes.)
- */
 export function SocialAuthButtons() {
   const { googleLogin } = useAuthStore();
   const [loading, setLoading] = useState(false);
 
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
-    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-  });
-
-  useEffect(() => {
-    if (response?.type !== "success") return;
-    const idToken = response.params?.id_token ?? response.authentication?.idToken;
-    if (!idToken) return;
-    setLoading(true);
-    googleLogin(idToken)
-      .then(() => router.replace("/"))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [response]);
+  const handleGoogle = async () => {
+    try {
+      setLoading(true);
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const res = await GoogleSignin.signIn();
+      // v13+ returns { type, data: { idToken } }; older returns { idToken }.
+      const idToken = (res as any)?.data?.idToken ?? (res as any)?.idToken;
+      if (!idToken) return;
+      await googleLogin(idToken);
+      router.replace("/");
+    } catch {
+      // User cancelled or sign-in failed — stay on the auth screen.
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <View className="gap-3 mt-2">
@@ -43,10 +43,9 @@ export function SocialAuthButtons() {
       </View>
 
       <Pressable
-        onPress={() => promptAsync()}
-        disabled={!request || loading}
+        onPress={handleGoogle}
+        disabled={loading}
         className="flex-row items-center justify-center bg-card border border-line rounded-xl py-3.5 gap-2"
-        style={{ opacity: !request ? 0.5 : 1 }}
       >
         {loading ? (
           <ActivityIndicator color="#C9826B" />

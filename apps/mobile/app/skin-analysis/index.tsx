@@ -22,6 +22,7 @@ export default function SkinAnalysisScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
   const hasPermission = permission?.granted ?? false;
+  const [facing, setFacing] = useState<"front" | "back">("front");
 
   const {
     phase, countdown, geminiResult, localResult,
@@ -75,7 +76,7 @@ export default function SkinAnalysisScreen() {
       <CameraView
         ref={cameraRef}
         style={StyleSheet.absoluteFill}
-        facing="back"
+        facing={facing}
       />
 
       {/* Face oval guide */}
@@ -90,7 +91,12 @@ export default function SkinAnalysisScreen() {
           <Text style={{ color: "#fff", fontSize: 18 }}>←</Text>
         </TouchableOpacity>
         <Text style={styles.topTitle}>Analyse de peau</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity
+          onPress={() => setFacing((f) => (f === "front" ? "back" : "front"))}
+          style={styles.backBtn}
+        >
+          <Text style={{ color: "#fff", fontSize: 18 }}>🔄</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Guide instruction */}

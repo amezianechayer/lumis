@@ -11,14 +11,7 @@
       "bundleIdentifier": "com.lumis.app",
       "infoPlist": {
         "NSCameraUsageDescription": "Lumis needs camera access to analyze your skin and face.",
-        "NSPhotoLibraryUsageDescription": "Lumis needs photo library access to analyze uploaded photos.",
-        "CFBundleURLTypes": [
-          {
-            "CFBundleURLSchemes": [
-              "com.googleusercontent.apps.145676767058-120ami9hvlun827ini11cpktpnj2sbl1"
-            ]
-          }
-        ]
+        "NSPhotoLibraryUsageDescription": "Lumis needs photo library access to analyze uploaded photos."
       }
     },
     "android": {
@@ -53,6 +46,12 @@
         }
       ],
       "expo-notifications",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.145676767058-120ami9hvlun827ini11cpktpnj2sbl1"
+        }
+      ],
       [
         "expo-camera",
         {

@@ -8,6 +8,7 @@ import {
   LocalColorAnalysis,
 } from "../services/gemini";
 import { api } from "../services/api";
+import { SkinScan } from "../types/api";
 
 export type SkinAnalysisPhase =
   | "idle"
@@ -108,9 +109,33 @@ export function useSkinAnalysis(cameraRef: React.RefObject<CameraView>) {
 
       if (isCancelled.current) return;
 
-      // Gemini analysis
+      // Gemini analysis — with Groq (backend) fallback on quota/error
       setState((s) => ({ ...s, phase: "gemini_analysis" }));
-      const geminiResult = await analyzeSkinWithGemini(compressed.base64);
+      let geminiResult: SkinAnalysisResult;
+      try {
+        geminiResult = await analyzeSkinWithGemini(compressed.base64);
+      } catch (geminiErr) {
+        if (isCancelled.current) return;
+        try {
+          const scan = await api.analyzeSkin({
+            photo_base64: `data:image/jpeg;base64,${compressed.base64}`,
+            sleep_hours: 7,
+            stress_level: 5,
+            water_intake_liters: 1.5,
+          });
+          if (isCancelled.current) return;
+          setState((s) => ({
+            ...s,
+            phase: "done",
+            geminiResult: scanToResult(scan, s.localResult),
+            lightingWarning: false,
+            lowConfidenceWarning: false,
+          }));
+          return;
+        } catch {
+          throw geminiErr; // both AI paths failed → surface original error
+        }
+      }
 
       if (isCancelled.current) return;
 
@@ -163,6 +188,41 @@ export function useSkinAnalysis(cameraRef: React.RefObject<CameraView>) {
   }, [cameraRef]);
 
   return { ...state, startAnalysis, reset };
+}
+
+// Maps a backend Groq SkinScan into the screen's SkinAnalysisResult shape, used
+// as a fallback when Gemini is unavailable (quota).
+function scanToResult(scan: SkinScan, local: LocalColorAnalysis | null): SkinAnalysisResult {
+  const d = scan.ai_analysis ?? null;
+  const lvl = (score: number): "none" | "mild" | "moderate" | "severe" =>
+    score >= 80 ? "none" : score >= 60 ? "mild" : score >= 40 ? "moderate" : "severe";
+  const qual = (v?: string): "none" | "mild" | "moderate" => {
+    const s = (v ?? "").toLowerCase();
+    if (s.includes("élev") || s.includes("elev")) return "moderate";
+    if (s.includes("modér") || s.includes("moder")) return "mild";
+    return "none";
+  };
+  const skinTypeMap: Record<string, SkinAnalysisResult["skinType"]> = {
+    grasse: "oily", "sèche": "dry", seche: "dry", mixte: "combination", normale: "normal", sensible: "normal",
+  };
+  return {
+    lightingQuality: "good",
+    skinType: d ? (skinTypeMap[(d.skin_type || "").toLowerCase()] ?? null) : null,
+    fitzpatrickType: (local?.fitzpatrickType as SkinAnalysisResult["fitzpatrickType"]) ?? 3,
+    undertone: local?.undertone ?? "neutral",
+    dominantHex: local?.dominantHex ?? "#C9A28A",
+    visibleConcerns: {
+      acne: lvl(scan.acne_score),
+      darkSpots: scan.dark_spots_count > 4 ? "moderate" : scan.dark_spots_count > 0 ? "mild" : "none",
+      pores: scan.pores_condition === "larges" ? "enlarged" : "normal",
+      wrinkles: scan.fine_lines_detected ? "fine_lines" : "none",
+      redness: qual(scan.redness_level),
+      dryness: (scan.dryness_zones?.length ?? 0) > 0 ? "mild" : "none",
+    },
+    skincareRoutine: { morning: d?.routine?.morning ?? [], evening: d?.routine?.evening ?? [] },
+    productCategories: d?.recommended_actives?.map((a) => a.name) ?? [],
+    confidence: 0.7,
+  };
 }
 
 function buildNotesFromGemini(r: SkinAnalysisResult): string {
