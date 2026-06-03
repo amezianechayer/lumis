@@ -111,10 +111,151 @@ func (s *SkinScanService) Analyze(ctx context.Context, userID uuid.UUID, input S
 		Notes:                  input.Notes,
 	}
 
+	// Rich, persisted, Aroma-Zone-style narrative diagnostic (best-effort).
+	if diag := s.generateDiagnostic(ctx, scores, input, user); diag != nil {
+		if b, err := json.Marshal(diag); err == nil {
+			scan.AIAnalysis = models.JSON(b)
+		}
+	}
+
 	if err := s.repo.Create(ctx, scan); err != nil {
 		return nil, err
 	}
 	return scan, nil
+}
+
+// SkinDiagnostic is the rich, personalized diagnostic persisted in
+// SkinScan.AIAnalysis and shown identically on the live result and in history.
+type SkinDiagnostic struct {
+	SkinType           string        `json:"skin_type"` // grasse|sèche|mixte|sensible|normale
+	Summary            string        `json:"summary"`
+	Concerns           []DiagConcern `json:"concerns"`
+	RecommendedActives []DiagActive  `json:"recommended_actives"`
+	Avoid              []DiagActive  `json:"avoid"`
+	Routine            DiagRoutine   `json:"routine"`
+	LifestyleTips      []string      `json:"lifestyle_tips"`
+}
+
+type DiagConcern struct {
+	Label       string `json:"label"`
+	Severity    string `json:"severity"` // faible|modérée|élevée
+	Explanation string `json:"explanation"`
+}
+
+type DiagActive struct {
+	Name string `json:"name"`
+	Why  string `json:"why"`
+}
+
+type DiagRoutine struct {
+	Morning []string `json:"morning"`
+	Evening []string `json:"evening"`
+}
+
+// generateDiagnostic asks the text model for a personalized skincare diagnostic
+// based on the computed scores + the user's profile. Best-effort: returns nil on
+// any failure so the scan is still saved with its scores.
+func (s *SkinScanService) generateDiagnostic(ctx context.Context, sc visionScores, input SkinScanInput, user *models.User) *SkinDiagnostic {
+	if s.groqAPIKey == "" {
+		return nil
+	}
+
+	declaredType := "non précisé"
+	ageLine := ""
+	if user != nil {
+		if user.SkinType != nil && *user.SkinType != "" {
+			declaredType = *user.SkinType
+		}
+		if age := user.Age(); age > 0 {
+			ageLine = fmt.Sprintf("\n- Âge : %d ans (adapte : prévention 18-25, premiers signes 25-35, anti-âge 35+)", age)
+		}
+	}
+
+	join := func(items []string) string {
+		if len(items) == 0 {
+			return "aucune"
+		}
+		return strings.Join(items, ", ")
+	}
+
+	prompt := fmt.Sprintf(`Tu es un expert dermo-cosmétique. À partir des résultats d'analyse de peau ci-dessous, rédige un diagnostic personnalisé, concret et bienveillant, en français (style diagnostic peau professionnel type Aroma-Zone).
+
+Résultats de l'analyse :
+- Score global : %d/100
+- Acné : %d/100 (%d imperfections, zones : %s)
+- Hydratation : %d/100
+- Texture : %d/100 (pores : %s)
+- Uniformité du teint : %d/100 (%d taches, hyperpigmentation : %s)
+- Rougeurs : %s
+- Fines lignes : %v
+- Zones grasses : %s
+- Zones sèches : %s
+- Type de peau déclaré : %s%s
+- Mode de vie : sommeil %.1fh/nuit, stress %d/10, eau %.1fL/jour
+
+Déduis le VRAI type de peau (grasse, sèche, mixte, sensible ou normale) à partir des données.
+Renvoie UNIQUEMENT un objet JSON valide (sans markdown, sans texte autour) :
+{
+  "skin_type": "grasse|sèche|mixte|sensible|normale",
+  "summary": "<2-3 phrases résumant l'état de la peau et le besoin principal>",
+  "concerns": [{"label": "<préoccupation>", "severity": "faible|modérée|élevée", "explanation": "<1 phrase liée aux données>"}],
+  "recommended_actives": [{"name": "<actif + dosage>", "why": "<pourquoi pour cette peau>"}],
+  "avoid": [{"name": "<ingrédient ou famille à éviter>", "why": "<pourquoi>"}],
+  "routine": {"morning": ["<étape concrète>"], "evening": ["<étape concrète>"]},
+  "lifestyle_tips": ["<conseil mode de vie>"]
+}
+Règles : 2 à 4 "concerns" priorisées, 3 à 5 "recommended_actives", 1 à 3 "avoid", 3 à 5 étapes par routine, 2 à 3 "lifestyle_tips". Cite des actifs réels (niacinamide, acide hyaluronique, rétinol, vitamine C, acide azélaïque, centella, AHA/BHA, SPF...). Ne fais aucun diagnostic médical.`,
+		sc.OverallScore, sc.AcneScore, sc.AcneCount, join(sc.AcneZones),
+		sc.HydrationScore, sc.TextureScore, sc.PoresCondition,
+		sc.UniformityScore, sc.DarkSpotsCount, sc.HyperpigmentationLevel,
+		sc.RednessLevel, sc.FineLinesDetected, join(sc.OilinessZones), join(sc.DrynessZones),
+		declaredType, ageLine, input.SleepHours, input.StressLevel, input.WaterIntakeLiters)
+
+	reqBody := groqRequest{
+		Model:       groqModel,
+		Messages:    []groqMessage{{Role: "user", Content: prompt}},
+		Temperature: 0.4,
+		MaxTokens:   1200,
+	}
+	body, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, groqAPIURL, bytes.NewReader(body))
+	if err != nil {
+		return nil
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+s.groqAPIKey)
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil
+	}
+	defer resp.Body.Close()
+
+	respBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil
+	}
+
+	var gr groqResponse
+	if err := json.Unmarshal(respBytes, &gr); err != nil {
+		return nil
+	}
+	if gr.Error != nil || len(gr.Choices) == 0 {
+		log.Printf("[SkinScan] diagnostic generation skipped: empty/err response")
+		return nil
+	}
+
+	raw := extractJSON(gr.Choices[0].Message.Content)
+	var diag SkinDiagnostic
+	if err := json.Unmarshal([]byte(raw), &diag); err != nil {
+		log.Printf("[SkinScan] diagnostic parse failed: %v", err)
+		return nil
+	}
+	return &diag
 }
 
 func (s *SkinScanService) analyzeWithVision(ctx context.Context, input SkinScanInput, user *models.User) (visionScores, error) {

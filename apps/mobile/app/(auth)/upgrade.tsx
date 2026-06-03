@@ -17,23 +17,22 @@ import {
   PasswordStrengthMeter,
   isPasswordValid,
 } from "../../components/ui/PasswordStrengthMeter";
-import { SocialAuthButtons } from "../../components/ui/SocialAuthButtons";
-import { LanguagePicker } from "../../components/ui/LanguagePicker";
 import { t } from "../../utils/i18n";
 import { useLanguageStore } from "../../stores/language.store";
 import { useAuthStore } from "../../stores/auth.store";
 import { useThemeColors } from "../../stores/theme.store";
 
-export default function RegisterScreen() {
+export default function UpgradeScreen() {
   useLanguageStore();
+  const c = useThemeColors();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const { register } = useAuthStore();
+  const { upgradeAccount } = useAuthStore();
 
-  const handleRegister = async () => {
+  const handleUpgrade = async () => {
     setError(null);
     if (!isPasswordValid(password)) {
       setError(t("auth.register.password_requirements"));
@@ -41,8 +40,8 @@ export default function RegisterScreen() {
     }
     setLoading(true);
     try {
-      await register(email.trim().toLowerCase(), password, fullName.trim() || undefined);
-      router.replace("/(auth)/onboarding");
+      await upgradeAccount(email.trim().toLowerCase(), password, fullName.trim() || undefined);
+      router.back();
     } catch (e: unknown) {
       setError(extractError(e, t("auth.register.error")));
     } finally {
@@ -55,47 +54,34 @@ export default function RegisterScreen() {
       className="flex-1 bg-lumis-black"
       style={{ paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0 }}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
-      >
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         <ScrollView
           contentContainerStyle={{ flexGrow: 1, paddingHorizontal: 24, paddingBottom: 32 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Top bar */}
-          <Animated.View
-            entering={FadeInDown.delay(0)}
-            className="flex-row items-center justify-between pt-4 pb-2"
-          >
-            <Text
-              className="text-lumis-white/50 font-body text-sm"
-              onPress={() => router.back()}
-            >
+          <Animated.View entering={FadeInDown.delay(0)} className="flex-row items-center pt-4 pb-2">
+            <Text className="text-lumis-white/50 font-body text-sm" onPress={() => router.back()}>
               ← {t("common.back")}
             </Text>
-            <LanguagePicker />
           </Animated.View>
 
-          {/* Title */}
           <Animated.View entering={FadeInDown.delay(80)} className="mt-6 mb-6">
             <Text className="text-lumis-white font-display text-3xl mb-1">
-              {t("auth.register.title")}
+              {t("auth.upgrade.title")}
             </Text>
             <Text className="text-lumis-white/50 font-body text-base">
-              {t("auth.register.subtitle")}
+              {t("auth.upgrade.subtitle")}
             </Text>
           </Animated.View>
 
-          {/* Form */}
           <Animated.View entering={FadeInDown.delay(150)} className="gap-4">
             <InputField
               label={t("auth.register.full_name")}
               placeholder={t("auth.register.full_name_placeholder")}
               value={fullName}
               onChangeText={setFullName}
-              autoComplete="name"
+              c={c}
             />
             <InputField
               label={t("auth.register.email")}
@@ -103,8 +89,7 @@ export default function RegisterScreen() {
               value={email}
               onChangeText={setEmail}
               keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
+              c={c}
             />
             <View>
               <PasswordInput
@@ -112,9 +97,10 @@ export default function RegisterScreen() {
                 placeholder={t("auth.register.password_placeholder")}
                 value={password}
                 onChangeText={setPassword}
+                autoComplete="new-password"
                 returnKeyType="go"
                 onSubmitEditing={() => {
-                  if (email && password && !loading) handleRegister();
+                  if (email && password && !loading) handleUpgrade();
                 }}
               />
               <PasswordStrengthMeter password={password} />
@@ -130,36 +116,11 @@ export default function RegisterScreen() {
             )}
 
             <PrimaryButton
-              label={t("auth.register.submit")}
-              onPress={handleRegister}
+              label={t("auth.upgrade.submit")}
+              onPress={handleUpgrade}
               loading={loading}
               disabled={!email || !password}
             />
-
-            <SocialAuthButtons />
-          </Animated.View>
-
-          {/* Login link */}
-          <Animated.View entering={FadeInDown.delay(250)} className="mt-6 items-center">
-            <Text
-              className="text-lumis-white/50 font-body text-sm"
-              onPress={() => router.back()}
-            >
-              {t("auth.register.already_account")}{" "}
-              <Text className="text-lumis-gold font-body-medium">
-                {t("auth.register.login")}
-              </Text>
-            </Text>
-          </Animated.View>
-
-          {/* Legal */}
-          <Animated.View entering={FadeInDown.delay(300)} className="mt-4 items-center">
-            <Text className="text-lumis-white/25 font-body text-xs text-center leading-5">
-              En créant un compte, tu acceptes nos{"\n"}
-              <Text className="text-lumis-white/40">Conditions d'utilisation</Text>
-              {" & "}
-              <Text className="text-lumis-white/40">Politique de confidentialité</Text>
-            </Text>
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -168,25 +129,15 @@ export default function RegisterScreen() {
 }
 
 function InputField({
-  label,
-  placeholder,
-  value,
-  onChangeText,
-  secureTextEntry,
-  keyboardType,
-  autoCapitalize,
-  autoComplete,
+  label, placeholder, value, onChangeText, keyboardType, c,
 }: {
   label: string;
   placeholder: string;
   value: string;
   onChangeText: (v: string) => void;
-  secureTextEntry?: boolean;
   keyboardType?: "default" | "email-address";
-  autoCapitalize?: "none" | "sentences";
-  autoComplete?: "email" | "password" | "new-password" | "name";
+  c: ReturnType<typeof useThemeColors>;
 }) {
-  const c = useThemeColors();
   return (
     <View>
       <Text className="text-lumis-white/70 font-body-medium text-sm mb-1.5">{label}</Text>
@@ -195,12 +146,8 @@ function InputField({
         placeholder={placeholder}
         placeholderTextColor={c.textFaint}
         keyboardType={keyboardType}
-        autoCapitalize={autoCapitalize ?? "sentences"}
+        autoCapitalize={keyboardType === "email-address" ? "none" : "sentences"}
         autoCorrect={false}
-        secureTextEntry={secureTextEntry}
-        autoComplete={secureTextEntry ? "off" : autoComplete}
-        importantForAutofill={secureTextEntry ? "no" : "auto"}
-        textContentType={secureTextEntry ? "none" : undefined}
         value={value}
         onChangeText={onChangeText}
       />

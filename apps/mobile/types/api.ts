@@ -10,6 +10,7 @@ export interface User {
   goals?: string[];
   skin_type?: "normal" | "oily" | "dry" | "combination" | "sensitive";
   email_verified: boolean;
+  is_guest?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -63,8 +64,19 @@ export interface FaceProfile {
   jaw_type: string;
   beard_recommendations?: string[];
   haircut_recommendations?: string[];
+  style_analysis?: FaceDiagnostic | null;
   analysis_version: string;
   created_at: string;
+}
+
+// Rich, personalized morphology + colorimetry reading (persisted server-side).
+export interface FaceDiagnostic {
+  summary: string;
+  strengths: string[];
+  face_shape_tips: string[];
+  best_colors: string[];
+  colors_to_avoid: string[];
+  style_tips: string[];
 }
 
 export interface RecStep {
@@ -176,9 +188,21 @@ export interface SkinScan {
   stress_level: number;
   water_intake_liters: number;
   notes?: string;
+  ai_analysis?: SkinDiagnostic | null;
   week_number: number;
   year: number;
   created_at: string;
+}
+
+// Rich, personalized diagnostic generated + persisted server-side.
+export interface SkinDiagnostic {
+  skin_type: string; // grasse | sèche | mixte | sensible | normale
+  summary: string;
+  concerns: { label: string; severity: string; explanation: string }[];
+  recommended_actives: { name: string; why: string }[];
+  avoid: { name: string; why: string }[];
+  routine: { morning: string[]; evening: string[] };
+  lifestyle_tips: string[];
 }
 
 export interface SkinScanRequest {

@@ -22,7 +22,10 @@
         "disabled": true
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://lumis-production.up.railway.app"
+        "EXPO_PUBLIC_API_URL": "https://lumis-production.up.railway.app",
+        "EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID": "145676767058-s6javfi4osbohniv0pagnt1gcu8kdcph.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "145676767058-120ami9hvlun827ini11cpktpnj2sbl1.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "145676767058-dks3jl10nivr4d0hi6p2fmticg961osf.apps.googleusercontent.com"
       }
     }
   }

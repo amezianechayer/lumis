@@ -10,6 +10,8 @@ import { useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { api } from "../../services/api";
 import { SkinScan } from "../../types/api";
+import { SkinDiagnosticCard } from "../../components/ui/SkinDiagnosticCard";
+import { useAuthStore } from "../../stores/auth.store";
 import { useThemeColors } from "../../stores/theme.store";
 
 const TERRACOTTA = "#C9826B";
@@ -134,6 +136,8 @@ export default function ScanDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const c = useThemeColors();
+  const { user } = useAuthStore();
+  const isPremium = !!user?.premium_until && new Date(user.premium_until) > new Date();
 
   const { data: scan, isLoading, isError } = useQuery<SkinScan>({
     queryKey: ["scan-detail", id],
@@ -187,6 +191,9 @@ export default function ScanDetailScreen() {
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
         {/* Overall score with pulse ring */}
         <OverallScoreCard overall={overall} oc={oc} />
+
+        {/* AI diagnostic (Aroma-Zone style) — same as the live result */}
+        {scan.ai_analysis && <SkinDiagnosticCard diagnostic={scan.ai_analysis} isPremium={isPremium} />}
 
         {/* Sub-scores */}
         <Animated.View entering={FadeInDown.delay(80)} style={{

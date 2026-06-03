@@ -28,20 +28,20 @@ export function PremiumGateModal({ visible, onClose, title, message, used, limit
               className="w-full max-w-sm mx-6 bg-[#111111] border border-line rounded-3xl p-6"
               style={{ marginHorizontal: 24 }}
             >
-              {/* Icon */}
+              {/* Icon — card is always dark (#111111) so use explicit light colors */}
               <View className="items-center mb-4">
                 <Text className="text-5xl mb-3">👑</Text>
-                <Text className="text-lumis-white font-display text-xl text-center">{title}</Text>
+                <Text className="font-display text-xl text-center" style={{ color: "#FAFAF8" }}>{title}</Text>
               </View>
 
               {/* Usage bar */}
               {used !== undefined && limit !== undefined && (
                 <View className="mb-4">
                   <View className="flex-row justify-between mb-1">
-                    <Text className="text-lumis-white/40 font-body text-xs">Utilisé</Text>
-                    <Text className="text-lumis-white/60 font-body-medium text-xs">{used}/{limit}</Text>
+                    <Text className="font-body text-xs" style={{ color: "rgba(250,250,248,0.45)" }}>Utilisé</Text>
+                    <Text className="font-body-medium text-xs" style={{ color: "rgba(250,250,248,0.7)" }}>{used}/{limit}</Text>
                   </View>
-                  <View className="h-1.5 bg-card rounded-full overflow-hidden">
+                  <View className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "rgba(255,255,255,0.1)" }}>
                     <View
                       className="h-full bg-lumis-gold rounded-full"
                       style={{ width: `${Math.min((used / limit) * 100, 100)}%` }}
@@ -50,7 +50,7 @@ export function PremiumGateModal({ visible, onClose, title, message, used, limit
                 </View>
               )}
 
-              <Text className="text-lumis-white/50 font-body text-sm text-center mb-6 leading-5">
+              <Text className="font-body text-sm text-center mb-6 leading-5" style={{ color: "rgba(250,250,248,0.6)" }}>
                 {message}
               </Text>
 
@@ -59,11 +59,11 @@ export function PremiumGateModal({ visible, onClose, title, message, used, limit
                 className="bg-lumis-gold rounded-2xl py-4 items-center mb-3"
                 activeOpacity={0.85}
               >
-                <Text className="text-lumis-black font-body-medium text-base">Passer à Premium</Text>
+                <Text className="font-body-bold text-base" style={{ color: "#1A1208" }}>Passer à Premium</Text>
               </TouchableOpacity>
 
               <TouchableOpacity onPress={onClose} className="items-center py-2" activeOpacity={0.7}>
-                <Text className="text-lumis-white/30 font-body text-sm">Plus tard</Text>
+                <Text className="font-body text-sm" style={{ color: "rgba(250,250,248,0.4)" }}>Plus tard</Text>
               </TouchableOpacity>
             </Animated.View>
           </TouchableWithoutFeedback>

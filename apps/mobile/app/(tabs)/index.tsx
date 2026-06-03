@@ -103,11 +103,14 @@ export default function HomeScreen() {
       refreshControl={<RefreshControl refreshing={false} onRefresh={onRefresh} tintColor={TERRACOTTA} />}
     >
       {/* ── Header ── */}
-      <Animated.View entering={FadeInDown.delay(40)}>
-        <Text style={{ color: c.textMuted, fontSize: 12, textTransform: "capitalize" }}>{today}</Text>
-        <Text style={{ color: c.text, fontSize: 26, fontWeight: "300", letterSpacing: 0.2, marginTop: 2 }}>
-          Bonjour <Text style={{ fontWeight: "600", color: TERRACOTTA }}>{firstName}</Text>
-        </Text>
+      <Animated.View entering={FadeInDown.delay(40)} style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between" }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: c.textMuted, fontSize: 12, textTransform: "capitalize" }}>{today}</Text>
+          <Text style={{ color: c.text, fontSize: 26, fontWeight: "300", letterSpacing: 0.2, marginTop: 2 }}>
+            Bonjour <Text style={{ fontWeight: "600", color: TERRACOTTA }}>{firstName}</Text>
+          </Text>
+        </View>
+        <StreakBadge streak={streak} onPress={() => router.push("/routine" as any)} />
       </Animated.View>
 
       {/* ── Hero score ── */}
@@ -233,6 +236,32 @@ export default function HomeScreen() {
         </Animated.View>
       )}
     </ScrollView>
+  );
+}
+
+function StreakBadge({ streak, onPress }: { streak: number; onPress: () => void }) {
+  const c = useThemeColors();
+  const active = streak > 0;
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.85}
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 4,
+        marginTop: 4,
+        backgroundColor: active ? "rgba(251,191,36,0.12)" : c.bgCard,
+        borderWidth: 0.5,
+        borderColor: active ? "rgba(251,191,36,0.4)" : c.borderLight,
+        borderRadius: 999,
+        paddingHorizontal: 12,
+        paddingVertical: 7,
+      }}
+    >
+      <Text style={{ fontSize: 16, opacity: active ? 1 : 0.5 }}>🔥</Text>
+      <Text style={{ color: active ? "#fbbf24" : c.textMuted, fontWeight: "700", fontSize: 15 }}>{streak}</Text>
+    </TouchableOpacity>
   );
 }
 

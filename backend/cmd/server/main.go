@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -51,7 +52,7 @@ func main() {
 	logger.Info("database connected")
 
 	// Auto-migrate models (supplements SQL migrations)
-	if err := db.AutoMigrate(&models.User{}, &models.RefreshToken{}, &models.FaceProfile{}, &models.Recommendation{}, &models.SkinScan{}, &models.CoachConversation{}, &models.CoachMessage{}, &models.ScannedProduct{}, &models.RoutineLog{}, &models.CycleData{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.RefreshToken{}, &models.AuthToken{}, &models.FaceProfile{}, &models.Recommendation{}, &models.SkinScan{}, &models.CoachConversation{}, &models.CoachMessage{}, &models.ScannedProduct{}, &models.RoutineLog{}, &models.CycleData{}); err != nil {
 		logger.Fatal("automigrate failed", zap.Error(err))
 	}
 
@@ -65,6 +66,7 @@ func main() {
 	// Repositories
 	userRepo := repository.NewUserRepository(db)
 	tokenRepo := repository.NewTokenRepository(db)
+	authTokenRepo := repository.NewAuthTokenRepository(db)
 	faceProfileRepo := repository.NewFaceProfileRepository(db)
 	recRepo := repository.NewRecommendationRepository(db)
 	skinScanRepo := repository.NewSkinScanRepository(db)
@@ -74,7 +76,8 @@ func main() {
 	cycleRepo := repository.NewCycleRepository(db)
 
 	// Services
-	authSvc := services.NewAuthService(userRepo, tokenRepo, cfg)
+	emailSender := services.NewEmailSender(cfg.ResendAPIKey, cfg.EmailFrom, logger)
+	authSvc := services.NewAuthService(userRepo, tokenRepo, authTokenRepo, emailSender, rdb, cfg)
 	storageSvc := services.NewStorageService(cfg.R2AccountID, cfg.R2AccessKey, cfg.R2SecretKey, cfg.R2Bucket, cfg.R2Endpoint)
 	stripeSvc := services.NewStripeService(cfg.StripeSecretKey, cfg.StripeWebhookSecret, cfg.StripePremiumPriceID, userRepo)
 	faceAnalysisSvc := services.NewFaceAnalysisService(faceProfileRepo, cfg.GroqAPIKey)
@@ -116,12 +119,12 @@ func main() {
 
 	app.Use(recover.New())
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
+		AllowOrigins: cfg.CORSAllowedOrigins,
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
 		AllowMethods: "GET, POST, PATCH, DELETE, OPTIONS",
 	}))
 	app.Use(middleware.Logger(logger))
-	app.Use(rateLimiter.PerIP(100, 60*1000000000)) // 100 req/min per IP
+	app.Use(rateLimiter.PerIP(100, time.Minute)) // 100 req/min per IP
 
 	// Health check
 	app.Get("/health", func(c *fiber.Ctx) error {
@@ -138,12 +141,18 @@ func main() {
 	// API v1
 	v1 := app.Group("/api/v1")
 
-	// Auth (public)
-	auth := v1.Group("/auth")
+	// Auth (public) — tighter per-IP limit to slow credential-stuffing/brute-force
+	auth := v1.Group("/auth", rateLimiter.PerIPScoped("auth", 20, time.Minute))
 	auth.Post("/register", authHandler.Register)
+	auth.Post("/guest", authHandler.Guest)
 	auth.Post("/login", authHandler.Login)
 	auth.Post("/refresh", authHandler.Refresh)
 	auth.Post("/logout", authHandler.Logout)
+	auth.Post("/forgot-password", authHandler.ForgotPassword)
+	auth.Post("/reset-password", authHandler.ResetPassword)
+	auth.Post("/verify-email", authHandler.VerifyEmail)
+	auth.Post("/apple", authHandler.Apple)
+	auth.Post("/google", authHandler.Google)
 
 	// Protected routes
 	protected := v1.Group("", middleware.Auth(authSvc))
@@ -152,6 +161,8 @@ func main() {
 	me.Get("/", userHandler.GetMe)
 	me.Patch("/", userHandler.UpdateMe)
 	me.Delete("/", userHandler.DeleteMe)
+	me.Post("/send-verification", authHandler.SendVerification)
+	me.Post("/upgrade", authHandler.Upgrade)
 
 	// Face analysis
 	analysis := protected.Group("/analysis")

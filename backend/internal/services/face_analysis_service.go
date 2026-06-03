@@ -95,11 +95,114 @@ func (s *FaceAnalysisService) Analyze(ctx context.Context, userID uuid.UUID, inp
 		AnalysisVersion:        "2.0",
 	}
 
+	// Rich, persisted morphology/color diagnostic (best-effort).
+	if diag := s.generateFaceDiagnostic(ctx, result, input.Gender); diag != nil {
+		if b, err := json.Marshal(diag); err == nil {
+			profile.StyleAnalysis = models.JSON(b)
+		}
+	}
+
 	if err := s.repo.Create(ctx, profile); err != nil {
 		return nil, fmt.Errorf("faceAnalysis: save profile: %w", err)
 	}
 
 	return profile, nil
+}
+
+// FaceDiagnostic is the rich, personalized morphology + colorimetry reading
+// persisted in FaceProfile.StyleAnalysis and shown on the face analysis screen.
+type FaceDiagnostic struct {
+	Summary       string   `json:"summary"`
+	Strengths     []string `json:"strengths"`
+	FaceShapeTips []string `json:"face_shape_tips"`
+	BestColors    []string `json:"best_colors"`
+	ColorsToAvoid []string `json:"colors_to_avoid"`
+	StyleTips     []string `json:"style_tips"`
+}
+
+// generateFaceDiagnostic asks the text model for a personalized image-consulting
+// reading based on the detected morphology + coloring. Best-effort: nil on error.
+func (s *FaceAnalysisService) generateFaceDiagnostic(ctx context.Context, r faceVisionResult, gender string) *FaceDiagnostic {
+	if s.groqAPIKey == "" {
+		return nil
+	}
+
+	genderLine := "non précisé (conseils neutres)"
+	switch gender {
+	case "male", "homme":
+		genderLine = "homme (grooming / barbe, pas de maquillage)"
+	case "female", "femme":
+		genderLine = "femme (maquillage)"
+	}
+
+	prompt := fmt.Sprintf(`Tu es un expert en morphologie du visage et en colorimétrie (conseil en image). À partir de l'analyse ci-dessous, rédige un diagnostic personnalisé, VALORISANT et concret, en français.
+
+Analyse :
+- Forme du visage : %s
+- Yeux : %s, écart %s
+- Nez : %s · Lèvres : %s · Mâchoire : %s
+- Carnation (Fitzpatrick) : %s
+- Sous-ton : %s
+- Saison couleur : %s
+- Profil : %s
+
+Renvoie UNIQUEMENT un objet JSON valide (sans markdown) :
+{
+  "summary": "<2-3 phrases : lecture morpho + colorimétrie, ton valorisant>",
+  "strengths": ["<atout du visage à mettre en valeur>"],
+  "face_shape_tips": ["<conseil pour équilibrer la forme : coiffure / lunettes / encolure (+ barbe si homme)>"],
+  "best_colors": ["<couleur qui sublime le teint>"],
+  "colors_to_avoid": ["<couleur à éviter>"],
+  "style_tips": ["<conseil maquillage (femme) ou grooming (homme) actionnable>"]
+}
+Règles : 2-3 "strengths", 2-4 "face_shape_tips", 4-6 "best_colors", 1-3 "colors_to_avoid", 2-4 "style_tips". Reste bienveillant et factuel, aucun jugement esthétique négatif.`,
+		r.FaceShape, r.EyeShape, r.EyeDistance, r.NoseShape, r.LipShape, r.JawType,
+		r.SkinTone, r.Undertone, r.ColorSeason, genderLine)
+
+	reqBody := groqRequest{
+		Model:       groqModel,
+		Messages:    []groqMessage{{Role: "user", Content: prompt}},
+		Temperature: 0.5,
+		MaxTokens:   1000,
+	}
+	body, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, groqAPIURL, bytes.NewReader(body))
+	if err != nil {
+		return nil
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+s.groqAPIKey)
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil
+	}
+	defer resp.Body.Close()
+
+	respBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil
+	}
+
+	var gr groqResponse
+	if err := json.Unmarshal(respBytes, &gr); err != nil {
+		return nil
+	}
+	if gr.Error != nil || len(gr.Choices) == 0 {
+		return nil
+	}
+
+	raw := extractJSONFace(gr.Choices[0].Message.Content)
+	var diag FaceDiagnostic
+	if err := json.Unmarshal([]byte(raw), &diag); err != nil {
+		log.Printf("[FaceAnalysis] diagnostic parse failed: %v", err)
+		return nil
+	}
+	return &diag
 }
 
 func (s *FaceAnalysisService) analyzeWithVision(ctx context.Context, input FaceAnalysisInput) (faceVisionResult, error) {

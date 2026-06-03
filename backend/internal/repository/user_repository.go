@@ -31,6 +31,24 @@ func (r *UserRepository) FindByEmail(ctx context.Context, email string) (*models
 	return &user, err
 }
 
+func (r *UserRepository) FindByAppleSub(ctx context.Context, sub string) (*models.User, error) {
+	var user models.User
+	err := r.db.WithContext(ctx).Where("apple_sub = ?", sub).First(&user).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &user, err
+}
+
+func (r *UserRepository) FindByGoogleSub(ctx context.Context, sub string) (*models.User, error) {
+	var user models.User
+	err := r.db.WithContext(ctx).Where("google_sub = ?", sub).First(&user).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &user, err
+}
+
 func (r *UserRepository) FindByID(ctx context.Context, id uuid.UUID) (*models.User, error) {
 	var user models.User
 	err := r.db.WithContext(ctx).Where("id = ?", id).First(&user).Error
@@ -46,6 +64,16 @@ func (r *UserRepository) Update(ctx context.Context, user *models.User) error {
 
 func (r *UserRepository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Where("id = ?", id).Delete(&models.User{}).Error
+}
+
+func (r *UserRepository) UpdatePassword(ctx context.Context, id uuid.UUID, passwordHash string) error {
+	return r.db.WithContext(ctx).Model(&models.User{}).Where("id = ?", id).
+		Update("password_hash", passwordHash).Error
+}
+
+func (r *UserRepository) SetEmailVerified(ctx context.Context, id uuid.UUID) error {
+	return r.db.WithContext(ctx).Model(&models.User{}).Where("id = ?", id).
+		Update("email_verified", true).Error
 }
 
 func (r *UserRepository) SetPremium(ctx context.Context, id uuid.UUID, until time.Time) error {

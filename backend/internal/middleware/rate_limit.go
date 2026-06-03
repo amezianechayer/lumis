@@ -26,6 +26,16 @@ func (rl *RateLimiter) PerIP(limit int, window time.Duration) fiber.Handler {
 	}
 }
 
+// PerIPScoped limits requests per IP within a named scope (e.g. "auth"), using a
+// separate counter so it doesn't share the global PerIP budget. Used to apply a
+// tighter limit on sensitive endpoints like login/register.
+func (rl *RateLimiter) PerIPScoped(scope string, limit int, window time.Duration) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		key := fmt.Sprintf("ratelimit:ip:%s:%s", scope, c.IP())
+		return rl.check(c, key, limit, window)
+	}
+}
+
 // PerUser limits requests per authenticated user per day for AI features.
 func (rl *RateLimiter) PerUser(limit int) fiber.Handler {
 	return func(c *fiber.Ctx) error {

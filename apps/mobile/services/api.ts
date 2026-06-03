@@ -116,6 +116,18 @@ class ApiClient {
     return SecureStore.getItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
   }
 
+  async hasStoredSession() {
+    const token = await SecureStore.getItemAsync(STORAGE_KEYS.REFRESH_TOKEN);
+    return token !== null;
+  }
+
+  // Anonymous guest session — lets a brand-new user in with no signup wall.
+  async createGuest(): Promise<AuthResponse> {
+    const { data } = await this.client.post<AuthResponse>("/auth/guest");
+    await this.storeTokens(data.tokens);
+    return data;
+  }
+
   // Auth
   async register(email: string, password: string, fullName?: string): Promise<AuthResponse> {
     const { data } = await this.client.post<AuthResponse>("/auth/register", {
@@ -138,6 +150,39 @@ class ApiClient {
     await this.clearTokens();
   }
 
+  // Social login
+  async loginWithApple(identityToken: string, fullName?: string): Promise<AuthResponse> {
+    const { data } = await this.client.post<AuthResponse>("/auth/apple", {
+      identity_token: identityToken,
+      full_name: fullName,
+    });
+    await this.storeTokens(data.tokens);
+    return data;
+  }
+
+  async loginWithGoogle(idToken: string): Promise<AuthResponse> {
+    const { data } = await this.client.post<AuthResponse>("/auth/google", { id_token: idToken });
+    await this.storeTokens(data.tokens);
+    return data;
+  }
+
+  // Password reset + email verification
+  async forgotPassword(email: string): Promise<void> {
+    await this.client.post("/auth/forgot-password", { email });
+  }
+
+  async resetPassword(token: string, password: string): Promise<void> {
+    await this.client.post("/auth/reset-password", { token, password });
+  }
+
+  async verifyEmail(token: string): Promise<void> {
+    await this.client.post("/auth/verify-email", { token });
+  }
+
+  async sendVerificationEmail(): Promise<void> {
+    await this.client.post("/me/send-verification");
+  }
+
   // User
   async getMe(): Promise<User> {
     const { data } = await this.client.get<{ user: User }>("/me");
@@ -152,6 +197,16 @@ class ApiClient {
   async deleteMe(): Promise<void> {
     await this.client.delete("/me");
     await this.clearTokens();
+  }
+
+  // Upgrade a guest account to a real email/password account (keeps all data).
+  async upgradeAccount(email: string, password: string, fullName?: string): Promise<User> {
+    const { data } = await this.client.post<{ user: User }>("/me/upgrade", {
+      email,
+      password,
+      full_name: fullName,
+    });
+    return data.user;
   }
 
   // Face analysis

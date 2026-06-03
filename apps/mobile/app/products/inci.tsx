@@ -29,6 +29,7 @@ export default function InciScannerScreen() {
 
   const age = user?.date_of_birth ? Math.max(0, new Date().getFullYear() - new Date(user.date_of_birth).getFullYear()) : undefined;
   const skin = { skinType: user?.skin_type, acneProne: user?.skin_type === "oily", age };
+  const isPremium = !!user?.premium_until && new Date(user.premium_until) > new Date();
 
   const reset = () => { setAi(null); setLocalText(""); setError(null); };
 
@@ -102,6 +103,34 @@ export default function InciScannerScreen() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (!isPremium) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
+        <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 6, paddingBottom: 8 }}>
+          <TouchableOpacity onPress={() => router.back()} style={{ padding: 6, marginRight: 6 }}>
+            <Text style={{ color: TERRACOTTA, fontSize: 22 }}>←</Text>
+          </TouchableOpacity>
+          <Text style={{ color: c.text, fontWeight: "700", fontSize: 18 }}>Analyse INCI (IA)</Text>
+        </View>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 32 }}>
+          <Text style={{ fontSize: 46, marginBottom: 14 }}>🔬</Text>
+          <Text style={{ color: c.text, fontSize: 19, fontWeight: "700", textAlign: "center", marginBottom: 8 }}>
+            Analyse INCI — Premium
+          </Text>
+          <Text style={{ color: c.textMuted, fontSize: 14, textAlign: "center", lineHeight: 21, marginBottom: 24 }}>
+            Scanne la composition de tes produits et vérifie leur compatibilité avec ta peau. Réservé aux membres Premium.
+          </Text>
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/premium" as any)}
+            style={{ backgroundColor: TERRACOTTA, borderRadius: 14, paddingHorizontal: 28, paddingVertical: 14 }}
+          >
+            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Débloquer avec Premium</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   return (

@@ -22,6 +22,9 @@ type User struct {
 	Goals            pq.StringArray `gorm:"type:text[]" json:"goals,omitempty"`
 	SkinType         *string        `gorm:"size:20;check:skin_type IN ('normal','oily','dry','combination','sensitive')" json:"skin_type,omitempty"`
 	EmailVerified    bool           `gorm:"default:false" json:"email_verified"`
+	IsGuest          bool           `gorm:"default:false" json:"is_guest"`
+	AppleSub         *string        `gorm:"uniqueIndex;size:255" json:"-"`
+	GoogleSub        *string        `gorm:"uniqueIndex;size:255" json:"-"`
 	CreatedAt        time.Time      `json:"created_at"`
 	UpdatedAt        time.Time      `json:"updated_at"`
 	DeletedAt        gorm.DeletedAt `gorm:"index" json:"-"`

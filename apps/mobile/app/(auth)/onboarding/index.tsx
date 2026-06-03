@@ -77,6 +77,13 @@ export default function OnboardingWelcome() {
           <Text className="text-lumis-white/30 font-body text-xs text-center mt-3">
             Gratuit · Sans carte bancaire
           </Text>
+          <Text
+            className="text-lumis-white/50 font-body text-sm text-center mt-4"
+            onPress={() => router.push("/(auth)/login")}
+          >
+            {t("onboarding.welcome.have_account")}{" "}
+            <Text className="text-lumis-gold font-body-medium">{t("auth.login.submit")}</Text>
+          </Text>
         </Animated.View>
       </View>
     </SafeAreaView>

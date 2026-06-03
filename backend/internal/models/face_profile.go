@@ -26,6 +26,7 @@ type FaceProfile struct {
 	BeardRecommendations   pq.StringArray `gorm:"type:text[]" json:"beard_recommendations,omitempty"`
 	HaircutRecommendations pq.StringArray `gorm:"type:text[]" json:"haircut_recommendations,omitempty"`
 	Landmarks              JSON           `gorm:"type:jsonb" json:"landmarks,omitempty"`
+	StyleAnalysis          JSON           `gorm:"type:jsonb" json:"style_analysis,omitempty"`
 	AnalysisVersion        string         `gorm:"size:20;default:'1.0'" json:"analysis_version"`
 	CreatedAt              time.Time      `json:"created_at"`
 }

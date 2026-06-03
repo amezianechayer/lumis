@@ -12,6 +12,8 @@ import {
 import { router } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { PrimaryButton } from "../../components/ui/PrimaryButton";
+import { PasswordInput } from "../../components/ui/PasswordInput";
+import { SocialAuthButtons } from "../../components/ui/SocialAuthButtons";
 import { LanguagePicker } from "../../components/ui/LanguagePicker";
 import { LumisLogo } from "../../components/ui/LumisLogo";
 import { t } from "../../utils/i18n";
@@ -82,13 +84,15 @@ export default function LoginScreen() {
               autoCapitalize="none"
               autoComplete="email"
             />
-            <InputField
+            <PasswordInput
               label={t("auth.login.password")}
               placeholder={t("auth.login.password_placeholder")}
               value={password}
               onChangeText={setPassword}
-              secureTextEntry
-              autoComplete="password"
+              returnKeyType="go"
+              onSubmitEditing={() => {
+                if (email && password && !loading) handleLogin();
+              }}
             />
 
             {error && (
@@ -106,6 +110,8 @@ export default function LoginScreen() {
               loading={loading}
               disabled={!email || !password}
             />
+
+            <SocialAuthButtons />
           </Animated.View>
 
           {/* Register link */}

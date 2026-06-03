@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -25,10 +25,11 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { api } from "../../services/api";
 import { SkinScan } from "../../types/api";
 import { PremiumGateModal } from "../../components/ui/PremiumGateModal";
+import { SkinDiagnosticCard } from "../../components/ui/SkinDiagnosticCard";
 import { SkinProgressChart } from "../../components/ui/SkinProgressChart";
 import { WeeklySkinCard } from "../../components/ui/WeeklySkinCard";
 import { useAuthStore } from "../../stores/auth.store";
@@ -208,21 +209,26 @@ function ScanResults({ scan, onReset }: { scan: SkinScan; onReset: () => void })
         <ScoreBar label="Uniformité" score={scan.uniformity_score} icon="🎨" type="uniformity" />
       </Animated.View>
 
-      {/* Priority actions */}
-      <Animated.View entering={FadeInDown.delay(240)} className="bg-lumis-gold/8 border border-lumis-gold/25 rounded-3xl p-5 mb-4">
-        <Text className="text-lumis-gold font-body text-xs uppercase tracking-widest mb-3">⚡ Priorités pour toi</Text>
-        {buildPriorityActions(scan).map((action, i) => (
-          <View key={i} className="flex-row items-start gap-3 mb-3">
-            <View className="w-6 h-6 rounded-full bg-lumis-gold/20 items-center justify-center mt-0.5" style={{ minWidth: 24 }}>
-              <Text style={{ color: "#C9826B", fontSize: 11, fontWeight: "700" }}>{i + 1}</Text>
+      {/* AI diagnostic (Aroma-Zone style) — persisted + shown in history too.
+          Falls back to heuristic priorities for older scans without a diagnostic. */}
+      {scan.ai_analysis ? (
+        <SkinDiagnosticCard diagnostic={scan.ai_analysis} isPremium={isPremium} />
+      ) : (
+        <Animated.View entering={FadeInDown.delay(240)} className="bg-lumis-gold/8 border border-lumis-gold/25 rounded-3xl p-5 mb-4">
+          <Text className="text-lumis-gold font-body text-xs uppercase tracking-widest mb-3">⚡ Priorités pour toi</Text>
+          {buildPriorityActions(scan).map((action, i) => (
+            <View key={i} className="flex-row items-start gap-3 mb-3">
+              <View className="w-6 h-6 rounded-full bg-lumis-gold/20 items-center justify-center mt-0.5" style={{ minWidth: 24 }}>
+                <Text style={{ color: "#C9826B", fontSize: 11, fontWeight: "700" }}>{i + 1}</Text>
+              </View>
+              <View className="flex-1">
+                <Text className="text-lumis-white font-body-medium text-sm mb-0.5">{action.title}</Text>
+                <Text className="text-lumis-white/50 font-body text-xs leading-5">{action.desc}</Text>
+              </View>
             </View>
-            <View className="flex-1">
-              <Text className="text-lumis-white font-body-medium text-sm mb-0.5">{action.title}</Text>
-              <Text className="text-lumis-white/50 font-body text-xs leading-5">{action.desc}</Text>
-            </View>
-          </View>
-        ))}
-      </Animated.View>
+          ))}
+        </Animated.View>
+      )}
 
       {/* Indicateurs qualitatifs */}
       <Animated.View entering={FadeInDown.delay(300)} className="bg-card border border-line rounded-3xl p-5 mb-4">
@@ -590,6 +596,21 @@ export default function ScanScreen() {
     prevView.current = view;
   }, [view]);
 
+  // Always land on the photo step when the Scan tab is (re)opened from the tab
+  // bar — tapping "+" should start a fresh scan, not stay on a stale view. Skip
+  // the reset when returning from a pushed child screen (scan detail / compare).
+  const cameFromChild = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (cameFromChild.current) {
+        cameFromChild.current = false;
+        return;
+      }
+      setView("photo");
+      setLatestResult(null);
+    }, [])
+  );
+
   const analyzeMutation = useMutation({
     mutationFn: () =>
       api.analyzeSkin({
@@ -689,7 +710,7 @@ export default function ScanScreen() {
           <Text className="text-lumis-white font-display text-xl flex-1">Historique scans</Text>
           {history.length >= 2 && (
             <TouchableOpacity
-              onPress={() => router.push("/scan/compare")}
+              onPress={() => { cameFromChild.current = true; router.push("/scan/compare" as any); }}
               style={{ backgroundColor: "rgba(201,168,76,0.15)", borderWidth: 0.5, borderColor: "rgba(201,168,76,0.4)", borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5 }}
             >
               <Text style={{ color: "#C9826B", fontSize: 11, fontWeight: "600" }}>⇄ Comparer</Text>
@@ -710,7 +731,7 @@ export default function ScanScreen() {
               <WeeklySkinCard
                 scans={history}
                 onScan={() => setView("photo")}
-                onCompare={() => router.push("/scan/compare" as any)}
+                onCompare={() => { cameFromChild.current = true; router.push("/scan/compare" as any); }}
               />
 
               {/* Graphique d'évolution */}
@@ -726,7 +747,7 @@ export default function ScanScreen() {
                 <Animated.View key={s.id} entering={FadeInDown.delay(i * 40 + 100)}>
                   <HistoryCard
                     scan={s}
-                    onPress={() => router.push(`/scan/${s.id}` as any)}
+                    onPress={() => { cameFromChild.current = true; router.push(`/scan/${s.id}` as any); }}
                   />
                 </Animated.View>
               ))}

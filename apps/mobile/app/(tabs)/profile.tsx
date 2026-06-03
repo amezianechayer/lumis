@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, Alert, Switch } from "react-native";
 import { router } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -5,6 +6,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../../stores/auth.store";
 import { useLanguageStore } from "../../stores/language.store";
 import { useThemeStore } from "../../stores/theme.store";
+import { useBiometricStore } from "../../stores/biometric.store";
+import { useNotificationStore } from "../../stores/notifications.store";
 import { LanguagePicker } from "../../components/ui/LanguagePicker";
 import { t } from "../../utils/i18n";
 import { api } from "../../services/api";
@@ -84,6 +87,9 @@ export default function ProfileScreen() {
         )}
       </Animated.View>
 
+      {/* Guest banner */}
+      {user?.is_guest && <GuestBanner />}
+
       {/* Stats grid */}
       <Animated.View entering={FadeInDown.delay(80)} className="flex-row gap-3 mb-6">
         {/* Score peau */}
@@ -145,7 +151,10 @@ export default function ProfileScreen() {
 
       {/* Infos */}
       <Animated.View entering={FadeInDown.delay(180)} className="gap-3 mb-6">
-        <InfoRow label={t("profile.email")} value={user?.email ?? "—"} />
+        <InfoRow
+          label={t("profile.email")}
+          value={user?.is_guest ? t("profile.guest_account") : (user?.email ?? "—")}
+        />
         {user?.full_name && <InfoRow label={t("profile.name")} value={user.full_name} />}
         <InfoRow
           label={t("profile.subscription")}
@@ -159,6 +168,8 @@ export default function ProfileScreen() {
           <LanguagePicker />
         </View>
         <DarkModeRow />
+        <NotificationsRow />
+        <BiometricRow />
       </Animated.View>
 
       {/* Objectifs */}
@@ -210,6 +221,37 @@ export default function ProfileScreen() {
   );
 }
 
+function GuestBanner() {
+  return (
+    <Animated.View
+      entering={FadeInDown.delay(40)}
+      className="bg-lumis-gold/10 border border-lumis-gold/30 rounded-2xl px-5 py-4 mb-6"
+    >
+      <Text className="text-lumis-gold font-body-medium text-sm mb-1">
+        {t("profile.guest.title")}
+      </Text>
+      <Text className="text-lumis-white/50 font-body text-xs mb-3">
+        {t("profile.guest.subtitle")}
+      </Text>
+      <TouchableOpacity
+        onPress={() => router.push("/(auth)/upgrade")}
+        activeOpacity={0.85}
+        className="bg-lumis-gold rounded-xl py-3 items-center mb-2"
+      >
+        <Text className="text-lumis-black font-body-bold text-sm">
+          {t("profile.guest.save_cta")}
+        </Text>
+      </TouchableOpacity>
+      <Text
+        className="text-lumis-white/40 font-body text-xs text-center"
+        onPress={() => router.push("/(auth)/login")}
+      >
+        {t("profile.guest.cta")}
+      </Text>
+    </Animated.View>
+  );
+}
+
 function InfoRow({ label, value, valueColor }: { label: string; value: string; valueColor?: string }) {
   return (
     <View className="bg-card border border-line rounded-2xl px-5 py-4">
@@ -233,6 +275,62 @@ function DarkModeRow() {
       <Switch
         value={isDark}
         onValueChange={toggle}
+        trackColor={{ false: "rgba(201,130,107,0.3)", true: "rgba(201,130,107,0.5)" }}
+        thumbColor="#C9826B"
+      />
+    </View>
+  );
+}
+
+function NotificationsRow() {
+  const { enabled, setEnabled } = useNotificationStore();
+
+  const onToggle = async (value: boolean) => {
+    const ok = await setEnabled(value);
+    if (!ok && value) {
+      Alert.alert(t("profile.notifications.title"), t("profile.notifications.unavailable"));
+    }
+  };
+
+  return (
+    <View className="bg-card border border-line rounded-2xl px-5 py-4 flex-row items-center justify-between">
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <Text style={{ fontSize: 18 }}>🔔</Text>
+        <Text className="text-lumis-white/50 font-body text-xs uppercase tracking-widest">
+          {t("profile.notifications.title")}
+        </Text>
+      </View>
+      <Switch
+        value={enabled}
+        onValueChange={onToggle}
+        trackColor={{ false: "rgba(201,130,107,0.3)", true: "rgba(201,130,107,0.5)" }}
+        thumbColor="#C9826B"
+      />
+    </View>
+  );
+}
+
+function BiometricRow() {
+  const { enabled, setEnabled } = useBiometricStore();
+
+  const onToggle = async (value: boolean) => {
+    const ok = await setEnabled(value);
+    if (!ok && value) {
+      Alert.alert(t("profile.biometric.title"), t("profile.biometric.unavailable"));
+    }
+  };
+
+  return (
+    <View className="bg-card border border-line rounded-2xl px-5 py-4 flex-row items-center justify-between">
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <Text style={{ fontSize: 18 }}>🔒</Text>
+        <Text className="text-lumis-white/50 font-body text-xs uppercase tracking-widest">
+          {t("profile.biometric.title")}
+        </Text>
+      </View>
+      <Switch
+        value={enabled}
+        onValueChange={onToggle}
         trackColor={{ false: "rgba(201,130,107,0.3)", true: "rgba(201,130,107,0.5)" }}
         thumbColor="#C9826B"
       />

@@ -63,6 +63,14 @@ export function WeatherTipCard() {
 
       const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Low });
       const data = await fetchWeather(pos.coords.latitude, pos.coords.longitude);
+      // Reverse-geocode to a human-readable city name (best-effort).
+      try {
+        const geo = await Location.reverseGeocodeAsync({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+        });
+        data.city = geo[0]?.city ?? geo[0]?.subregion ?? geo[0]?.region ?? undefined;
+      } catch {}
       storage.set(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
       setState({ kind: "ok", data, advice: buildAdvice(data) });
     } catch {
@@ -97,8 +105,8 @@ export function WeatherTipCard() {
   return (
     <Animated.View entering={FadeIn} style={[cardStyle, { flexDirection: "column", alignItems: "stretch" }]}>
       <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-        <Text style={{ color: c.textMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 1, flex: 1 }}>
-          Conseil du jour
+        <Text numberOfLines={1} style={{ color: c.textMuted, fontSize: 11, textTransform: "uppercase", letterSpacing: 1, flex: 1 }}>
+          {data.city ? `📍 ${data.city}` : "Conseil du jour"}
         </Text>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
           <Text style={{ color: c.textMuted, fontSize: 12 }}>🌡️ {data.temp}°</Text>

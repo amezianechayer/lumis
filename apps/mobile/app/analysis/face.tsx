@@ -19,6 +19,7 @@ import { useAuthStore } from "../../stores/auth.store";
 import { t } from "../../utils/i18n";
 import { getMakeupGuide, FaceShape } from "../../utils/makeupTips";
 import { FaceMakeupDiagram } from "../../components/ui/FaceMakeupDiagram";
+import { FaceDiagnosticCard } from "../../components/ui/FaceDiagnosticCard";
 import { useThemeColors } from "../../stores/theme.store";
 
 const TERRACOTTA = "#C9826B";
@@ -91,6 +92,7 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
   const tc = useThemeColors();
   const { user } = useAuthStore();
   const isMale = user?.gender === "male";
+  const isPremium = !!user?.premium_until && new Date(user.premium_until) > new Date();
   const faceShapes = t("onboarding.selfie.face_shapes") as unknown as Record<string, string>;
   const seasons = t("onboarding.selfie.seasons") as unknown as Record<string, string>;
   const faceDescs = t("onboarding.selfie.face_descriptions") as unknown as Record<string, string>;
@@ -150,6 +152,11 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
             {faceDescs[profile.face_shape] ?? ""}
           </Text>
         </Animated.View>
+
+        {/* AI morphology + color diagnostic (personalized, like the skin one) */}
+        {profile.style_analysis && (
+          <FaceDiagnosticCard diagnostic={profile.style_analysis} isPremium={isPremium} />
+        )}
 
         {/* Undertone + Season avec explications */}
         <Animated.View entering={FadeInDown.delay(160)} className="mb-4">

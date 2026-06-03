@@ -321,15 +321,15 @@ export default function ProductScanScreen() {
               onPress={() => router.back()}
               style={{ position: "absolute", top: 56, left: 24 }}
             >
-              <Text className="text-lumis-white font-body-bold text-2xl">←</Text>
+              <Text className="font-body-bold text-2xl" style={{ color: "#FAFAF8" }}>←</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => router.push("/products/history")}
-              style={{ position: "absolute", top: 56, right: 24, backgroundColor: "rgba(0,0,0,0.4)", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 }}
+              style={{ position: "absolute", top: 56, right: 24, backgroundColor: "rgba(0,0,0,0.55)", borderWidth: 0.5, borderColor: "rgba(255,255,255,0.25)", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 }}
             >
-              <Text className="text-lumis-white font-body text-xs">🕐 Historique</Text>
+              <Text className="font-body text-xs" style={{ color: "#FAFAF8" }}>🕐 Historique</Text>
             </TouchableOpacity>
-            <Text className="text-lumis-white font-display text-xl">Scanner un produit</Text>
+            <Text className="font-display text-xl" style={{ color: "#FAFAF8" }}>Scanner un produit</Text>
           </View>
 
           {/* Scan window */}
@@ -351,7 +351,7 @@ export default function ProductScanScreen() {
             style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.55)" }}
             className="items-center pt-6 px-8"
           >
-            <Text className="text-lumis-white/70 font-body text-sm text-center">
+            <Text className="font-body text-sm text-center" style={{ color: "rgba(250,250,248,0.75)" }}>
               Pointe vers le code-barres du produit
             </Text>
             {error ? (
@@ -362,7 +362,7 @@ export default function ProductScanScreen() {
               style={{ marginTop: 18, borderWidth: 0.5, borderColor: "rgba(255,255,255,0.3)", borderRadius: 14, paddingHorizontal: 18, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 8 }}
             >
               <Text style={{ fontSize: 15 }}>🔬</Text>
-              <Text className="text-lumis-white font-body text-sm">Analyse INCI par IA (photo)</Text>
+              <Text className="font-body text-sm" style={{ color: "#FAFAF8" }}>Analyse INCI par IA (photo)</Text>
             </TouchableOpacity>
           </View>
         </View>

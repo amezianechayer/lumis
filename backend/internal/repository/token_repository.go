@@ -45,6 +45,20 @@ func (r *TokenRepository) FindByHash(ctx context.Context, rawToken string) (*mod
 	return &rt, err
 }
 
+// FindAnyByHash returns the token row regardless of its revoked/expiry state.
+// Used by refresh-token reuse detection, which must be able to see tokens that
+// have already been rotated out (revoked).
+func (r *TokenRepository) FindAnyByHash(ctx context.Context, rawToken string) (*models.RefreshToken, error) {
+	var rt models.RefreshToken
+	err := r.db.WithContext(ctx).
+		Where("token_hash = ?", HashToken(rawToken)).
+		First(&rt).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &rt, err
+}
+
 func (r *TokenRepository) Revoke(ctx context.Context, rawToken string) error {
 	return r.db.WithContext(ctx).
 		Model(&models.RefreshToken{}).

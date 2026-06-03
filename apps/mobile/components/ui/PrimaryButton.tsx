@@ -39,7 +39,7 @@ export function PrimaryButton({
   const variantClass =
     variant === "gold"
       ? disabled
-        ? "bg-card"
+        ? "bg-lumis-gold/20"
         : "bg-lumis-gold"
       : variant === "outline"
       ? "border border-line bg-transparent"
@@ -48,7 +48,7 @@ export function PrimaryButton({
   const textClass =
     variant === "gold"
       ? disabled
-        ? "text-white/30"
+        ? "text-lumis-gold"
         : "text-lumis-black"
       : "text-lumis-white";
 
