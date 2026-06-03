@@ -141,12 +141,7 @@ export default function ScanDetailScreen() {
 
   const { data: scan, isLoading, isError } = useQuery<SkinScan>({
     queryKey: ["scan-detail", id],
-    queryFn: async () => {
-      const history = await api.getSkinHistory();
-      const found = history.find((s: SkinScan) => s.id === id);
-      if (!found) throw new Error("Scan non trouvé");
-      return found;
-    },
+    queryFn: () => api.getSkinScan(id as string),
     enabled: !!id,
   });
 

@@ -176,6 +176,7 @@ func main() {
 	analysis.Post("/skin", skinScanHandler.Analyze)
 	analysis.Get("/skin/latest", skinScanHandler.GetLatest)
 	analysis.Get("/skin/history", skinScanHandler.GetHistory)
+	analysis.Get("/skin/:id", skinScanHandler.GetByID)
 
 	// AI Coach
 	coach := protected.Group("/coach")

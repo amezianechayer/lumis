@@ -266,6 +266,12 @@ class ApiClient {
     return data.skin_scans ?? [];
   }
 
+  // Fetch one scan by id — backfills the AI diagnostic server-side for older scans.
+  async getSkinScan(id: string): Promise<SkinScan> {
+    const { data } = await this.client.get<SkinScanResponse>(`/analysis/skin/${id}`);
+    return data.skin_scan;
+  }
+
   async generateRecommendations(): Promise<Recommendation[]> {
     const { data } = await this.client.post<RecommendationsResponse>("/recommendations/generate");
     return data.recommendations;

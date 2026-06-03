@@ -203,7 +203,7 @@ export default function HomeScreen() {
             <ToolTile icon="🌙" label="Cycle & Peau" sub="Phase hormonale" tint="#a78bfa"
               onPress={() => router.push("/cycle" as any)} />
           )}
-          <ToolTile icon="🔬" label="Analyse IA" sub="Diagnose Gemini" tint={TERRACOTTA}
+          <ToolTile icon="🔬" label="Analyse express" sub="Type de peau & teint" tint={TERRACOTTA}
             onPress={() => router.push("/skin-analysis" as any)} />
           <ToolTile icon="🧴" label="Scan produit" sub="Compatibilité" tint={TERRACOTTA}
             onPress={() => router.push("/products/scan" as any)} />

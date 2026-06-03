@@ -124,6 +124,54 @@ func (s *SkinScanService) Analyze(ctx context.Context, userID uuid.UUID, input S
 	return scan, nil
 }
 
+// GetScanWithDiagnostic returns a scan and, if it doesn't yet have an AI
+// diagnostic (older scans created before the feature), generates one from its
+// stored scores and persists it — so history shows the full diagnostic too.
+func (s *SkinScanService) GetScanWithDiagnostic(ctx context.Context, userID, scanID uuid.UUID, user *models.User) (*models.SkinScan, error) {
+	scan, err := s.repo.FindByID(ctx, scanID, userID)
+	if err != nil || scan == nil {
+		return scan, err
+	}
+	if len(scan.AIAnalysis) > 0 {
+		return scan, nil // already has a diagnostic
+	}
+
+	scores := scanToVisionScores(scan)
+	input := SkinScanInput{
+		SleepHours:        scan.SleepHours,
+		StressLevel:       scan.StressLevel,
+		WaterIntakeLiters: scan.WaterIntakeLiters,
+	}
+	if diag := s.generateDiagnostic(ctx, scores, input, user); diag != nil {
+		if b, err := json.Marshal(diag); err == nil {
+			scan.AIAnalysis = models.JSON(b)
+			_ = s.repo.UpdateAIAnalysis(ctx, scan.ID, b)
+		}
+	}
+	return scan, nil
+}
+
+// scanToVisionScores rebuilds the scoring struct from a persisted scan, so the
+// diagnostic generator can run on an old scan without its original photo.
+func scanToVisionScores(scan *models.SkinScan) visionScores {
+	return visionScores{
+		OverallScore:           scan.OverallScore,
+		AcneScore:              scan.AcneScore,
+		HydrationScore:         scan.HydrationScore,
+		UniformityScore:        scan.UniformityScore,
+		TextureScore:           scan.TextureScore,
+		AcneCount:              scan.AcneCount,
+		AcneZones:              []string(scan.AcneZones),
+		DarkSpotsCount:         scan.DarkSpotsCount,
+		HyperpigmentationLevel: scan.HyperpigmentationLevel,
+		PoresCondition:         scan.PoresCondition,
+		RednessLevel:           scan.RednessLevel,
+		FineLinesDetected:      scan.FineLinesDetected,
+		OilinessZones:          []string(scan.OilinessZones),
+		DrynessZones:           []string(scan.DrynessZones),
+	}
+}
+
 // SkinDiagnostic is the rich, personalized diagnostic persisted in
 // SkinScan.AIAnalysis and shown identically on the live result and in history.
 type SkinDiagnostic struct {

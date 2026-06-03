@@ -54,6 +54,12 @@ func (r *SkinScanRepository) CountThisMonth(ctx context.Context, userID uuid.UUI
 	return count, err
 }
 
+func (r *SkinScanRepository) UpdateAIAnalysis(ctx context.Context, id uuid.UUID, analysis []byte) error {
+	return r.db.WithContext(ctx).Model(&models.SkinScan{}).
+		Where("id = ?", id).
+		Update("ai_analysis", string(analysis)).Error
+}
+
 func (r *SkinScanRepository) FindByID(ctx context.Context, id, userID uuid.UUID) (*models.SkinScan, error) {
 	var scan models.SkinScan
 	err := r.db.WithContext(ctx).

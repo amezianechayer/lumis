@@ -99,6 +99,29 @@ func (h *SkinScanHandler) GetLatest(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"skin_scan": scan})
 }
 
+// GET /api/v1/analysis/skin/:id
+func (h *SkinScanHandler) GetByID(c *fiber.Ctx) error {
+	userID, err := parseUserID(c)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
+	}
+	scanID, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid scan id"})
+	}
+
+	user, _ := h.userRepo.FindByID(c.Context(), userID)
+
+	scan, err := h.svc.GetScanWithDiagnostic(c.Context(), userID, scanID, user)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "database error"})
+	}
+	if scan == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "scan not found"})
+	}
+	return c.JSON(fiber.Map{"skin_scan": scan})
+}
+
 // GET /api/v1/analysis/skin/history
 func (h *SkinScanHandler) GetHistory(c *fiber.Ctx) error {
 	userID, err := parseUserID(c)
