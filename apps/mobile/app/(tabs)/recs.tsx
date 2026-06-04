@@ -16,11 +16,13 @@ import { RecommendationCard } from "../../components/recommendations/Recommendat
 import { TypeFilter, RecType } from "../../components/recommendations/TypeFilter";
 import { t } from "../../utils/i18n";
 import { useAuthStore } from "../../stores/auth.store";
+import { useThemeColors } from "../../stores/theme.store";
 
 export default function RecsScreen() {
   const [filter, setFilter] = useState<RecType>("all");
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
+  const c = useThemeColors();
   const gender = user?.gender;
 
   const {
@@ -55,7 +57,7 @@ export default function RecsScreen() {
       return (
         <Animated.View entering={FadeIn} className="flex-1 items-center justify-center py-20">
           <ActivityIndicator color="#C9826B" size="large" />
-          <Text className="mt-4 text-base" style={{ color: "#94a3b8" }}>
+          <Text className="mt-4 text-base" style={{ color: c.textMuted }}>
             {t("recs.generating")}
           </Text>
         </Animated.View>
@@ -64,10 +66,10 @@ export default function RecsScreen() {
     return (
       <Animated.View entering={FadeIn} className="flex-1 items-center justify-center px-8 py-20">
         <Text style={{ fontSize: 48 }}>✨</Text>
-        <Text className="text-lg font-bold mt-4 text-center" style={{ color: "#f8fafc" }}>
+        <Text className="text-lg font-bold mt-4 text-center" style={{ color: c.text }}>
           {t("recs.empty_title")}
         </Text>
-        <Text className="text-sm text-center mt-2" style={{ color: "#64748b" }}>
+        <Text className="text-sm text-center mt-2" style={{ color: c.textMuted }}>
           {t("recs.empty_subtitle")}
         </Text>
         <TouchableOpacity
@@ -85,10 +87,10 @@ export default function RecsScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: "#EDE4D4" }}>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: c.bg }}>
       {/* Header */}
       <View className="px-5 pt-2 pb-3 flex-row items-center justify-between">
-        <Text className="text-2xl font-bold" style={{ color: "#f8fafc" }}>
+        <Text className="text-2xl font-bold" style={{ color: c.text }}>
           {t("recs.title")}
         </Text>
         {filtered.length > 0 && (

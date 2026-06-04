@@ -33,38 +33,52 @@ export function TypeFilter({ active, onChange, gender }: Props) {
     return true;
   });
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8, gap: 8 }}
-    >
-      {filters.map((f) => {
-        const isActive = f === active;
-        return (
-          <TouchableOpacity
-            key={f}
-            onPress={() => onChange(f)}
-            activeOpacity={0.75}
-            className="flex-row items-center px-3 py-2 rounded-full"
-            style={{
-              backgroundColor: isActive ? TERRACOTTA : c.bgCard,
-              borderWidth: 0.5,
-              borderColor: isActive ? TERRACOTTA : c.border,
-            }}
-          >
-            <Text style={{ fontSize: 13, marginRight: 4 }}>{FILTER_EMOJIS[f]}</Text>
-            <Text
+    <View style={{ borderBottomWidth: 0.5, borderBottomColor: c.borderLight }}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 14, paddingVertical: 10, gap: 6 }}
+      >
+        {filters.map((f) => {
+          const isActive = f === active;
+          return (
+            <TouchableOpacity
+              key={f}
+              onPress={() => onChange(f)}
+              activeOpacity={0.8}
               style={{
-                color: isActive ? "#fff" : c.textMuted,
-                fontSize: 13,
-                fontWeight: isActive ? "700" : "400",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 6,
+                paddingHorizontal: 14,
+                paddingVertical: 9,
+                borderRadius: 999,
+                backgroundColor: isActive ? TERRACOTTA : "transparent",
+                ...(isActive
+                  ? {
+                      shadowColor: TERRACOTTA,
+                      shadowOpacity: 0.3,
+                      shadowRadius: 8,
+                      shadowOffset: { width: 0, height: 3 },
+                      elevation: 4,
+                    }
+                  : {}),
               }}
             >
-              {t(`recs.filter_${f}` as any)}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
-    </ScrollView>
+              <Text style={{ fontSize: 14 }}>{FILTER_EMOJIS[f]}</Text>
+              <Text
+                style={{
+                  color: isActive ? "#fff" : c.textMuted,
+                  fontSize: 13.5,
+                  fontWeight: isActive ? "700" : "500",
+                }}
+              >
+                {t(`recs.filter_${f}` as any)}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 }

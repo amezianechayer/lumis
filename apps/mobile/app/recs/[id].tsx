@@ -35,6 +35,29 @@ function parseArr<T>(field: unknown): T[] {
   return [];
 }
 
+// Maps a product category/name to an illustrative thumbnail (no real product
+// photos: recs are brand-agnostic, so we show a category visual instead).
+function productVisual(category: string, name: string): { emoji: string; tint: string } {
+  const s = `${category} ${name}`.toLowerCase();
+  const has = (...k: string[]) => k.some((x) => s.includes(x));
+  if (has("nettoyant", "cleanser", "mousse", "gel nett")) return { emoji: "🧼", tint: "#60a5fa" };
+  if (has("sérum", "serum")) return { emoji: "💧", tint: "#5DCAA5" };
+  if (has("spf", "solaire", "sunscreen", "écran")) return { emoji: "☀️", tint: "#fbbf24" };
+  if (has("crème", "creme", "hydratant", "moistur", "baume", "lait")) return { emoji: "🧴", tint: "#4ade80" };
+  if (has("masque", "mask")) return { emoji: "🧖", tint: "#a78bfa" };
+  if (has("exfoli", "peeling", "aha", "bha", "gommage")) return { emoji: "✨", tint: "#f472b6" };
+  if (has("huile", "oil")) return { emoji: "🌿", tint: "#84cc16" };
+  if (has("contour", "yeux", "eye", "cernes")) return { emoji: "👁️", tint: "#818cf8" };
+  if (has("fond de teint", "foundation", "teint")) return { emoji: "🎨", tint: "#f9a8d4" };
+  if (has("rouge", "lèvres", "levres", "lipstick", "gloss")) return { emoji: "💄", tint: "#fb7185" };
+  if (has("mascara", "eyeliner", "khôl", "khol")) return { emoji: "👀", tint: "#a78bfa" };
+  if (has("blush", "fard")) return { emoji: "🌸", tint: "#f472b6" };
+  if (has("cheveux", "hair", "shampo", "capillaire")) return { emoji: "💆", tint: "#60a5fa" };
+  if (has("barbe", "beard", "rasage", "tondeuse")) return { emoji: "🧔", tint: "#94a3b8" };
+  if (has("parfum", "fragrance")) return { emoji: "🌹", tint: "#fb7185" };
+  return { emoji: "🛍️", tint: "#C9826B" };
+}
+
 export default function RecDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -173,10 +196,20 @@ export default function RecDetailScreen() {
               {t("recs.products_title")}
             </Text>
             {products.map((p, i) => (
-              <View key={i} style={{ marginBottom: 10, borderRadius: 16, padding: 14, flexDirection: "row", gap: 12, backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: p.premium ? c.border : c.borderLight }}>
-                <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: p.premium ? c.primaryMuted : `${theme.accent}18`, alignItems: "center", justifyContent: "center" }}>
-                  <Text style={{ fontSize: 18 }}>{p.premium ? "💎" : "🛍️"}</Text>
-                </View>
+              <View key={i} style={{ marginBottom: 10, borderRadius: 16, padding: 14, flexDirection: "row", gap: 12, alignItems: "center", backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: p.premium ? c.border : c.borderLight }}>
+                {(() => {
+                  const v = productVisual(p.category, p.name);
+                  return (
+                    <View style={{ width: 54, height: 54, borderRadius: 14, backgroundColor: `${v.tint}22`, borderWidth: 0.5, borderColor: `${v.tint}40`, alignItems: "center", justifyContent: "center" }}>
+                      <Text style={{ fontSize: 26 }}>{v.emoji}</Text>
+                      {p.premium && (
+                        <View style={{ position: "absolute", top: -5, right: -5, backgroundColor: c.bg, borderRadius: 10, width: 19, height: 19, alignItems: "center", justifyContent: "center" }}>
+                          <Text style={{ fontSize: 10 }}>💎</Text>
+                        </View>
+                      )}
+                    </View>
+                  );
+                })()}
                 <View style={{ flex: 1 }}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                     <Text style={{ color: c.text, fontWeight: "600", fontSize: 14, flex: 1 }}>{p.name}</Text>
