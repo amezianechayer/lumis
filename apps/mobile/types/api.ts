@@ -55,6 +55,7 @@ export interface FaceProfile {
   face_shape: FaceShape;
   face_shape_confidence: number;
   eye_shape: EyeShape;
+  eye_color?: string;
   eye_distance: EyeDistance;
   skin_tone: SkinTone;
   undertone: Undertone;

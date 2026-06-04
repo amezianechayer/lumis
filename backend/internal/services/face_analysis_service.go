@@ -43,6 +43,7 @@ type faceVisionResult struct {
 	FaceShape           string   `json:"face_shape"`
 	FaceShapeConfidence float64  `json:"face_shape_confidence"`
 	EyeShape            string   `json:"eye_shape"`
+	EyeColor            string   `json:"eye_color"`
 	EyeDistance         string   `json:"eye_distance"`
 	NoseShape           string   `json:"nose_shape"`
 	LipShape            string   `json:"lip_shape"`
@@ -82,6 +83,7 @@ func (s *FaceAnalysisService) Analyze(ctx context.Context, userID uuid.UUID, inp
 		FaceShape:              result.FaceShape,
 		FaceShapeConfidence:    result.FaceShapeConfidence,
 		EyeShape:               result.EyeShape,
+		EyeColor:               result.EyeColor,
 		EyeDistance:            result.EyeDistance,
 		SkinTone:               skinTone,
 		Undertone:              result.Undertone,
@@ -243,6 +245,7 @@ func (s *FaceAnalysisService) analyzeWithVision(ctx context.Context, input FaceA
 CRITICAL: Every person's face is unique. You MUST observe what you actually SEE, not generic defaults.
 - Look at the actual width vs height ratio → face_shape
 - Look at the actual eye shape → do NOT default to "almond"
+- Look carefully at the IRIS color (the actual pigment) → eye_color
 - Look at the actual jaw structure → do NOT default to "defined"
 
 Face shape guide: oval=balanced, round=equal width+height, square=angular jaw, heart=wide forehead+narrow jaw, oblong=longer than wide, diamond=narrow forehead+jaw+wide cheeks
@@ -255,6 +258,7 @@ Return ONLY valid JSON (no markdown):
   "face_shape": <"oval"|"round"|"square"|"heart"|"oblong"|"diamond">,
   "face_shape_confidence": <0.0-1.0>,
   "eye_shape": <"almond"|"round"|"hooded"|"monolid"|"upturned"|"downturned">,
+  "eye_color": <"marron"|"noisette"|"vert"|"bleu"|"gris"|"ambre"|"noir">,
   "eye_distance": <"close"|"average"|"wide">,
   "nose_shape": <"straight"|"button"|"wide"|"narrow"|"upturned">,
   "lip_shape": <"thin"|"full"|"heart"|"wide"|"downturned">,
@@ -372,6 +376,10 @@ func sanitizeFaceResult(r faceVisionResult) faceVisionResult {
 	if r.EyeShape == "" {
 		r.EyeShape = "almond"
 	}
+	validEyeColors := map[string]bool{"marron": true, "noisette": true, "vert": true, "bleu": true, "gris": true, "ambre": true, "noir": true}
+	if !validEyeColors[r.EyeColor] {
+		r.EyeColor = "marron"
+	}
 	if r.EyeDistance == "" {
 		r.EyeDistance = "average"
 	}
@@ -415,6 +423,7 @@ func defaultFaceResult(input FaceAnalysisInput) faceVisionResult {
 		FaceShape:           "oval",
 		FaceShapeConfidence: 0.6,
 		EyeShape:            "almond",
+		EyeColor:            "marron",
 		EyeDistance:         "average",
 		NoseShape:           "straight",
 		LipShape:            "full",

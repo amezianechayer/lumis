@@ -16,6 +16,7 @@ type FaceProfile struct {
 	FaceShape              string         `gorm:"size:50" json:"face_shape"`
 	FaceShapeConfidence    float64        `json:"face_shape_confidence"`
 	EyeShape               string         `gorm:"size:50" json:"eye_shape"`
+	EyeColor               string         `gorm:"size:30" json:"eye_color"`
 	EyeDistance            string         `gorm:"size:20" json:"eye_distance"`
 	SkinTone               string         `gorm:"size:20" json:"skin_tone"`
 	Undertone              string         `gorm:"size:20" json:"undertone"`

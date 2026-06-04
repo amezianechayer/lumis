@@ -246,6 +246,7 @@ function ProfileDetail({ profile }: { profile: FaceProfile }) {
         {/* Features grid */}
         <Animated.View entering={FadeInDown.delay(240)} className="flex-row flex-wrap gap-3 mb-4">
           <FeatureTile label="Yeux" value={profile.eye_shape} />
+          <FeatureTile label="Couleur yeux" value={profile.eye_color ?? "—"} />
           <FeatureTile label="Écart yeux" value={profile.eye_distance} />
           <FeatureTile label="Nez" value={profile.nose_shape} />
           <FeatureTile label="Lèvres" value={profile.lip_shape} />
