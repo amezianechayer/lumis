@@ -161,6 +161,8 @@ Règles : 2-3 "strengths", 2-4 "face_shape_tips", 4-6 "best_colors", 1-3 "colors
 		r.FaceShape, r.EyeShape, r.EyeDistance, r.NoseShape, r.LipShape, r.JawType,
 		r.SkinTone, r.Undertone, r.ColorSeason, genderLine)
 
+	prompt += "\n\n" + langDirective(ctx)
+
 	reqBody := groqRequest{
 		Model:       groqModel,
 		Messages:    []groqMessage{{Role: "user", Content: prompt}},

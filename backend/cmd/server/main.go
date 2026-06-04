@@ -120,10 +120,11 @@ func main() {
 	app.Use(recover.New())
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: cfg.CORSAllowedOrigins,
-		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization, X-Lang",
 		AllowMethods: "GET, POST, PATCH, DELETE, OPTIONS",
 	}))
 	app.Use(middleware.Logger(logger))
+	app.Use(middleware.Language()) // store X-Lang on the request context for AI services
 	app.Use(rateLimiter.PerIP(100, time.Minute)) // 100 req/min per IP
 
 	// Health check

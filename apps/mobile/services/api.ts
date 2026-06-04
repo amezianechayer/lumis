@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosInstance } from "axios";
 import * as SecureStore from "expo-secure-store";
+import { getLocale } from "../utils/i18n";
 import type { AiInciResult } from "./gemini";
 import {
   ApiError,
@@ -54,6 +55,8 @@ class ApiClient {
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
+      // Tell the backend which language to generate AI content in.
+      config.headers["X-Lang"] = getLocale();
       return config;
     });
 

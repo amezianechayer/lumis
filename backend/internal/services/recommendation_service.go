@@ -403,6 +403,8 @@ Réponds UNIQUEMENT avec un tableau JSON valide (sans markdown, sans commentaire
 ]
 Génère 4-6 étapes et 3-5 produits par recommandation. Types requis : skincare, makeup, haircut, grooming, color_season.`)
 
+	sb.WriteString("\n\n" + langDirective(ctx))
+
 	type recGroqMsg struct {
 		Role    string `json:"role"`
 		Content string `json:"content"`

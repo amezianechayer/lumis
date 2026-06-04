@@ -270,6 +270,8 @@ Réponds UNIQUEMENT avec un objet JSON valide (sans markdown, sans explication) 
 }
 Règles verdict : excellent=85+, good=65-84, neutral=40-64, avoid=0-39.`)
 
+	sb.WriteString("\n\n" + langDirective(ctx))
+
 	messages := []productGroqMsg{
 		{Role: "user", Content: sb.String()},
 	}
@@ -412,7 +414,7 @@ func (s *ProductService) AnalyzeInci(ctx context.Context, userID uuid.UUID, text
 	}
 	profile := s.buildInciSkinProfile(ctx, userID)
 	fromImage := imageB64 != ""
-	prompt := inciAIPrompt(profile, fromImage)
+	prompt := inciAIPrompt(profile, fromImage) + "\n" + langDirective(ctx)
 
 	type msg struct {
 		Role    string      `json:"role"`

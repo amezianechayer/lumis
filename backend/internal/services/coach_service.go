@@ -80,7 +80,7 @@ func (s *CoachService) buildSystemPrompt(ctx context.Context, user *models.User,
 	sb.WriteString("RÈGLE ABSOLUE : tu NE donnes JAMAIS de conseils génériques. ")
 	sb.WriteString("Chaque réponse doit citer explicitement les données du profil de l'utilisateur (scores, zones, undertone, saison couleur, objectifs). ")
 	sb.WriteString("Si tu ne peux pas personnaliser ta réponse avec les données disponibles, demande plus d'informations. ")
-	sb.WriteString("Tu parles en français, ton ton est expert, direct et bienveillant. ")
+	sb.WriteString(langDirective(ctx) + " Ton ton est expert, direct et bienveillant. ")
 	sb.WriteString("Réponses : max 4 paragraphes, toujours actionnables avec des étapes concrètes. ")
 	sb.WriteString("Tu ne donnes pas de conseils médicaux — dermatologue pour problèmes persistants.\n\n")
 

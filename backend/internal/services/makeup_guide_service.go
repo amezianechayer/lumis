@@ -210,6 +210,7 @@ Génère 5-7 étapes et 4-5 produits.`)
 }
 
 func (s *MakeupGuideService) callGroqGuide(ctx context.Context, prompt string) (string, error) {
+	prompt += "\n\n" + langDirective(ctx)
 	reqBody := groqRequest{
 		Model:       groqModel,
 		Messages:    []groqMessage{{Role: "user", Content: prompt}},

@@ -259,6 +259,8 @@ Règles : 2 à 4 "concerns" priorisées, 3 à 5 "recommended_actives", 1 à 3 "a
 		sc.RednessLevel, sc.FineLinesDetected, join(sc.OilinessZones), join(sc.DrynessZones),
 		declaredType, ageLine, input.SleepHours, input.StressLevel, input.WaterIntakeLiters)
 
+	prompt += "\n\n" + langDirective(ctx)
+
 	reqBody := groqRequest{
 		Model:       groqModel,
 		Messages:    []groqMessage{{Role: "user", Content: prompt}},
