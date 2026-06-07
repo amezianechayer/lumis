@@ -18,6 +18,7 @@ import {
   RoutineStatus,
   RoutineDay,
   CycleStatus,
+  CycleLog,
   RecommendationsResponse,
   RefreshResponse,
   ScannedProduct,
@@ -320,9 +321,17 @@ class ApiClient {
     const { data } = await this.client.get<CycleStatus>("/cycle");
     return data;
   }
-  async saveCycle(payload: { last_period_date: string; cycle_length: number; period_length: number }): Promise<CycleStatus> {
+  async saveCycle(payload: { last_period_date: string; cycle_length: number; period_length: number; has_pcos?: boolean }): Promise<CycleStatus> {
     const { data } = await this.client.post<CycleStatus>("/cycle", payload);
     return data;
+  }
+  async getCycleLogs(): Promise<CycleLog[]> {
+    const { data } = await this.client.get<{ logs: CycleLog[] }>("/cycle/logs");
+    return data.logs ?? [];
+  }
+  async saveCycleLog(payload: CycleLog): Promise<CycleLog> {
+    const { data } = await this.client.post<{ log: CycleLog }>("/cycle/log", payload);
+    return data.log;
   }
 
   // Coach

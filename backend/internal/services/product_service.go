@@ -264,9 +264,9 @@ Réponds UNIQUEMENT avec un objet JSON valide (sans markdown, sans explication) 
 {
   "compatibility_score": <0-100>,
   "verdict": <"excellent"|"good"|"neutral"|"avoid">,
-  "pros": <array de 1-3 avantages en français, strings courts>,
-  "cons": <array de 0-3 inconvénients en français, strings courts>,
-  "tip": <string, conseil personnalisé en français, max 2 phrases>
+  "pros": <array de 1-3 avantages, strings courts>,
+  "cons": <array de 0-3 inconvénients, strings courts>,
+  "tip": <string, conseil personnalisé, max 2 phrases>>
 }
 Règles verdict : excellent=85+, good=65-84, neutral=40-64, avoid=0-39.`)
 
@@ -401,7 +401,7 @@ func inciAIPrompt(profile string, fromImage bool) string {
 	}
 	return "Tu es un expert cosmétologue spécialiste de l'analyse INCI. " + intro + "\n" +
 		"Profil de l'utilisateur : " + profile + ".\n" +
-		"Pour CHAQUE ingrédient : fonction en français, comédogénicité 0-5, rating (\"good\"|\"ok\"|\"caution\"), et \"concern\" (pourquoi problématique POUR CE PROFIL en une phrase, sinon \"\").\n" +
+		"Pour CHAQUE ingrédient : fonction (texte descriptif), comédogénicité 0-5, rating (\"good\"|\"ok\"|\"caution\"), et \"concern\" (pourquoi problématique POUR CE PROFIL en une phrase, sinon \"\").\n" +
 		"Puis \"alerts\" (alertes personnalisées pour cette peau), \"verdict\" (\"excellent\"|\"good\"|\"neutral\"|\"avoid\"), \"score\" 0-100, \"summary\" (2 phrases max). Aucun diagnostic médical.\n" +
 		"Réponds UNIQUEMENT en JSON brut (sans markdown) : {\"productGuess\":\"\",\"ingredients\":[{\"name\":\"\",\"fonction\":\"\",\"rating\":\"good\",\"comedogenic\":0,\"concern\":\"\"}],\"alerts\":[],\"verdict\":\"neutral\",\"score\":0,\"summary\":\"\"}"
 }

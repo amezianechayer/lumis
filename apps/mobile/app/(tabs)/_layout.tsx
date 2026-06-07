@@ -1,14 +1,15 @@
 import { Tabs } from "expo-router";
 import { Text, View, TouchableOpacity } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { AppIcon, IconName } from "../../components/ui/AppIcon";
 import { useThemeColors } from "../../stores/theme.store";
 
 const TERRACOTTA = "#C9826B";
 
-function TabIcon({ icon, label, focused, faint }: { icon: string; label: string; focused: boolean; faint: string }) {
+function TabIcon({ name, label, focused, faint }: { name: IconName; label: string; focused: boolean; faint: string }) {
   return (
-    <View style={{ alignItems: "center", justifyContent: "center", paddingTop: 6, gap: 2, width: 64 }}>
-      <Text style={{ fontSize: 18, opacity: focused ? 1 : 0.4 }}>{icon}</Text>
+    <View style={{ alignItems: "center", justifyContent: "center", paddingTop: 6, gap: 3, width: 64 }}>
+      <AppIcon name={name} size={22} color={focused ? TERRACOTTA : faint} strokeWidth={focused ? 2.1 : 1.8} />
       <Text
         style={{
           fontSize: 9,
@@ -74,13 +75,13 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon icon="🏠" label="Accueil" focused={focused} faint={faint} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="home" label="Accueil" focused={focused} faint={faint} />,
         }}
       />
       <Tabs.Screen
         name="coach"
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon icon="✨" label="Coach" focused={focused} faint={faint} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="coach" label="Coach" focused={focused} faint={faint} />,
         }}
       />
       {/* Central scan button */}
@@ -95,13 +96,13 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="recs"
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon icon="💡" label="Conseils" focused={focused} faint={faint} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="recs" label="Conseils" focused={focused} faint={faint} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          tabBarIcon: ({ focused }) => <TabIcon icon="👤" label="Profil" focused={focused} faint={faint} />,
+          tabBarIcon: ({ focused }) => <TabIcon name="profile" label="Profil" focused={focused} faint={faint} />,
         }}
       />
       {/* Premium — hidden from tab bar, still reachable via dashboard/profile */}

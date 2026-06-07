@@ -135,13 +135,28 @@ export interface CyclePhase {
   skin_impact: string;
   tips: string[];
   next_period_in_days: number;
+  has_pcos?: boolean;
+  is_estimate?: boolean;
+  pcos_note?: string;
+  pcos_tips?: string[];
 }
 
 export interface CycleStatus {
   configured: boolean;
   last_period_date?: string;
   cycle_length?: number;
+  has_pcos?: boolean;
   phase?: CyclePhase;
+}
+
+export interface CycleLog {
+  id?: string;
+  date: string; // YYYY-MM-DD
+  mood: string;
+  skin_state: string;
+  flow: string;
+  symptoms: string[];
+  notes: string;
 }
 
 export interface MakeupGuide {

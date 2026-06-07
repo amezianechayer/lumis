@@ -67,7 +67,7 @@ export function SkinDiagnosticCard({
       {/* Header: skin type + summary */}
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}>
         <Text style={{ fontSize: 18 }}>🧴</Text>
-        <Text style={{ color: c.text, fontWeight: "700", fontSize: 16 }}>Diagnostic peau</Text>
+        <Text style={{ color: c.text, fontWeight: "700", fontSize: 16 }}>Bilan peau</Text>
         {!isPremium && <PremiumBadge />}
         {typeLabel ? (
           <View
@@ -186,6 +186,10 @@ export function SkinDiagnosticCard({
         </View>
         {!isPremium && <DiagnosticLockOverlay c={c} />}
       </View>
+
+      <Text style={{ color: c.textFaint, fontSize: 10, lineHeight: 14, marginTop: 14, fontStyle: "italic" }}>
+        Analyse à but cosmétique et informatif — ne remplace pas un avis dermatologique.
+      </Text>
     </Animated.View>
   );
 }

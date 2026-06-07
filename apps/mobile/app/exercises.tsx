@@ -2,21 +2,27 @@ import { useEffect, useRef, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { useQuery } from "@tanstack/react-query";
 import Svg, { Circle } from "react-native-svg";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { useAuthStore } from "../stores/auth.store";
 import { getProgramsForGender, ExerciseProgram, Exercise } from "../utils/exercises";
+import { getDailyChallenge, getGlowTips, PLAN_LENGTHS, GlowTipSection } from "../utils/glowup";
+import { useGlowUpStore, planProgress, todayStr } from "../stores/glowup.store";
+import { api } from "../services/api";
+import { SkinScan } from "../types/api";
 import { useThemeColors } from "../stores/theme.store";
 import { ExerciseAnimation } from "../components/ui/ExerciseAnimation";
 
 const TERRACOTTA = "#C9826B";
+const GREEN = "#5DCAA5";
 
 function totalDuration(ex: Exercise): number {
   return ex.reps ? ex.durationSec * ex.reps : ex.durationSec;
 }
 
 // ─── Guided player ──────────────────────────────────────────────────────────
-function Player({ program, onExit }: { program: ExerciseProgram; onExit: () => void }) {
+function Player({ program, onExit }: { program: ExerciseProgram; onExit: (completed: boolean) => void }) {
   const c = useThemeColors();
   const [idx, setIdx] = useState(0);
   const [timeLeft, setTimeLeft] = useState(totalDuration(program.exercises[0]));
@@ -76,7 +82,7 @@ function Player({ program, onExit }: { program: ExerciseProgram; onExit: () => v
           <Text style={{ color: c.textMuted, fontSize: 14, textAlign: "center", marginBottom: 28 }}>
             {program.exercises.length} exercices complétés. La régularité est la clé — reviens demain !
           </Text>
-          <TouchableOpacity onPress={onExit} style={{ backgroundColor: TERRACOTTA, borderRadius: 14, paddingHorizontal: 32, paddingVertical: 14 }}>
+          <TouchableOpacity onPress={() => onExit(true)} style={{ backgroundColor: TERRACOTTA, borderRadius: 14, paddingHorizontal: 32, paddingVertical: 14 }}>
             <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Terminer</Text>
           </TouchableOpacity>
         </Animated.View>
@@ -95,7 +101,7 @@ function Player({ program, onExit }: { program: ExerciseProgram; onExit: () => v
     <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
       {/* Header */}
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 6, paddingBottom: 8 }}>
-        <TouchableOpacity onPress={onExit} style={{ padding: 6 }}>
+        <TouchableOpacity onPress={() => onExit(false)} style={{ padding: 6 }}>
           <Text style={{ color: TERRACOTTA, fontSize: 22 }}>✕</Text>
         </TouchableOpacity>
         <Text style={{ color: c.text, fontWeight: "600", fontSize: 15, flex: 1, textAlign: "center", marginRight: 28 }}>{program.title}</Text>
@@ -212,69 +218,351 @@ function ProgramDetail({ program, onStart, onBack }: { program: ExerciseProgram;
   );
 }
 
-// ─── Program selection ──────────────────────────────────────────────────────
+// ─── Section heading ────────────────────────────────────────────────────────
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  const c = useThemeColors();
+  return (
+    <Text style={{ color: c.text, fontSize: 16, fontWeight: "700", marginBottom: 12, marginTop: 4 }}>{children}</Text>
+  );
+}
+
+// ─── Streak hero ────────────────────────────────────────────────────────────
+function StreakHero({ streak, best, checkedToday }: { streak: number; best: number; checkedToday: boolean }) {
+  const c = useThemeColors();
+  return (
+    <Animated.View
+      entering={FadeInDown}
+      style={{ backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.border, borderRadius: 22, padding: 18, marginBottom: 16, flexDirection: "row", alignItems: "center", gap: 16 }}
+    >
+      <View style={{ width: 66, height: 66, borderRadius: 33, backgroundColor: c.primaryMuted, alignItems: "center", justifyContent: "center" }}>
+        <Text style={{ fontSize: 30 }}>{streak > 0 ? "🔥" : "✨"}</Text>
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: c.text, fontSize: 22, fontWeight: "800" }}>
+          {streak} <Text style={{ color: c.textMuted, fontSize: 14, fontWeight: "600" }}>{streak > 1 ? "jours" : "jour"} de série</Text>
+        </Text>
+        <Text style={{ color: c.textMuted, fontSize: 12, marginTop: 2 }}>
+          {checkedToday ? "Objectif du jour validé 🎉" : "Valide ton défi pour garder la flamme"}
+          {best > 0 ? ` · record ${best}j` : ""}
+        </Text>
+      </View>
+    </Animated.View>
+  );
+}
+
+// ─── Daily challenge ────────────────────────────────────────────────────────
+function DailyChallengeCard({ checkedToday, onCheckIn }: { checkedToday: boolean; onCheckIn: () => void }) {
+  const c = useThemeColors();
+  const challenge = getDailyChallenge();
+  return (
+    <Animated.View entering={FadeInDown.delay(60)} style={{ marginBottom: 22 }}>
+      <SectionTitle>🎯 Défi du jour</SectionTitle>
+      <View style={{ backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight, borderRadius: 20, padding: 18 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 }}>
+          <Text style={{ fontSize: 30 }}>{challenge.emoji}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: c.text, fontSize: 15, fontWeight: "700" }}>{challenge.title}</Text>
+            <Text style={{ color: c.textMuted, fontSize: 13, lineHeight: 18, marginTop: 2 }}>{challenge.desc}</Text>
+          </View>
+        </View>
+        <TouchableOpacity
+          onPress={onCheckIn}
+          disabled={checkedToday}
+          activeOpacity={0.85}
+          style={{
+            backgroundColor: checkedToday ? c.primaryMuted : TERRACOTTA,
+            borderRadius: 12, paddingVertical: 13, alignItems: "center",
+          }}
+        >
+          <Text style={{ color: checkedToday ? TERRACOTTA : "#fff", fontWeight: "700", fontSize: 14 }}>
+            {checkedToday ? "✓ Validé aujourd'hui" : "Marquer comme fait"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </Animated.View>
+  );
+}
+
+// ─── Multi-day plan ─────────────────────────────────────────────────────────
+function PlanCard() {
+  const c = useThemeColors();
+  const { checkInDates, planLength, planStart, startPlan, resetPlan } = useGlowUpStore();
+  const completed = planProgress(checkInDates, planStart, planLength);
+  const finished = planLength != null && completed >= planLength;
+
+  return (
+    <Animated.View entering={FadeInDown.delay(120)} style={{ marginBottom: 22 }}>
+      <SectionTitle>📅 Mon plan Glow Up</SectionTitle>
+      <View style={{ backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight, borderRadius: 20, padding: 18 }}>
+        {planLength == null ? (
+          <>
+            <Text style={{ color: c.textMuted, fontSize: 13, lineHeight: 19, marginBottom: 14 }}>
+              Choisis un défi sur la durée. Coche ton défi chaque jour et regarde ta progression.
+            </Text>
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              {PLAN_LENGTHS.map((n) => (
+                <TouchableOpacity
+                  key={n}
+                  onPress={() => startPlan(n)}
+                  activeOpacity={0.85}
+                  style={{ flex: 1, backgroundColor: c.primaryMuted, borderRadius: 14, paddingVertical: 16, alignItems: "center" }}
+                >
+                  <Text style={{ color: TERRACOTTA, fontSize: 22, fontWeight: "800" }}>{n}</Text>
+                  <Text style={{ color: c.textMuted, fontSize: 11, marginTop: 2 }}>jours</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        ) : (
+          <>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+              <Text style={{ color: c.text, fontSize: 15, fontWeight: "700" }}>
+                {finished ? "Plan terminé 🎉" : `Défi ${planLength} jours`}
+              </Text>
+              <Text style={{ color: c.textMuted, fontSize: 13 }}>{completed}/{planLength}</Text>
+            </View>
+
+            {/* Progress bar */}
+            <View style={{ height: 10, borderRadius: 5, backgroundColor: c.primaryMuted, overflow: "hidden", marginBottom: 14 }}>
+              <View style={{ width: `${Math.min(100, (completed / planLength) * 100)}%`, height: "100%", backgroundColor: GREEN, borderRadius: 5 }} />
+            </View>
+
+            {/* Day dots */}
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 7, marginBottom: 14 }}>
+              {Array.from({ length: planLength }).map((_, i) => (
+                <View
+                  key={i}
+                  style={{
+                    width: 22, height: 22, borderRadius: 11,
+                    backgroundColor: i < completed ? GREEN : c.primaryMuted,
+                    alignItems: "center", justifyContent: "center",
+                  }}
+                >
+                  <Text style={{ color: i < completed ? "#fff" : c.textFaint, fontSize: 10, fontWeight: "700" }}>{i + 1}</Text>
+                </View>
+              ))}
+            </View>
+
+            <TouchableOpacity onPress={resetPlan} activeOpacity={0.7}>
+              <Text style={{ color: c.textMuted, fontSize: 12, textAlign: "center" }}>
+                {finished ? "Démarrer un nouveau plan" : "Changer de plan"}
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
+    </Animated.View>
+  );
+}
+
+// ─── Before / after (linked to skin scans) ──────────────────────────────────
+function BeforeAfterCard({ onScan }: { onScan: () => void }) {
+  const c = useThemeColors();
+  const { data: scans } = useQuery({
+    queryKey: ["skin-history", "glowup"],
+    queryFn: () => api.getSkinHistory(),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const sorted = [...(scans ?? [])].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+  );
+
+  if (sorted.length < 2) {
+    return (
+      <Animated.View entering={FadeInDown.delay(180)} style={{ marginBottom: 22 }}>
+        <SectionTitle>📈 Ton avant / après</SectionTitle>
+        <View style={{ backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight, borderRadius: 20, padding: 18, alignItems: "center" }}>
+          <Text style={{ fontSize: 30, marginBottom: 8 }}>📷</Text>
+          <Text style={{ color: c.textMuted, fontSize: 13, textAlign: "center", lineHeight: 19, marginBottom: 14 }}>
+            Scanne ta peau régulièrement pour suivre tes progrès Glow Up dans le temps.
+          </Text>
+          <TouchableOpacity onPress={onScan} style={{ backgroundColor: c.primaryMuted, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 11 }}>
+            <Text style={{ color: TERRACOTTA, fontWeight: "700", fontSize: 13 }}>Faire un scan peau</Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    );
+  }
+
+  const first = sorted[0];
+  const last = sorted[sorted.length - 1];
+  const delta = last.overall_score - first.overall_score;
+  const deltaColor = delta > 0 ? GREEN : delta < 0 ? c.danger : c.textMuted;
+
+  return (
+    <Animated.View entering={FadeInDown.delay(180)} style={{ marginBottom: 22 }}>
+      <SectionTitle>📈 Ton avant / après</SectionTitle>
+      <View style={{ backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight, borderRadius: 20, padding: 18 }}>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <ScoreBlock label="Avant" value={first.overall_score} date={first.created_at} c={c} />
+          <View style={{ alignItems: "center", paddingHorizontal: 8 }}>
+            <Text style={{ color: deltaColor, fontSize: 18, fontWeight: "800" }}>
+              {delta > 0 ? "+" : ""}{delta}
+            </Text>
+            <Text style={{ color: c.textFaint, fontSize: 16 }}>→</Text>
+          </View>
+          <ScoreBlock label="Maintenant" value={last.overall_score} date={last.created_at} c={c} highlight />
+        </View>
+        <Text style={{ color: c.textMuted, fontSize: 12, textAlign: "center", marginTop: 12, lineHeight: 17 }}>
+          {delta > 0
+            ? `Ta peau a gagné ${delta} points depuis ton premier scan. Continue ! 💪`
+            : delta < 0
+            ? "Un petit creux — reprends ta routine et ton défi quotidien."
+            : "Stable. La régularité finit toujours par payer."}
+        </Text>
+      </View>
+    </Animated.View>
+  );
+}
+
+function ScoreBlock({ label, value, date, c, highlight }: { label: string; value: number; date: string; c: ReturnType<typeof useThemeColors>; highlight?: boolean }) {
+  return (
+    <View style={{ flex: 1, alignItems: "center" }}>
+      <Text style={{ color: c.textFaint, fontSize: 11, marginBottom: 4 }}>{label}</Text>
+      <Text style={{ color: highlight ? TERRACOTTA : c.text, fontSize: 30, fontWeight: "800" }}>{value}</Text>
+      <Text style={{ color: c.textFaint, fontSize: 10, marginTop: 2 }}>
+        {new Date(date).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}
+      </Text>
+    </View>
+  );
+}
+
+// ─── Tips (expandable) ──────────────────────────────────────────────────────
+function TipsSection({ sections }: { sections: GlowTipSection[] }) {
+  const c = useThemeColors();
+  const [open, setOpen] = useState<string | null>(sections[0]?.id ?? null);
+
+  return (
+    <Animated.View entering={FadeInDown.delay(300)} style={{ marginBottom: 12 }}>
+      <SectionTitle>💡 Conseils Glow Up</SectionTitle>
+      {sections.map((s) => {
+        const isOpen = open === s.id;
+        return (
+          <View key={s.id} style={{ backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight, borderRadius: 16, marginBottom: 10, overflow: "hidden" }}>
+            <TouchableOpacity
+              onPress={() => setOpen(isOpen ? null : s.id)}
+              activeOpacity={0.7}
+              style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 16 }}
+            >
+              <Text style={{ fontSize: 20 }}>{s.emoji}</Text>
+              <Text style={{ color: c.text, fontSize: 15, fontWeight: "600", flex: 1 }}>{s.label}</Text>
+              <Text style={{ color: c.textMuted, fontSize: 14 }}>{isOpen ? "−" : "+"}</Text>
+            </TouchableOpacity>
+            {isOpen && (
+              <View style={{ paddingHorizontal: 16, paddingBottom: 14, gap: 8 }}>
+                {s.tips.map((tip, i) => (
+                  <View key={i} style={{ flexDirection: "row", gap: 8 }}>
+                    <Text style={{ color: TERRACOTTA, fontSize: 13, marginTop: 1 }}>•</Text>
+                    <Text style={{ color: c.textMuted, fontSize: 13, lineHeight: 19, flex: 1 }}>{tip}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        );
+      })}
+    </Animated.View>
+  );
+}
+
+// ─── Hub ────────────────────────────────────────────────────────────────────
+function GlowUpHub({
+  gender,
+  onOpenProgram,
+  onBack,
+  router,
+}: {
+  gender?: string;
+  onOpenProgram: (p: ExerciseProgram) => void;
+  onBack: () => void;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const c = useThemeColors();
+  const { streak, bestStreak, lastCheckIn, checkInToday } = useGlowUpStore();
+  const checkedToday = lastCheckIn === todayStr();
+  const programs = getProgramsForGender(gender);
+  const tips = getGlowTips(gender);
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
+      <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 6, paddingBottom: 8 }}>
+        <TouchableOpacity onPress={onBack} style={{ padding: 6, marginRight: 6 }}>
+          <Text style={{ color: TERRACOTTA, fontSize: 22 }}>←</Text>
+        </TouchableOpacity>
+        <Text style={{ color: c.text, fontWeight: "700", fontSize: 18 }}>Glow Up</Text>
+      </View>
+
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+        <StreakHero streak={streak} best={bestStreak} checkedToday={checkedToday} />
+        <DailyChallengeCard checkedToday={checkedToday} onCheckIn={checkInToday} />
+        <PlanCard />
+        <BeforeAfterCard onScan={() => router.push("/(tabs)/scan" as any)} />
+
+        {/* Face yoga programs */}
+        <Animated.View entering={FadeInDown.delay(240)} style={{ marginBottom: 22 }}>
+          <SectionTitle>🧘 Exercices visage</SectionTitle>
+          {programs.map((p) => (
+            <TouchableOpacity
+              key={p.id}
+              onPress={() => onOpenProgram(p)}
+              activeOpacity={0.85}
+              style={{ flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.border, borderRadius: 18, padding: 16, marginBottom: 10 }}
+            >
+              <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: c.primaryMuted, alignItems: "center", justifyContent: "center" }}>
+                <Text style={{ fontSize: 24 }}>{p.emoji}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: c.text, fontSize: 15, fontWeight: "700" }}>{p.title}</Text>
+                <Text style={{ color: c.textMuted, fontSize: 12, marginTop: 2 }}>
+                  {p.exercises.length} exercices · {p.durationLabel}
+                </Text>
+              </View>
+              <Text style={{ color: TERRACOTTA, fontSize: 18 }}>›</Text>
+            </TouchableOpacity>
+          ))}
+        </Animated.View>
+
+        <TipsSection sections={tips} />
+
+        <Text style={{ color: c.textFaint, fontSize: 11, textAlign: "center", marginTop: 4, lineHeight: 16 }}>
+          Le Glow Up, c'est la régularité. Résultats visibles en 4-8 semaines. À but cosmétique et bien-être.
+        </Text>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+// ─── Screen (state machine: hub → program detail → player) ──────────────────
 export default function ExercisesScreen() {
   const router = useRouter();
-  const c = useThemeColors();
   const { user } = useAuthStore();
+  const { checkInToday } = useGlowUpStore();
   const [preview, setPreview] = useState<ExerciseProgram | null>(null);
   const [active, setActive] = useState<ExerciseProgram | null>(null);
 
-  const programs = getProgramsForGender(user?.gender);
-
   if (active) {
-    return <Player program={active} onExit={() => { setActive(null); setPreview(null); }} />;
+    return (
+      <Player
+        program={active}
+        onExit={(completed) => {
+          if (completed) checkInToday(); // finishing a session counts toward the streak
+          setActive(null);
+          setPreview(null);
+        }}
+      />
+    );
   }
   if (preview) {
     return <ProgramDetail program={preview} onStart={() => setActive(preview)} onBack={() => setPreview(null)} />;
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: c.bg }}>
-      <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 6, paddingBottom: 8 }}>
-        <TouchableOpacity onPress={() => router.back()} style={{ padding: 6, marginRight: 6 }}>
-          <Text style={{ color: TERRACOTTA, fontSize: 22 }}>←</Text>
-        </TouchableOpacity>
-        <Text style={{ color: c.text, fontWeight: "700", fontSize: 18 }}>Exercices visage</Text>
-      </View>
-
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-        <Animated.View entering={FadeIn} style={{ marginBottom: 16 }}>
-          <Text style={{ color: c.textMuted, fontSize: 14, lineHeight: 21 }}>
-            Des routines guidées d'exercices faciaux pour sculpter ta mâchoire et illuminer ton visage. 5 minutes par jour suffisent.
-          </Text>
-        </Animated.View>
-
-        {programs.map((p, i) => (
-          <Animated.View key={p.id} entering={FadeInDown.delay(i * 80)}>
-            <TouchableOpacity
-              onPress={() => setPreview(p)}
-              activeOpacity={0.85}
-              style={{ backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.border, borderRadius: 20, padding: 20, marginBottom: 14 }}
-            >
-              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
-                <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: c.primaryMuted, alignItems: "center", justifyContent: "center", marginRight: 14 }}>
-                  <Text style={{ fontSize: 26 }}>{p.emoji}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: c.text, fontSize: 17, fontWeight: "700" }}>{p.title}</Text>
-                  <Text style={{ color: c.textMuted, fontSize: 12, marginTop: 2 }}>
-                    {p.exercises.length} exercices · {p.durationLabel}
-                  </Text>
-                </View>
-              </View>
-              <Text style={{ color: c.textMuted, fontSize: 13, lineHeight: 19, marginBottom: 12 }}>{p.description}</Text>
-              <View style={{ backgroundColor: TERRACOTTA, borderRadius: 12, paddingVertical: 12, alignItems: "center" }}>
-                <Text style={{ color: "#fff", fontWeight: "700", fontSize: 14 }}>Voir les exercices →</Text>
-              </View>
-            </TouchableOpacity>
-          </Animated.View>
-        ))}
-
-        <Text style={{ color: c.textFaint, fontSize: 11, textAlign: "center", marginTop: 8, lineHeight: 16 }}>
-          Les exercices faciaux complètent ta routine. Résultats visibles avec la régularité (4-8 semaines).
-        </Text>
-      </ScrollView>
-    </SafeAreaView>
+    <GlowUpHub
+      gender={user?.gender}
+      onOpenProgram={setPreview}
+      onBack={() => router.back()}
+      router={router}
+    />
   );
 }

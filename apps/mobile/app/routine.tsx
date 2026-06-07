@@ -20,7 +20,7 @@ const MORNING_STEPS = [
 
 const EVENING_STEPS = [
   { icon: "🌙", title: "Démaquillage / Nettoyage", desc: "Retire maquillage, pollution et SPF de la journée." },
-  { icon: "✨", title: "Traitement ciblé", desc: "Rétinol ou exfoliant selon ta routine (2-3x/semaine)." },
+  { icon: "✨", title: "Soin ciblé", desc: "Rétinol ou exfoliant selon ta routine (2-3x/semaine)." },
   { icon: "💧", title: "Sérum réparateur", desc: "Acide hyaluronique ou niacinamide pour réparer la nuit." },
   { icon: "🌿", title: "Crème de nuit", desc: "Nourrit et répare pendant le sommeil." },
 ];

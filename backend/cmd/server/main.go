@@ -49,10 +49,23 @@ func main() {
 	if err != nil {
 		logger.Fatal("failed to connect to database", zap.Error(err))
 	}
+
+	// Tune the connection pool. Without this GORM uses database/sql defaults
+	// (unlimited open connections), which can exhaust Postgres' max_connections
+	// under a traffic burst. Cap it well below Railway Postgres' limit.
+	if sqlDB, err := db.DB(); err != nil {
+		logger.Fatal("failed to get sql.DB handle", zap.Error(err))
+	} else {
+		sqlDB.SetMaxOpenConns(20)
+		sqlDB.SetMaxIdleConns(10)
+		sqlDB.SetConnMaxLifetime(time.Hour)
+		sqlDB.SetConnMaxIdleTime(10 * time.Minute)
+	}
+
 	logger.Info("database connected")
 
 	// Auto-migrate models (supplements SQL migrations)
-	if err := db.AutoMigrate(&models.User{}, &models.RefreshToken{}, &models.AuthToken{}, &models.FaceProfile{}, &models.Recommendation{}, &models.SkinScan{}, &models.CoachConversation{}, &models.CoachMessage{}, &models.ScannedProduct{}, &models.RoutineLog{}, &models.CycleData{}); err != nil {
+	if err := db.AutoMigrate(&models.User{}, &models.RefreshToken{}, &models.AuthToken{}, &models.FaceProfile{}, &models.Recommendation{}, &models.SkinScan{}, &models.CoachConversation{}, &models.CoachMessage{}, &models.ScannedProduct{}, &models.RoutineLog{}, &models.CycleData{}, &models.CycleLog{}); err != nil {
 		logger.Fatal("automigrate failed", zap.Error(err))
 	}
 
@@ -213,6 +226,8 @@ func main() {
 	// Menstrual cycle → skin
 	protected.Get("/cycle", cycleHandler.Get)
 	protected.Post("/cycle", cycleHandler.Save)
+	protected.Get("/cycle/logs", cycleHandler.GetLogs)
+	protected.Post("/cycle/log", cycleHandler.SaveLog)
 
 	// Stripe / Premium
 	stripeGroup := protected.Group("/stripe")

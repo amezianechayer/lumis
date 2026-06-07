@@ -63,20 +63,22 @@ type MakeupGuideResult struct {
 	IsMale bool `json:"is_male"`
 }
 
-func makeupGuideCacheKey(userID uuid.UUID) string {
-	return fmt.Sprintf("makeup_guide:v1:%s", userID)
+func makeupGuideCacheKey(lang string, userID uuid.UUID) string {
+	return fmt.Sprintf("makeup_guide:v2:%s:%s", lang, userID)
 }
 
 func (s *MakeupGuideService) InvalidateCache(ctx context.Context, userID uuid.UUID) {
 	if s.rdb != nil {
-		s.rdb.Del(ctx, makeupGuideCacheKey(userID))
+		for _, lang := range supportedLangs {
+			s.rdb.Del(ctx, makeupGuideCacheKey(lang, userID))
+		}
 	}
 }
 
 func (s *MakeupGuideService) Generate(ctx context.Context, userID uuid.UUID) (*MakeupGuideResult, error) {
 	// Cache check
 	if s.rdb != nil {
-		if cached, err := s.rdb.Get(ctx, makeupGuideCacheKey(userID)).Bytes(); err == nil {
+		if cached, err := s.rdb.Get(ctx, makeupGuideCacheKey(langOf(ctx), userID)).Bytes(); err == nil {
 			var result MakeupGuideResult
 			if json.Unmarshal(cached, &result) == nil {
 				log.Printf("[MakeupGuide] cache HIT for user %s", userID)
@@ -118,7 +120,7 @@ func (s *MakeupGuideService) Generate(ctx context.Context, userID uuid.UUID) (*M
 	// Cache it
 	if s.rdb != nil {
 		if b, err := json.Marshal(result); err == nil {
-			s.rdb.Set(ctx, makeupGuideCacheKey(userID), b, makeupGuideCacheTTL)
+			s.rdb.Set(ctx, makeupGuideCacheKey(langOf(ctx), userID), b, makeupGuideCacheTTL)
 		}
 	}
 

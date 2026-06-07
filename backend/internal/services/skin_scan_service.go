@@ -226,7 +226,7 @@ func (s *SkinScanService) generateDiagnostic(ctx context.Context, sc visionScore
 		return strings.Join(items, ", ")
 	}
 
-	prompt := fmt.Sprintf(`Tu es un expert dermo-cosmétique. À partir des résultats d'analyse de peau ci-dessous, rédige un diagnostic personnalisé, concret et bienveillant, en français (style diagnostic peau professionnel type Aroma-Zone).
+	prompt := fmt.Sprintf(`Tu es un expert dermo-cosmétique. À partir des résultats d'analyse de peau ci-dessous, rédige un bilan beauté personnalisé, concret et bienveillant (style bilan peau cosmétique professionnel type Aroma-Zone). La langue de rédaction est imposée par la directive de langue en fin de prompt.
 
 Résultats de l'analyse :
 - Score global : %d/100

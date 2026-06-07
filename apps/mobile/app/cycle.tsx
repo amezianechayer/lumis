@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { api } from "../services/api";
-import { CycleStatus } from "../types/api";
+import { CycleStatus, CycleLog } from "../types/api";
 import { useThemeColors } from "../stores/theme.store";
 
 const TERRACOTTA = "#C9826B";
@@ -137,6 +137,193 @@ function Stepper({ label, value, onChange, min, max, suffix }: {
   );
 }
 
+// ─── Daily log options ───────────────────────────────────────────────────────
+const todayISO = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+
+const MOODS = [
+  { key: "happy", emoji: "😊", label: "Bien" },
+  { key: "calm", emoji: "😌", label: "Calme" },
+  { key: "tired", emoji: "😴", label: "Fatiguée" },
+  { key: "irritable", emoji: "😤", label: "Irritable" },
+  { key: "anxious", emoji: "😰", label: "Anxieuse" },
+  { key: "sad", emoji: "😢", label: "Triste" },
+];
+const SKIN_STATES = [
+  { key: "clear", emoji: "✨", label: "Nette" },
+  { key: "glowing", emoji: "🌟", label: "Éclat" },
+  { key: "oily", emoji: "💧", label: "Grasse" },
+  { key: "dry", emoji: "🏜️", label: "Sèche" },
+  { key: "breakout", emoji: "🔴", label: "Boutons" },
+  { key: "sensitive", emoji: "🌸", label: "Sensible" },
+];
+const FLOWS = [
+  { key: "none", emoji: "○", label: "Aucun" },
+  { key: "light", emoji: "🩸", label: "Léger" },
+  { key: "medium", emoji: "🩸", label: "Moyen" },
+  { key: "heavy", emoji: "🩸", label: "Abondant" },
+];
+const SYMPTOMS = ["Crampes", "Ballonnements", "Maux de tête", "Fatigue", "Fringales", "Acné", "Sautes d'humeur", "Sensibilité", "Mal de dos", "Nausée"];
+
+// ─── Toggle (for the SOPK switch) ────────────────────────────────────────────
+function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <TouchableOpacity
+      onPress={() => onChange(!value)}
+      activeOpacity={0.8}
+      style={{ width: 50, height: 30, borderRadius: 15, backgroundColor: value ? OVULATION : "rgba(120,120,120,0.3)", padding: 3, justifyContent: "center" }}
+    >
+      <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: "#fff", alignSelf: value ? "flex-end" : "flex-start" }} />
+    </TouchableOpacity>
+  );
+}
+
+// ─── Selection chip ──────────────────────────────────────────────────────────
+function SelectChip({ label, emoji, active, onPress }: { label: string; emoji?: string; active: boolean; onPress: () => void }) {
+  const c = useThemeColors();
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.75}
+      style={{
+        flexDirection: "row", alignItems: "center", gap: 5,
+        backgroundColor: active ? c.primary : c.bgCard,
+        borderWidth: 0.5, borderColor: active ? c.primary : c.borderLight,
+        borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8, marginRight: 8, marginBottom: 8,
+      }}
+    >
+      {emoji ? <Text style={{ fontSize: 14 }}>{emoji}</Text> : null}
+      <Text style={{ color: active ? "#fff" : c.textMuted, fontSize: 13, fontWeight: active ? "700" : "400" }}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+// ─── SOPK card ───────────────────────────────────────────────────────────────
+function SopkCard({ note, tips }: { note?: string; tips?: string[] }) {
+  const c = useThemeColors();
+  if (!note && !(tips && tips.length)) return null;
+  return (
+    <Animated.View entering={FadeInDown.delay(170)} style={{ backgroundColor: "rgba(167,139,250,0.10)", borderWidth: 0.5, borderColor: "rgba(167,139,250,0.4)", borderRadius: 18, padding: 18, marginBottom: 14 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}>
+        <Text style={{ fontSize: 18 }}>🩺</Text>
+        <Text style={{ color: c.text, fontWeight: "700", fontSize: 15 }}>Mode SOPK</Text>
+      </View>
+      {!!note && <Text style={{ color: c.textMuted, fontSize: 13, lineHeight: 19, marginBottom: tips?.length ? 12 : 0 }}>{note}</Text>}
+      {tips?.map((t, i) => (
+        <View key={i} style={{ flexDirection: "row", gap: 10, marginBottom: 8, alignItems: "flex-start" }}>
+          <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: "#a78bfa", marginTop: 6 }} />
+          <Text style={{ color: c.textMuted, fontSize: 13, lineHeight: 19, flex: 1 }}>{t}</Text>
+        </View>
+      ))}
+    </Animated.View>
+  );
+}
+
+// ─── Daily logger ────────────────────────────────────────────────────────────
+function DailyLogger() {
+  const c = useThemeColors();
+  const qc = useQueryClient();
+  const { data: logs } = useQuery({ queryKey: ["cycle-logs"], queryFn: () => api.getCycleLogs() });
+  const today = todayISO();
+  const existing = logs?.find((l) => l.date === today);
+
+  const [mood, setMood] = useState("");
+  const [skin, setSkin] = useState("");
+  const [flow, setFlow] = useState("");
+  const [symptoms, setSymptoms] = useState<string[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    if (existing && !hydrated) {
+      setMood(existing.mood || "");
+      setSkin(existing.skin_state || "");
+      setFlow(existing.flow || "");
+      setSymptoms(existing.symptoms || []);
+      setHydrated(true);
+    }
+  }, [existing, hydrated]);
+
+  const save = useMutation({
+    mutationFn: () => api.saveCycleLog({ date: today, mood, skin_state: skin, flow, symptoms, notes: "" }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["cycle-logs"] }),
+  });
+
+  const toggleSymptom = (s: string) => setSymptoms((p) => (p.includes(s) ? p.filter((x) => x !== s) : [...p, s]));
+  const recent = (logs ?? []).slice(0, 7);
+
+  return (
+    <>
+      <Animated.View entering={FadeInDown.delay(220)} style={{ backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight, borderRadius: 18, padding: 18, marginBottom: 14 }}>
+        <Text style={{ color: c.text, fontWeight: "700", fontSize: 15, marginBottom: 4 }}>📔 Journal du jour</Text>
+        <Text style={{ color: c.textFaint, fontSize: 12, marginBottom: 14 }}>Note ton humeur, ta peau et tes symptômes pour repérer tes schémas.</Text>
+
+        <Text style={{ color: c.textMuted, fontSize: 12, marginBottom: 8 }}>Humeur</Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+          {MOODS.map((m) => (
+            <SelectChip key={m.key} label={m.label} emoji={m.emoji} active={mood === m.key} onPress={() => setMood(mood === m.key ? "" : m.key)} />
+          ))}
+        </View>
+
+        <Text style={{ color: c.textMuted, fontSize: 12, marginTop: 8, marginBottom: 8 }}>Peau</Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+          {SKIN_STATES.map((s) => (
+            <SelectChip key={s.key} label={s.label} emoji={s.emoji} active={skin === s.key} onPress={() => setSkin(skin === s.key ? "" : s.key)} />
+          ))}
+        </View>
+
+        <Text style={{ color: c.textMuted, fontSize: 12, marginTop: 8, marginBottom: 8 }}>Flux</Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+          {FLOWS.map((f) => (
+            <SelectChip key={f.key} label={f.label} emoji={f.emoji} active={flow === f.key} onPress={() => setFlow(flow === f.key ? "" : f.key)} />
+          ))}
+        </View>
+
+        <Text style={{ color: c.textMuted, fontSize: 12, marginTop: 8, marginBottom: 8 }}>Symptômes</Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+          {SYMPTOMS.map((s) => (
+            <SelectChip key={s} label={s} active={symptoms.includes(s)} onPress={() => toggleSymptom(s)} />
+          ))}
+        </View>
+
+        <TouchableOpacity
+          onPress={() => save.mutate()}
+          disabled={save.isPending}
+          activeOpacity={0.85}
+          style={{ backgroundColor: TERRACOTTA, borderRadius: 12, paddingVertical: 13, alignItems: "center", marginTop: 12 }}
+        >
+          {save.isPending ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={{ color: "#fff", fontWeight: "700", fontSize: 14 }}>{save.isSuccess ? "✓ Enregistré" : "Enregistrer ma journée"}</Text>
+          )}
+        </TouchableOpacity>
+      </Animated.View>
+
+      {recent.length > 0 && (
+        <Animated.View entering={FadeInDown.delay(260)} style={{ backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.borderLight, borderRadius: 18, padding: 18, marginBottom: 14 }}>
+          <Text style={{ color: c.textFaint, fontSize: 11, textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Derniers jours</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {recent.map((l) => {
+              const skinDef = SKIN_STATES.find((s) => s.key === l.skin_state);
+              const moodDef = MOODS.find((m) => m.key === l.mood);
+              const d = new Date(`${l.date}T00:00:00`);
+              return (
+                <View key={l.date} style={{ alignItems: "center", marginRight: 16, minWidth: 44 }}>
+                  <Text style={{ color: c.textFaint, fontSize: 10, marginBottom: 6 }}>{d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</Text>
+                  <Text style={{ fontSize: 22 }}>{skinDef?.emoji ?? moodDef?.emoji ?? "•"}</Text>
+                  {l.symptoms?.length ? <Text style={{ color: c.textFaint, fontSize: 9, marginTop: 4 }}>{l.symptoms.length} sympt.</Text> : null}
+                </View>
+              );
+            })}
+          </ScrollView>
+        </Animated.View>
+      )}
+    </>
+  );
+}
+
 export default function CycleScreen() {
   const router = useRouter();
   const c = useThemeColors();
@@ -144,18 +331,27 @@ export default function CycleScreen() {
   const [editing, setEditing] = useState(false);
   const [daysSince, setDaysSince] = useState(3);
   const [cycleLength, setCycleLength] = useState(28);
+  const [hasPCOS, setHasPCOS] = useState(false);
 
   const { data: cycle, isLoading } = useQuery({
     queryKey: ["cycle"],
     queryFn: () => api.getCycle(),
   });
 
+  // Prefill the form from saved data (length + SOPK flag).
+  useEffect(() => {
+    if (cycle?.configured) {
+      if (cycle.cycle_length) setCycleLength(cycle.cycle_length);
+      setHasPCOS(!!cycle.has_pcos);
+    }
+  }, [cycle?.configured]);
+
   const mutation = useMutation({
     mutationFn: () => {
       const d = new Date();
       d.setDate(d.getDate() - daysSince);
       const lastPeriodDate = d.toISOString().slice(0, 10);
-      return api.saveCycle({ last_period_date: lastPeriodDate, cycle_length: cycleLength, period_length: 5 });
+      return api.saveCycle({ last_period_date: lastPeriodDate, cycle_length: cycleLength, period_length: 5, has_pcos: hasPCOS });
     },
     onSuccess: (data: CycleStatus) => {
       queryClient.setQueryData(["cycle"], data);
@@ -193,8 +389,19 @@ export default function CycleScreen() {
             </Text>
           </Animated.View>
 
-          <Stepper label="Il y a combien de jours ont commencé tes dernières règles ?" value={daysSince} onChange={setDaysSince} min={0} max={35} suffix="jours" />
-          <Stepper label="Durée moyenne de ton cycle" value={cycleLength} onChange={setCycleLength} min={21} max={40} suffix="jours" />
+          <Stepper label="Il y a combien de jours ont commencé tes dernières règles ?" value={daysSince} onChange={setDaysSince} min={0} max={60} suffix="jours" />
+          <Stepper label="Durée moyenne de ton cycle" value={cycleLength} onChange={setCycleLength} min={21} max={hasPCOS ? 90 : 40} suffix="jours" />
+
+          {/* SOPK / irregular cycle */}
+          <View style={{ backgroundColor: c.bgCard, borderWidth: 0.5, borderColor: c.border, borderRadius: 16, padding: 16, marginBottom: 12, flexDirection: "row", alignItems: "center" }}>
+            <View style={{ flex: 1, marginRight: 12 }}>
+              <Text style={{ color: c.text, fontSize: 14, fontWeight: "600" }}>Cycle irrégulier / SOPK</Text>
+              <Text style={{ color: c.textMuted, fontSize: 12, lineHeight: 17, marginTop: 2 }}>
+                Active si tes cycles sont irréguliers. Les dates deviennent des estimations et les conseils ciblent l'acné hormonale.
+              </Text>
+            </View>
+            <Toggle value={hasPCOS} onChange={setHasPCOS} />
+          </View>
 
           <TouchableOpacity onPress={() => mutation.mutate()} disabled={mutation.isPending} style={{ backgroundColor: TERRACOTTA, borderRadius: 16, paddingVertical: 16, alignItems: "center", marginTop: 8 }}>
             {mutation.isPending ? <ActivityIndicator color="#fff" /> : <Text style={{ color: "#fff", fontWeight: "700", fontSize: 16 }}>Voir mon calendrier</Text>}
@@ -218,7 +425,7 @@ export default function CycleScreen() {
                   <View style={{ flex: 1 }}>
                     <Text style={{ color, fontSize: 18, fontWeight: "800" }}>{ph.phase_fr}</Text>
                     <Text style={{ color: c.textMuted, fontSize: 12, marginTop: 2 }}>
-                      Jour {ph.day_of_cycle} · règles dans ~{ph.next_period_in_days}j
+                      Jour {ph.day_of_cycle} · règles dans ~{ph.next_period_in_days}j{ph.is_estimate ? " (estimation)" : ""}
                     </Text>
                   </View>
                 </Animated.View>
@@ -244,7 +451,13 @@ export default function CycleScreen() {
                   </View>
                 </Animated.View>
 
-                <Animated.View entering={FadeInDown.delay(260)}>
+                {/* SOPK guidance (only when the user flagged an irregular cycle) */}
+                <SopkCard note={ph.pcos_note} tips={ph.pcos_tips} />
+
+                {/* Daily symptom / mood / skin tracking */}
+                <DailyLogger />
+
+                <Animated.View entering={FadeInDown.delay(300)}>
                   <TouchableOpacity onPress={() => router.push("/(tabs)/coach")} style={{ backgroundColor: c.primaryMuted, borderRadius: 14, paddingVertical: 14, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8 }}>
                     <Text style={{ fontSize: 16 }}>✨</Text>
                     <Text style={{ color: TERRACOTTA, fontWeight: "600", fontSize: 14 }}>Demande conseil au Coach IA</Text>

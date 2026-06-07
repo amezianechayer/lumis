@@ -55,15 +55,15 @@ func NewRecommendationService(
 	}
 }
 
-func recCacheKey(userID uuid.UUID) string {
-	return fmt.Sprintf("recs:v1:%s", userID)
+func recCacheKey(lang string, userID uuid.UUID) string {
+	return fmt.Sprintf("recs:v2:%s:%s", lang, userID)
 }
 
 // GetOrGenerate returns cached recs if fresh, otherwise generates new ones.
 func (s *RecommendationService) GetOrGenerate(ctx context.Context, userID uuid.UUID, recType, occasion string) ([]models.Recommendation, error) {
 	// Try Redis cache first
 	if s.rdb != nil {
-		if cached, err := s.rdb.Get(ctx, recCacheKey(userID)).Bytes(); err == nil {
+		if cached, err := s.rdb.Get(ctx, recCacheKey(langOf(ctx), userID)).Bytes(); err == nil {
 			var recs []models.Recommendation
 			if json.Unmarshal(cached, &recs) == nil {
 				log.Printf("[RecService] cache HIT for user %s", userID)
@@ -144,14 +144,17 @@ func (s *RecommendationService) cacheRecs(ctx context.Context, userID uuid.UUID,
 	if err != nil {
 		return
 	}
-	if err := s.rdb.Set(ctx, recCacheKey(userID), b, recCacheTTL).Err(); err != nil {
+	if err := s.rdb.Set(ctx, recCacheKey(langOf(ctx), userID), b, recCacheTTL).Err(); err != nil {
 		log.Printf("[RecService] Redis cache SET failed: %v", err)
 	}
 }
 
 func (s *RecommendationService) InvalidateCache(ctx context.Context, userID uuid.UUID) {
 	if s.rdb != nil {
-		s.rdb.Del(ctx, recCacheKey(userID))
+		// Clear every language variant so a new scan refreshes all of them.
+		for _, lang := range supportedLangs {
+			s.rdb.Del(ctx, recCacheKey(lang, userID))
+		}
 	}
 }
 

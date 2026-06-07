@@ -137,7 +137,7 @@ func (s *FaceAnalysisService) generateFaceDiagnostic(ctx context.Context, r face
 		genderLine = "femme (maquillage)"
 	}
 
-	prompt := fmt.Sprintf(`Tu es un expert en morphologie du visage et en colorimétrie (conseil en image). À partir de l'analyse ci-dessous, rédige un diagnostic personnalisé, VALORISANT et concret, en français.
+	prompt := fmt.Sprintf(`Tu es un expert en morphologie du visage et en colorimétrie (conseil en image). À partir de l'analyse ci-dessous, rédige un bilan personnalisé, VALORISANT et concret (conseil en image, cosmétique — aucun propos médical). La langue de rédaction est imposée par la directive de langue en fin de prompt.
 
 Analyse :
 - Forme du visage : %s
@@ -251,6 +251,13 @@ CRITICAL: Every person's face is unique. You MUST observe what you actually SEE,
 - Look at the actual jaw structure → do NOT default to "defined"
 
 Face shape guide: oval=balanced, round=equal width+height, square=angular jaw, heart=wide forehead+narrow jaw, oblong=longer than wide, diamond=narrow forehead+jaw+wide cheeks
+
+EYE COLOR — look ONLY at the iris (the colored ring), ignore the white and the pupil. Judge the dominant pigment:
+- "bleu": any blue/azure pigment, even pale or grayish-blue. Light/clear eyes that have ANY blue hue are "bleu".
+- "gris": truly steel-gray with NO blue and NO green tint at all. True gray is RARE — only choose it when there is clearly zero blue/green. When hesitating between bleu and gris, choose "bleu".
+- "vert": green / teal pigment. "noisette": mixed brown-green with a brown center (hazel). When hesitating between vert and noisette, look for a brown ring near the pupil → noisette.
+- "ambre": golden/amber. "marron": clearly brown. "noir": very dark brown that looks black.
+Do not let lighting, reflections or eye makeup change your judgement — focus on the pigment itself.
 
 %s
 %s

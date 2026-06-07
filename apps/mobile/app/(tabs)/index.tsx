@@ -13,6 +13,7 @@ import { useLanguageStore } from "../../stores/language.store";
 import { t } from "../../utils/i18n";
 import { Skeleton, SkeletonCard } from "../../components/ui/Skeleton";
 import { WeatherTipCard } from "../../components/ui/WeatherTipCard";
+import { AppIcon, IconName } from "../../components/ui/AppIcon";
 import { useThemeColors } from "../../stores/theme.store";
 import { api } from "../../services/api";
 
@@ -185,27 +186,27 @@ export default function HomeScreen() {
 
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
           <ToolTile
-            icon="🔥" label="Routine" sub={streak > 0 ? `${streak} j de série` : "Matin & soir"} tint="#fbbf24"
+            iconName="routine" label="Routine" sub={streak > 0 ? `${streak} j de série` : "Matin & soir"} tint="#fbbf24"
             onPress={() => router.push("/routine" as any)}
           />
           <ToolTile
-            icon={isMale ? "💪" : "✨"} label={isMale ? "Jawline" : "Glow Up"} sub="Exercices guidés" tint="#5DCAA5"
+            iconName="glowup" label="Glow Up" sub={isMale ? "Sculpte ton visage" : "Rituel beauté"} tint="#5DCAA5"
             onPress={() => router.push("/exercises" as any)}
           />
           {isMale ? (
-            <ToolTile icon="💈" label="Coupes & Barbes" sub="Styles pour toi" tint="#60a5fa"
+            <ToolTile iconName="menstyles" label="Coupes & Barbes" sub="Styles pour toi" tint="#60a5fa"
               onPress={() => router.push("/men-styles" as any)} />
           ) : (
-            <ToolTile icon="💄" label="Try-On" sub="Maquillage AR" tint="#f472b6"
+            <ToolTile iconName="tryon" label="Try-On" sub="Maquillage AR" tint="#f472b6"
               onPress={() => router.push("/tryon" as any)} />
           )}
           {!isMale && (
-            <ToolTile icon="🌙" label="Cycle & Peau" sub="Phase hormonale" tint="#a78bfa"
+            <ToolTile iconName="cycle" label="Cycle & Peau" sub="Phase hormonale" tint="#a78bfa"
               onPress={() => router.push("/cycle" as any)} />
           )}
-          <ToolTile icon="🔬" label="Analyse express" sub="Type de peau & teint" tint={TERRACOTTA}
+          <ToolTile iconName="analyse" label="Analyse express" sub="Type de peau & teint" tint={TERRACOTTA}
             onPress={() => router.push("/skin-analysis" as any)} />
-          <ToolTile icon="🧴" label="Scan produit" sub="Compatibilité" tint={TERRACOTTA}
+          <ToolTile iconName="product" label="Scan produit" sub="Compatibilité" tint={TERRACOTTA}
             onPress={() => router.push("/products/scan" as any)} />
         </View>
       </Animated.View>
@@ -299,7 +300,7 @@ function ProfileChip({ label, value, gold = false }: { label: string; value: str
   );
 }
 
-function ToolTile({ icon, label, sub, tint, onPress }: { icon: string; label: string; sub: string; tint: string; onPress: () => void }) {
+function ToolTile({ icon, iconName, label, sub, tint, onPress }: { icon?: string; iconName?: IconName; label: string; sub: string; tint: string; onPress: () => void }) {
   const c = useThemeColors();
   return (
     <TouchableOpacity
@@ -313,7 +314,7 @@ function ToolTile({ icon, label, sub, tint, onPress }: { icon: string; label: st
       }}
     >
       <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: `${tint}22`, alignItems: "center", justifyContent: "center", marginBottom: 10 }}>
-        <Text style={{ fontSize: 22 }}>{icon}</Text>
+        {iconName ? <AppIcon name={iconName} size={24} color={tint} /> : <Text style={{ fontSize: 22 }}>{icon}</Text>}
       </View>
       <Text style={{ color: c.text, fontSize: 14, fontWeight: "600" }}>{label}</Text>
       <Text style={{ color: c.textMuted, fontSize: 11, marginTop: 1 }}>{sub}</Text>

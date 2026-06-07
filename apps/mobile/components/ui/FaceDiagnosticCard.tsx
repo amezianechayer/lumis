@@ -74,7 +74,7 @@ export function FaceDiagnosticCard({
     >
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}>
         <Text style={{ fontSize: 18 }}>🧬</Text>
-        <Text style={{ color: c.text, fontWeight: "700", fontSize: 16 }}>Diagnostic morpho & couleur</Text>
+        <Text style={{ color: c.text, fontWeight: "700", fontSize: 16 }}>Bilan morpho & couleur</Text>
         {!isPremium && <PremiumBadge />}
       </View>
 
@@ -116,6 +116,10 @@ export function FaceDiagnosticCard({
         </View>
         {!isPremium && <FaceDiagnosticLockOverlay c={c} />}
       </View>
+
+      <Text style={{ color: c.textFaint, fontSize: 10, lineHeight: 14, marginTop: 14, fontStyle: "italic" }}>
+        Conseils en image à but cosmétique — sans valeur médicale.
+      </Text>
     </Animated.View>
   );
 }

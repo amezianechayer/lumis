@@ -26,6 +26,11 @@ type CyclePhase struct {
 	SkinImpact       string   `json:"skin_impact"`
 	Tips             []string `json:"tips"`
 	NextPeriodInDays int      `json:"next_period_in_days"`
+	// PCOS / SOPK
+	HasPCOS    bool     `json:"has_pcos"`
+	IsEstimate bool     `json:"is_estimate"` // predictions are rough when the cycle is irregular
+	PcosNote   string   `json:"pcos_note,omitempty"`
+	PcosTips   []string `json:"pcos_tips,omitempty"`
 }
 
 func (s *CycleService) Upsert(ctx context.Context, data *models.CycleData) error {
@@ -34,6 +39,16 @@ func (s *CycleService) Upsert(ctx context.Context, data *models.CycleData) error
 
 func (s *CycleService) Get(ctx context.Context, userID uuid.UUID) (*models.CycleData, error) {
 	return s.repo.FindByUser(ctx, userID)
+}
+
+// SaveLog upserts a single day's tracking entry.
+func (s *CycleService) SaveLog(ctx context.Context, log *models.CycleLog) error {
+	return s.repo.UpsertLog(ctx, log)
+}
+
+// GetLogs returns the user's recent daily logs.
+func (s *CycleService) GetLogs(ctx context.Context, userID uuid.UUID, limit int) ([]models.CycleLog, error) {
+	return s.repo.FindLogs(ctx, userID, limit)
 }
 
 // GetPhase returns the computed phase for a user, or nil if not configured.
@@ -110,6 +125,20 @@ func ComputeCyclePhase(data *models.CycleData) CyclePhase {
 		p.Tips = []string{
 			"Anticipe l'acné : niacinamide et acide salicylique (BHA) sur le menton.",
 			"Évite les nouveaux produits irritants, la peau est plus réactive.",
+		}
+	}
+
+	// SOPK / cycles irréguliers : les prédictions deviennent des estimations et
+	// l'accent passe sur la gestion de l'acné hormonale (conseils cosmétiques).
+	if data.HasPCOS {
+		p.HasPCOS = true
+		p.IsEstimate = true
+		p.PcosNote = "Cycle irrégulier (SOPK) : les dates ci-dessus sont des estimations. Note tes règles au fil des jours pour affiner."
+		p.PcosTips = []string{
+			"L'acné hormonale (menton, mâchoire, cou) peut survenir hors phase lutéale : garde une routine anti-imperfections constante.",
+			"Mise sur des actifs réguliers : niacinamide, acide salicylique (BHA) et SPF quotidien.",
+			"Privilégie un mode de vie à index glycémique bas — ça aide souvent la peau SOPK.",
+			"Suis tes symptômes au quotidien ci-dessous pour repérer tes propres schémas.",
 		}
 	}
 	return p
